@@ -1,0 +1,1 @@
+/bucket/.deigo/HusnikU/Conda-envs/prokka/bin/prokka --compliant --rfam $genome.fasta

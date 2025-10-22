@@ -1,0 +1,1 @@
+/Users/yonghengphua/Documents/programmes/ASAFind2/ASAFind2.py -f GKBP01.1.fas.transdecoder.pep -p GKBP01.1_signalp.log

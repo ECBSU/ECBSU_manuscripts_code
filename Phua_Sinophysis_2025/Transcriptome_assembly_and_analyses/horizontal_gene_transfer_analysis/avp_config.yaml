@@ -1,0 +1,35 @@
+---
+max_threads: 32
+
+# DB path
+blast_db_path: nr    # blast: change to the local blast_db path
+fasta_path: ${DIAMONDDB}/nr.dmnd  # diamond: change to the local fasta path for sp, ur90, or custom database
+mode: blast    # use blast for blast database, use sp for swissprot database, ur90 for uniref90 or custom database
+data_type: AA    # data type DNA, AA
+
+## Algorithm options
+# prepare
+ai_cutoff: 20
+ahs_cutoff: 0
+outg_pct_cutoff: 80
+selection: "(ai or ahs) and outg_pct" # select sequences based on which metrics, another example "(ai or ahs) and outg_pct"
+percent_identity: 100   # select hits equal or below this number
+cutoffextend: 20    # when ingroup hit is found, we take this hit + n hits
+trimal: false
+min_num_hits: 4   # select queries with at least that many blast hits
+percentage_similar_hits: 0.7  # group queries based on this
+# detect, clasify, evaluate
+fastml: true  # Use fasttree instead of IQTree
+node_support: 0  # nodes below that number will collapse
+complex_per_ingroup: 20   # if D/(D+I) smaller than this then node is considered Ingroup
+complex_per_donor: 80   # if D/(D+I) greater than this then node is considered Donor
+complex_per_node: 90  # if node contains percent number of this category, it is assigned
+
+# Program specific options
+mafft_options: '--anysymbol --auto'
+trimal_options: '-automated1'
+
+#IQ-Tree
+iqmodel: '-mset WAG,LG,JTT -AICc -mrate E,I,G,R'
+ufbootstrap: 1000
+iq_threads: 4

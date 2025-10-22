@@ -1,0 +1,1 @@
+phyloFlash.pl -lib SL2 -read1 {$sample}_R1_001.fastq.gz -read2 {$sample}_R2_001.fastq.gz -id 55 -almosteverything -CPU 32

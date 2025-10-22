@@ -1,0 +1,1 @@
+/apps/unit/HusnikU/bbmap/bbsplit.sh ref=assembly.fasta in=SinoL_S1_L001_R1_001_Trimed.fastq.gz in2=SinoL_S1_L001_R2_001_Trimed.fastq.gz basename=out_%.fq outu1=clean1.fq outu2=clean2.fq

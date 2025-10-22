@@ -1,0 +1,2 @@
+module load singularity
+singularity exec -e /apps/unit/HusnikU/trinityrnaseq.v2.15.0.simg /usr/local/bin/util/align_and_estimate_abundance.pl --transcripts /flash/HusnikU/Phua_2/sino_transcriptome/clean_1234/trinity_out_dir.Trinity.fasta --seqType fq --samples_file samples.tsv --trinity_mode --thread_count 96 --output_dir /flash/HusnikU/Phua_2/sino_transcriptome/clean_1234 --est_method RSEM --prep_reference --aln_method bowtie --thread_count 32

@@ -1,0 +1,2 @@
+blastn.exe -query C:\Users\pyh_1\Desktop\tmp\dinosplice\dinosplice.txt -db C:\Users\pyh_1\Desktop\tmp\dinosplice\trinity_out_dir.Trinity.fasta -task blastn-short > splicelead_v_transcriptome.blastn
+blastn.exe -query C:\Users\pyh_1\Desktop\tmp\dinosplice\dinosplice.txt -db C:\Users\pyh_1\Desktop\tmp\dinosplice\trinity_out_dir.Trinity.fasta -task blastn-short -outfmt 6 > splicelead_v_transcriptome.blastn.tsv

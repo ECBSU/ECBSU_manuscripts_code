@@ -1,0 +1,1 @@
+checkm lineage_wf /bucket/.deigo/HusnikU/Unit_Members/Phua_internship_files/Sino_prj/Sino_genome/SPAdes_nano/bin/bins/scaffolds.fasta_dastool_output_DASTool_bins -x fa -t 8 .
