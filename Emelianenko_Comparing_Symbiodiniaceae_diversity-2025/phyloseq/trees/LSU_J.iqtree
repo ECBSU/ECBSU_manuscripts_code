@@ -1,0 +1,411 @@
+IQ-TREE 2.4.0 built Feb  7 2025
+
+Input file name: LSU_combined_with_J_trimmed.fasta
+Type of analysis: tree reconstruction + ultrafast bootstrap (10000 replicates)
+Random seed number: 715371
+
+REFERENCES
+----------
+
+To cite IQ-TREE please use:
+
+Bui Quang Minh, Heiko A. Schmidt, Olga Chernomor, Dominik Schrempf,
+Michael D. Woodhams, Arndt von Haeseler, and Robert Lanfear (2020)
+IQ-TREE 2: New models and efficient methods for phylogenetic inference
+in the genomic era. Mol. Biol. Evol., in press.
+https://doi.org/10.1093/molbev/msaa015
+
+Since you used ultrafast bootstrap (UFBoot) please also cite: 
+
+Diep Thi Hoang, Olga Chernomor, Arndt von Haeseler, Bui Quang Minh,
+and Le Sy Vinh (2018) UFBoot2: Improving the ultrafast bootstrap
+approximation. Mol. Biol. Evol., 35:518–522.
+https://doi.org/10.1093/molbev/msx281
+
+SEQUENCE ALIGNMENT
+------------------
+
+Input data: 69 sequences with 617 nucleotide sites
+Number of constant sites: 289 (= 46.8395% of all sites)
+Number of invariant (constant or ambiguous constant) sites: 289 (= 46.8395% of all sites)
+Number of parsimony informative sites: 311
+Number of distinct site patterns: 347
+
+SUBSTITUTION PROCESS
+--------------------
+
+Model of substitution: GTR+F+I+G4
+
+Rate parameter R:
+
+  A-C: 0.7667
+  A-G: 3.0508
+  A-T: 0.5229
+  C-G: 0.3632
+  C-T: 5.9798
+  G-T: 1.0000
+
+State frequencies: (empirical counts from alignment)
+
+  pi(A) = 0.2432
+  pi(C) = 0.2025
+  pi(G) = 0.2983
+  pi(T) = 0.256
+
+Rate matrix Q:
+
+  A   -0.8565    0.1109      0.65   0.09563
+  C    0.1332    -1.304   0.07738     1.094
+  G    0.5299   0.05255   -0.7653    0.1829
+  T   0.09082    0.8651     0.213    -1.169
+
+Model of rate heterogeneity: Invar+Gamma with 4 categories
+Proportion of invariable sites: 0.3399
+Gamma shape alpha: 1.151
+
+ Category  Relative_rate  Proportion
+  0         0              0.3399
+  1         0.2516         0.165
+  2         0.7846         0.165
+  3         1.547          0.165
+  4         3.477          0.165
+Relative rates are computed as MEAN of the portion of the Gamma distribution falling in the category.
+
+MAXIMUM LIKELIHOOD TREE
+-----------------------
+
+Log-likelihood of the tree: -5725.9967 (s.e. 214.2698)
+Unconstrained log-likelihood (without tree): -2910.8555
+Number of free parameters (#branches + #model parameters): 145
+Akaike information criterion (AIC) score: 11741.9934
+Corrected Akaike information criterion (AICc) score: 11831.8872
+Bayesian information criterion (BIC) score: 12383.5994
+
+Total tree length (sum of branch lengths): 2.5776
+Sum of internal branch lengths: 2.1238 (82.3946% of tree length)
+
+WARNING: 14 near-zero internal branches (<0.0016) should be treated with caution
+         Such branches are denoted by '**' in the figure below
+
+NOTE: Tree is UNROOTED although outgroup taxon 'JN558040.1_Symbiodinium_sp._C1' is drawn at root
+Numbers in parentheses are SH-aLRT support (%) / ultrafast bootstrap support (%)
+
++**JN558040.1_Symbiodinium_sp._C1
+|
++**KR996308.1_Symbiodinium_thermophilum
+|
+|  +**JN558045.1_Symbiodinium_sp._C90
++**| (0/28)
+   |     +**JN558048.1_Symbiodinium_sp._C91
+   |  +--| (82.6/96)
+   |  |  |  +--JN558042.1_Symbiodinium_sp._C15
+   |  |  +--| (76.6/92)
+   |  |     |           +--JN558051.1_Symbiodinium_sp._H1
+   |  |     |        +**| (0/68)
+   |  |     |        |  |  +**JN558053.1_Symbiodinium_sp._H1a
+   |  |     |        |  +**| (0/54)
+   |  |     |        |     +**AJ291513.1_Symbiodinium_sp._clade_H_751
+   |  |     |     +--| (95.1/95)
+   |  |     |     |  |  +--AJ621148.1_Symbiodinium_sp._H_isolate_FL34_1286x
+   |  |     |     |  +--| (73.2/91)
+   |  |     |     |     +--AJ291520.2_Symbiodinium_sp._clade_H_isolate_1678J
+   |  |     |  +--| (95.7/99)
+   |  |     |  |  +--MT015652.1_Symbiodinium_sp_P1C4_Clade_H_Heron_Island
+   |  |     +--| (98.9/100)
+   |  |        |                              +**JQ247043.1_Symbiodinium_sp._F2
+   |  |        |                       +------| (100/100)
+   |  |        |                       |      |  +--JQ247044.1_Symbiodinium_sp._F2ae
+   |  |        |                       |      +--| (89.5/93)
+   |  |        |                       |         |  +--AJ830912.1_Symbiodinium_sp._clade_F_isolate_El67b_1335j
+   |  |        |                       |         +--| (99.7/100)
+   |  |        |                       |            +**AJ830914.1_Symbiodinium_sp._clade_F_El52_1320j
+   |  |        |                    +**| (66.6/75)
+   |  |        |                    |  |  +--JQ247046.1_Symbiodinium_sp._F3.2
+   |  |        |                    |  +--| (76.1/95)
+   |  |        |                    |     |  +**AJ872076.1_Symbiodinium_sp._clade_F_isolate_MS8_5243X
+   |  |        |                    |     +**| (0/66)
+   |  |        |                    |        +**AJ830916.1_Symbiodinium_sp._clade_F_isolate_MS26_5244x
+   |  |        |                 +--| (80.5/80)
+   |  |        |                 |  +--MT015653.1_Symbiodinium_sp_P2D2_Clade_Fr3_Heron_Island
+   |  |        |              +--| (50.1/63)
+   |  |        |              |  |  +--JQ247045.1_Symbiodinium_sp._F3.1a
+   |  |        |              |  +--| (97.9/98)
+   |  |        |              |     |  +--AJ308895.1_Symbiodinium_sp._FG188C1
+   |  |        |              |     +**| (0/63)
+   |  |        |              |        +**AJ291525.1_Symbiodinium_sp._clade_F_isolate_1635_
+   |  |        |           +--| (98.9/99)
+   |  |        |           |  +--MT015654.1_Symbiodinium_sp_P1G6_Clade_Fr3_Heron_Island
+   |  |        |        +--| (12.4/50)
+   |  |        |        |  |          +--JQ247047.1_Symbiodinium_sp._F4.1
+   |  |        |        |  |       +--| (87/98)
+   |  |        |        |  |       |  +**AJ621146.1_Symbiodinium_sp._F_isolate_FL77_1349x
+   |  |        |        |  +-------| (100/100)
+   |  |        |        |          |  +--JQ247048.1_Symbiodinium_sp._F4.8
+   |  |        |        |          +--| (91.3/98)
+   |  |        |        |             |     +**AJ621145.1_Symbiodinium_sp._F_isolate_FL74_1334x
+   |  |        |        |             |  +**| (0/51)
+   |  |        |        |             |  |  +**AJ291527.1_Symbiodinium_sp._F_isolate_836
+   |  |        |        |             +--| (76.6/95)
+   |  |        |        |                +**AJ621135.1_Symbiodinium_sp._F_isolate_PC227_1628x
+   |  |        |     +--| (75.9/78)
+   |  |        |     |  |             +--LK934666.1_Symbiodinium_kawagutii
+   |  |        |     |  |          +--| (99.7/100)
+   |  |        |     |  |          |  +**JN558066.1_Symbiodinium_sp._F1
+   |  |        |     |  |       +--| (89.2/96)
+   |  |        |     |  |       |  |  +--JN558072.1_Symbiodinium_sp._F5.2g
+   |  |        |     |  |       |  +**| (67.7/98)
+   |  |        |     |  |       |     +--AJ872077.1_Symbiodinium_sp._clade_F_isolate_RII40_971X
+   |  |        |     |  +-------| (100/100)
+   |  |        |     |          |  +--JN558063.1_Symbiodinium_sp._F5.1
+   |  |        |     |          +--| (69.1/94)
+   |  |        |     |             +--JN558069.1_Symbiodinium_sp._F5.1d
+   |  |        |  +--| (43.4/57)
+   |  |        |  |  |                 +**KT149349.1_Symbiodinium_minutum_strain_Mf
+   |  |        |  |  |              +--| (84.4/97)
+   |  |        |  |  |              |  +**KT149346.1_Symbiodinium_antillogorgium
+   |  |        |  |  |           +--| (82/94)
+   |  |        |  |  |           |  |  +**KT149350.1_Symbiodinium_pseudominutum
+   |  |        |  |  |           |  +**| (0/54)
+   |  |        |  |  |           |     +**KT149347.1_Symbiodinium_endomadracis
+   |  |        |  |  +-----------| (100/100)
+   |  |        |  |              |  +**LK934671.1_Symbiodinium_psygmophilum
+   |  |        |  |              +**| (0/63)
+   |  |        |  |                 +--KT149345.1_Symbiodinium_aenigmaticum
+   |  |        +--| (93.1/98)
+   |  |           |               +--FN561559.1_Symbiodinium_sp._nr_I1
+   |  |           |        +------| (99.7/100)
+   |  |           |        |      +--FN561560.1_Symbiodinium_sp._nr_I2
+   |  |           |    +---| (96.8/98)
+   |  |           |    |   |                +--LC503502.1
+   |  |           |    |   |             +--| (88.9/98)
+   |  |           |    |   |             |  +--LC503503.1
+   |  |           |    |   |          +--| (36.8/93)
+   |  |           |    |   |          |  +**LC503504.1
+   |  |           |    |   +----------| (100/100)
+   |  |           |    |              +**LC503505.1
+   |  |           +----| (99.3/99)
+   |  |                |                          +--KY131782.1_Symbiodinium_glynnii
+   |  |                |                       +**| (0/29)
+   |  |                |                       |  +**KF740686.1_Symbiodinium_sp._D8
+   |  |                |                    +**| (0/34)
+   |  |                |                    |  +**JN558078.1_Symbiodinium_sp._D1a
+   |  |                |          +---------| (100/100)
+   |  |                |          |         +--KF740688.1_Symbiodinium_sp._D15
+   |  |                |      +---| (94/97)
+   |  |                |      |   |    +--JQ247049.1_Symbiodinium_sp._D1.1
+   |  |                |      |   +----| (98.7/99)
+   |  |                |      |        +--JN558081.1_Symbiodinium_sp._D1.2
+   |  |                |   +--| (62.1/78)
+   |  |                |   |  |                              +**KM972549.1_Symbiodinium_microadriaticum
+   |  |                |   |  |                           +--| (88.9/97)
+   |  |                |   |  |                           |  |  +**KP114226.1_Symbiodinium_sp._TLJ_2015c_strain_CCMP_2469
+   |  |                |   |  |                           |  +--| (83.4/99)
+   |  |                |   |  |                           |     +**JN558094.1_Symbiodinium_sp._A13
+   |  |                |   |  |                        +--| (90/96)
+   |  |                |   |  |                        |  |  +**KM816405.1_Symbiodinium_sp._TLJ_2015a_strain_CCMP_832
+   |  |                |   |  |                        |  +--| (95.2/100)
+   |  |                |   |  |                        |     +--JN558091.1_Symbiodinium_sp._A3
+   |  |                |   |  |              +---------| (98.7/99)
+   |  |                |   |  |              |         |  +--KF740671.1_Symbiodinium_pilosum
+   |  |                |   |  |              |         +--| (92.1/98)
+   |  |                |   |  |              |            |  +**JN558097.1_Symbiodinium_sp._A2
+   |  |                |   |  |              |            +**| (0/52)
+   |  |                |   |  |              |               +--JN558100.1_Symbiodinium_sp._A2
+   |  |                |   |  |       +------| (96/99)
+   |  |                |   |  |       |      +------------------------JN558103.1_Protodinium_simplex
+   |  |                |   |  +-------| (98.1/95)
+   |  |                |   |          |                   +--JN558084.1_Symbiodinium_sp._E1
+   |  |                |   |          +-------------------| (100/100)
+   |  |                |   |                              +**HF568830.1_Symbiodinium_voratum
+   |  |                +---| (91.3/95)
+   |  |                    |                        +--JN558089.1_Symbiodinium_sp._G2
+   |  |                    |                  +-----| (99.7/100)
+   |  |                    |                  |     +**JN558088.1_Symbiodinium_sp._G2b
+   |  |                    +------------------| (100/100)
+   |  |                                       |  +**MF322789.1_Symbiodinium_endoclionum
+   |  |                                       +--| (93.8/99)
+   |  |                                          +--MF322787.1_Symbiodinium_spongiolum
+   +**| (0/59)
+      +--KF740677.1_Symbiodinium_sp._C7a
+
+Tree in newick format:
+
+(JN558040.1_Symbiodinium_sp._C1:0.0000010022,KR996308.1_Symbiodinium_thermophilum:0.0000010022,(JN558045.1_Symbiodinium_sp._C90:0.0000010022,((JN558048.1_Symbiodinium_sp._C91:0.0000010022,(JN558042.1_Symbiodinium_sp._C15:0.0017112417,((((JN558051.1_Symbiodinium_sp._H1:0.0018619373,(JN558053.1_Symbiodinium_sp._H1a:0.0000010022,AJ291513.1_Symbiodinium_sp._clade_H_751:0.0000010022)0/54:0.0000010022)0/68:0.0000010022,(AJ621148.1_Symbiodinium_sp._H_isolate_FL34_1286x:0.0018800673,AJ291520.2_Symbiodinium_sp._clade_H_isolate_1678J:0.0076003502)73.2/91:0.0018542262)95.1/95:0.0185556121,MT015652.1_Symbiodinium_sp_P1C4_Clade_H_Heron_Island:0.0160337379)95.7/99:0.0253176690,(((((((((JQ247043.1_Symbiodinium_sp._F2:0.0000025906,(JQ247044.1_Symbiodinium_sp._F2ae:0.0017007294,(AJ830912.1_Symbiodinium_sp._clade_F_isolate_El67b_1335j:0.0034109316,AJ830914.1_Symbiodinium_sp._clade_F_El52_1320j:0.0000010022)99.7/100:0.0156608730)89.5/93:0.0050479973)100/100:0.0750945082,(JQ247046.1_Symbiodinium_sp._F3.2:0.0016656885,(AJ872076.1_Symbiodinium_sp._clade_F_isolate_MS8_5243X:0.0000010022,AJ830916.1_Symbiodinium_sp._clade_F_isolate_MS26_5244x:0.0000010022)0/66:0.0000010022)76.1/95:0.0020215000)66.6/75:0.0013240825,MT015653.1_Symbiodinium_sp_P2D2_Clade_Fr3_Heron_Island:0.0068384859)80.5/80:0.0033673918,(JQ247045.1_Symbiodinium_sp._F3.1a:0.0033193269,(AJ308895.1_Symbiodinium_sp._FG188C1:0.0016555759,AJ291525.1_Symbiodinium_sp._clade_F_isolate_1635_:0.0000010022)0/63:0.0000010022)97.9/98:0.0139148582)50.1/63:0.0075756413,MT015654.1_Symbiodinium_sp_P1G6_Clade_Fr3_Heron_Island:0.0157129714)98.9/99:0.0381036590,((JQ247047.1_Symbiodinium_sp._F4.1:0.0068019172,AJ621146.1_Symbiodinium_sp._F_isolate_FL77_1349x:0.0000010022)87/98:0.0113810435,(JQ247048.1_Symbiodinium_sp._F4.8:0.0034179717,((AJ621145.1_Symbiodinium_sp._F_isolate_FL74_1334x:0.0000010022,AJ291527.1_Symbiodinium_sp._F_isolate_836:0.0000010022)0/51:0.0000010022,AJ621135.1_Symbiodinium_sp._F_isolate_PC227_1628x:0.0000010022)76.6/95:0.0016610924)91.3/98:0.0132601376)100/100:0.0848194301)12.4/50:0.0147933982,(((LK934666.1_Symbiodinium_kawagutii:0.0085629820,JN558066.1_Symbiodinium_sp._F1:0.0000010022)99.7/100:0.0180582885,(JN558072.1_Symbiodinium_sp._F5.2g:0.0017417733,AJ872077.1_Symbiodinium_sp._clade_F_isolate_RII40_971X:0.0085458477)67.7/98:0.0010966151)89.2/96:0.0080914472,(JN558063.1_Symbiodinium_sp._F5.1:0.0103827081,JN558069.1_Symbiodinium_sp._F5.1d:0.0086254141)69.1/94:0.0029276871)100/100:0.0851323322)75.9/78:0.0078267061,(((KT149349.1_Symbiodinium_minutum_strain_Mf:0.0000010022,KT149346.1_Symbiodinium_antillogorgium:0.0000010022)84.4/97:0.0016914425,(KT149350.1_Symbiodinium_pseudominutum:0.0000010022,KT149347.1_Symbiodinium_endomadracis:0.0000010022)0/54:0.0000010022)82/94:0.0051156664,(LK934671.1_Symbiodinium_psygmophilum:0.0000010022,KT149345.1_Symbiodinium_aenigmaticum:0.0033998055)0/63:0.0000022577)100/100:0.1347084695)43.4/57:0.0201731884,(((FN561559.1_Symbiodinium_sp._nr_I1:0.0032879417,FN561560.1_Symbiodinium_sp._nr_I2:0.0017704797)99.7/100:0.0744311215,(((LC503502.1:0.0016771688,LC503503.1:0.0016800306)88.9/98:0.0033456280,LC503504.1:0.0000010022)36.8/93:0.0016665633,LC503505.1:0.0000023371)100/100:0.1171195152)96.8/98:0.0505785663,((((((KY131782.1_Symbiodinium_glynnii:0.0016575590,KF740686.1_Symbiodinium_sp._D8:0.0000010022)0/29:0.0000010022,JN558078.1_Symbiodinium_sp._D1a:0.0000010022)0/34:0.0000010022,KF740688.1_Symbiodinium_sp._D15:0.0016553533)100/100:0.1066526530,(JQ247049.1_Symbiodinium_sp._D1.1:0.0200314482,JN558081.1_Symbiodinium_sp._D1.2:0.0034990357)98.7/99:0.0548560972)94/97:0.0459854544,(((((KM972549.1_Symbiodinium_microadriaticum:0.0000010022,(KP114226.1_Symbiodinium_sp._TLJ_2015c_strain_CCMP_2469:0.0000010022,JN558094.1_Symbiodinium_sp._A13:0.0000010022)83.4/99:0.0016496021)88.9/97:0.0078119429,(KM816405.1_Symbiodinium_sp._TLJ_2015a_strain_CCMP_832:0.0000010022,JN558091.1_Symbiodinium_sp._A3:0.0016567980)95.2/100:0.0110035664)90/96:0.0201294822,(KF740671.1_Symbiodinium_pilosum:0.0016501386,(JN558097.1_Symbiodinium_sp._A2:0.0000010022,JN558100.1_Symbiodinium_sp._A2:0.0016495482)0/52:0.0000010022)92.1/98:0.0230535876)98.7/99:0.1077437094,JN558103.1_Protodinium_simplex:0.2749123498)96/99:0.0814025182,(JN558084.1_Symbiodinium_sp._E1:0.0016554150,HF568830.1_Symbiodinium_voratum:0.0000010022)100/100:0.2144365696)98.1/95:0.0867941872)62.1/78:0.0244387505,((JN558089.1_Symbiodinium_sp._G2:0.0033608111,JN558088.1_Symbiodinium_sp._G2b:0.0000010022)99.7/100:0.0672994680,(MF322789.1_Symbiodinium_endoclionum:0.0000010022,MF322787.1_Symbiodinium_spongiolum:0.0033615813)93.8/99:0.0357659564)100/100:0.2066292577)91.3/95:0.0439290881)99.3/99:0.0612962902)93.1/98:0.0249560351)98.9/100:0.0339555090)76.6/92:0.0016324164)82.6/96:0.0016659780,KF740677.1_Symbiodinium_sp._C7a:0.0103820874)0/59:0.0000010022)0/28:0.0000010022);
+
+CONSENSUS TREE
+--------------
+
+Consensus tree is constructed from 10000 bootstrap trees
+Log-likelihood of consensus tree: -5726.034527
+Robinson-Foulds distance between ML tree and consensus tree: 2
+
+Branches with support >0.000000% are kept (extended consensus)
+Branch lengths are optimized by maximum likelihood on original alignment
+Numbers in parentheses are bootstrap supports (%)
+
++--JN558040.1_Symbiodinium_sp._C1
+|
+|  +--KR996308.1_Symbiodinium_thermophilum
++--| (54)
+|  +--JN558045.1_Symbiodinium_sp._C90
+|
+|     +--JN558048.1_Symbiodinium_sp._C91
+|  +--| (96)
+|  |  |  +--JN558042.1_Symbiodinium_sp._C15
+|  |  +--| (92)
+|  |     |           +--JN558051.1_Symbiodinium_sp._H1
+|  |     |        +--| (68)
+|  |     |        |  |  +--JN558053.1_Symbiodinium_sp._H1a
+|  |     |        |  +--| (54)
+|  |     |        |     +--AJ291513.1_Symbiodinium_sp._clade_H_751
+|  |     |     +--| (95)
+|  |     |     |  |  +--AJ621148.1_Symbiodinium_sp._H_isolate_FL34_1286x
+|  |     |     |  +--| (91)
+|  |     |     |     +--AJ291520.2_Symbiodinium_sp._clade_H_isolate_1678J
+|  |     |  +--| (99)
+|  |     |  |  +--MT015652.1_Symbiodinium_sp_P1C4_Clade_H_Heron_Island
+|  |     +--| (100)
+|  |        |                              +--JQ247043.1_Symbiodinium_sp._F2
+|  |        |                       +------| (100)
+|  |        |                       |      |  +--JQ247044.1_Symbiodinium_sp._F2ae
+|  |        |                       |      +--| (93)
+|  |        |                       |         |  +--AJ830912.1_Symbiodinium_sp._clade_F_isolate_El67b_1335j
+|  |        |                       |         +--| (100)
+|  |        |                       |            +--AJ830914.1_Symbiodinium_sp._clade_F_El52_1320j
+|  |        |                    +--| (75)
+|  |        |                    |  |  +--JQ247046.1_Symbiodinium_sp._F3.2
+|  |        |                    |  +--| (95)
+|  |        |                    |     |  +--AJ872076.1_Symbiodinium_sp._clade_F_isolate_MS8_5243X
+|  |        |                    |     +--| (66)
+|  |        |                    |        +--AJ830916.1_Symbiodinium_sp._clade_F_isolate_MS26_5244x
+|  |        |                 +--| (80)
+|  |        |                 |  +--MT015653.1_Symbiodinium_sp_P2D2_Clade_Fr3_Heron_Island
+|  |        |              +--| (63)
+|  |        |              |  |  +--JQ247045.1_Symbiodinium_sp._F3.1a
+|  |        |              |  +--| (98)
+|  |        |              |     |  +--AJ308895.1_Symbiodinium_sp._FG188C1
+|  |        |              |     +--| (63)
+|  |        |              |        +--AJ291525.1_Symbiodinium_sp._clade_F_isolate_1635_
+|  |        |           +--| (99)
+|  |        |           |  +--MT015654.1_Symbiodinium_sp_P1G6_Clade_Fr3_Heron_Island
+|  |        |        +--| (50)
+|  |        |        |  |          +--JQ247047.1_Symbiodinium_sp._F4.1
+|  |        |        |  |       +--| (98)
+|  |        |        |  |       |  +--AJ621146.1_Symbiodinium_sp._F_isolate_FL77_1349x
+|  |        |        |  +-------| (100)
+|  |        |        |          |  +--JQ247048.1_Symbiodinium_sp._F4.8
+|  |        |        |          +--| (98)
+|  |        |        |             |     +--AJ621145.1_Symbiodinium_sp._F_isolate_FL74_1334x
+|  |        |        |             |  +--| (51)
+|  |        |        |             |  |  +--AJ291527.1_Symbiodinium_sp._F_isolate_836
+|  |        |        |             +--| (95)
+|  |        |        |                +--AJ621135.1_Symbiodinium_sp._F_isolate_PC227_1628x
+|  |        |     +--| (78)
+|  |        |     |  |             +--LK934666.1_Symbiodinium_kawagutii
+|  |        |     |  |          +--| (100)
+|  |        |     |  |          |  +--JN558066.1_Symbiodinium_sp._F1
+|  |        |     |  |       +--| (96)
+|  |        |     |  |       |  |  +--JN558072.1_Symbiodinium_sp._F5.2g
+|  |        |     |  |       |  +--| (98)
+|  |        |     |  |       |     +--AJ872077.1_Symbiodinium_sp._clade_F_isolate_RII40_971X
+|  |        |     |  +-------| (100)
+|  |        |     |          |  +--JN558063.1_Symbiodinium_sp._F5.1
+|  |        |     |          +--| (94)
+|  |        |     |             +--JN558069.1_Symbiodinium_sp._F5.1d
+|  |        |  +--| (57)
+|  |        |  |  |                 +--KT149349.1_Symbiodinium_minutum_strain_Mf
+|  |        |  |  |              +--| (97)
+|  |        |  |  |              |  +--KT149346.1_Symbiodinium_antillogorgium
+|  |        |  |  |           +--| (94)
+|  |        |  |  |           |  |  +--KT149350.1_Symbiodinium_pseudominutum
+|  |        |  |  |           |  +--| (54)
+|  |        |  |  |           |     +--KT149347.1_Symbiodinium_endomadracis
+|  |        |  |  +-----------| (100)
+|  |        |  |              |  +--LK934671.1_Symbiodinium_psygmophilum
+|  |        |  |              +--| (63)
+|  |        |  |                 +--KT149345.1_Symbiodinium_aenigmaticum
+|  |        +--| (98)
+|  |           |               +--FN561559.1_Symbiodinium_sp._nr_I1
+|  |           |        +------| (100)
+|  |           |        |      +--FN561560.1_Symbiodinium_sp._nr_I2
+|  |           |    +---| (98)
+|  |           |    |   |                +--LC503502.1
+|  |           |    |   |             +--| (98)
+|  |           |    |   |             |  +--LC503503.1
+|  |           |    |   |          +--| (93)
+|  |           |    |   |          |  +--LC503504.1
+|  |           |    |   +----------| (100)
+|  |           |    |              +--LC503505.1
+|  |           +----| (99)
+|  |                |                          +--KY131782.1_Symbiodinium_glynnii
+|  |                |                       +--| (29)
+|  |                |                       |  +--KF740686.1_Symbiodinium_sp._D8
+|  |                |                    +--| (34)
+|  |                |                    |  +--JN558078.1_Symbiodinium_sp._D1a
+|  |                |          +---------| (100)
+|  |                |          |         +--KF740688.1_Symbiodinium_sp._D15
+|  |                |      +---| (97)
+|  |                |      |   |    +--JQ247049.1_Symbiodinium_sp._D1.1
+|  |                |      |   +----| (99)
+|  |                |      |        +--JN558081.1_Symbiodinium_sp._D1.2
+|  |                |   +--| (78)
+|  |                |   |  |                              +--KM972549.1_Symbiodinium_microadriaticum
+|  |                |   |  |                           +--| (97)
+|  |                |   |  |                           |  |  +--KP114226.1_Symbiodinium_sp._TLJ_2015c_strain_CCMP_2469
+|  |                |   |  |                           |  +--| (99)
+|  |                |   |  |                           |     +--JN558094.1_Symbiodinium_sp._A13
+|  |                |   |  |                        +--| (96)
+|  |                |   |  |                        |  |  +--KM816405.1_Symbiodinium_sp._TLJ_2015a_strain_CCMP_832
+|  |                |   |  |                        |  +--| (100)
+|  |                |   |  |                        |     +--JN558091.1_Symbiodinium_sp._A3
+|  |                |   |  |              +---------| (99)
+|  |                |   |  |              |         |  +--KF740671.1_Symbiodinium_pilosum
+|  |                |   |  |              |         +--| (98)
+|  |                |   |  |              |            |  +--JN558097.1_Symbiodinium_sp._A2
+|  |                |   |  |              |            +--| (52)
+|  |                |   |  |              |               +--JN558100.1_Symbiodinium_sp._A2
+|  |                |   |  |       +------| (99)
+|  |                |   |  |       |      +------------------------JN558103.1_Protodinium_simplex
+|  |                |   |  +-------| (95)
+|  |                |   |          |                   +--JN558084.1_Symbiodinium_sp._E1
+|  |                |   |          +-------------------| (100)
+|  |                |   |                              +--HF568830.1_Symbiodinium_voratum
+|  |                +---| (95)
+|  |                    |                        +--JN558089.1_Symbiodinium_sp._G2
+|  |                    |                  +-----| (100)
+|  |                    |                  |     +--JN558088.1_Symbiodinium_sp._G2b
+|  |                    +------------------| (100)
+|  |                                       |  +--MF322789.1_Symbiodinium_endoclionum
+|  |                                       +--| (99)
+|  |                                          +--MF322787.1_Symbiodinium_spongiolum
++--| (59)
+   +--KF740677.1_Symbiodinium_sp._C7a
+
+
+Consensus tree in newick format: 
+
+(JN558040.1_Symbiodinium_sp._C1:0.0000025850,(KR996308.1_Symbiodinium_thermophilum:0.0000025850,JN558045.1_Symbiodinium_sp._C90:0.0000025850)54:0.0000025850,((JN558048.1_Symbiodinium_sp._C91:0.0000025850,(JN558042.1_Symbiodinium_sp._C15:0.0017088617,((((JN558051.1_Symbiodinium_sp._H1:0.0018598286,(JN558053.1_Symbiodinium_sp._H1a:0.0000025850,AJ291513.1_Symbiodinium_sp._clade_H_751:0.0000025850)54:0.0000025850)68:0.0000025850,(AJ621148.1_Symbiodinium_sp._H_isolate_FL34_1286x:0.0018778971,AJ291520.2_Symbiodinium_sp._clade_H_isolate_1678J:0.0075916169)91:0.0018505487)95:0.0185340731,MT015652.1_Symbiodinium_sp_P1C4_Clade_H_Heron_Island:0.0160208584)99:0.0253010333,(((((((((JQ247043.1_Symbiodinium_sp._F2:0.0000025955,(JQ247044.1_Symbiodinium_sp._F2ae:0.0016982731,(AJ830912.1_Symbiodinium_sp._clade_F_isolate_El67b_1335j:0.0034058244,AJ830914.1_Symbiodinium_sp._clade_F_El52_1320j:0.0000025850)100:0.0156375892)93:0.0050406550)100:0.0749817627,(JQ247046.1_Symbiodinium_sp._F3.2:0.0016633463,(AJ872076.1_Symbiodinium_sp._clade_F_isolate_MS8_5243X:0.0000025850,AJ830916.1_Symbiodinium_sp._clade_F_isolate_MS26_5244x:0.0000025850)66:0.0000025850)95:0.0020197967)75:0.0013219292,MT015653.1_Symbiodinium_sp_P2D2_Clade_Fr3_Heron_Island:0.0068288069)80:0.0033662427,(JQ247045.1_Symbiodinium_sp._F3.1a:0.0033146579,(AJ308895.1_Symbiodinium_sp._FG188C1:0.0016532955,AJ291525.1_Symbiodinium_sp._clade_F_isolate_1635_:0.0000025850)63:0.0000025850)98:0.0138934444)63:0.0075708137,MT015654.1_Symbiodinium_sp_P1G6_Clade_Fr3_Heron_Island:0.0156883311)99:0.0380502185,((JQ247047.1_Symbiodinium_sp._F4.1:0.0067928575,AJ621146.1_Symbiodinium_sp._F_isolate_FL77_1349x:0.0000025850)98:0.0113776011,(JQ247048.1_Symbiodinium_sp._F4.8:0.0034137904,((AJ621145.1_Symbiodinium_sp._F_isolate_FL74_1334x:0.0000025850,AJ291527.1_Symbiodinium_sp._F_isolate_836:0.0000025850)51:0.0000025850,AJ621135.1_Symbiodinium_sp._F_isolate_PC227_1628x:0.0000025850)95:0.0016588621)98:0.0132380615)100:0.0847035663)50:0.0147814296,(((LK934666.1_Symbiodinium_kawagutii:0.0085523784,JN558066.1_Symbiodinium_sp._F1:0.0000025850)100:0.0180361512,(JN558072.1_Symbiodinium_sp._F5.2g:0.0017395087,AJ872077.1_Symbiodinium_sp._clade_F_isolate_RII40_971X:0.0085352815)98:0.0010961693)96:0.0080780898,(JN558063.1_Symbiodinium_sp._F5.1:0.0103697930,JN558069.1_Symbiodinium_sp._F5.1d:0.0086145619)94:0.0029302648)100:0.0850007444)78:0.0078362900,(((KT149349.1_Symbiodinium_minutum_strain_Mf:0.0000025850,KT149346.1_Symbiodinium_antillogorgium:0.0000025850)97:0.0016885092,(KT149350.1_Symbiodinium_pseudominutum:0.0000025850,KT149347.1_Symbiodinium_endomadracis:0.0000025850)54:0.0000025850)94:0.0051096043,(LK934671.1_Symbiodinium_psygmophilum:0.0000025850,KT149345.1_Symbiodinium_aenigmaticum:0.0033958756)63:0.0000024413)100:0.1345236064)57:0.0201468486,(((FN561559.1_Symbiodinium_sp._nr_I1:0.0032853751,FN561560.1_Symbiodinium_sp._nr_I2:0.0017685984)100:0.0743635268,(((LC503502.1:0.0016748080,LC503503.1:0.0016776763)98:0.0033425750,LC503504.1:0.0000025850)93:0.0016640401,LC503505.1:0.0000025850)100:0.1169915716)98:0.0505331462,((((((KY131782.1_Symbiodinium_glynnii:0.0016556560,KF740686.1_Symbiodinium_sp._D8:0.0000025850)29:0.0000025850,JN558078.1_Symbiodinium_sp._D1a:0.0000025850)34:0.0000025850,KF740688.1_Symbiodinium_sp._D15:0.0016533909)100:0.1065486336,(JQ247049.1_Symbiodinium_sp._D1.1:0.0200221947,JN558081.1_Symbiodinium_sp._D1.2:0.0034944472)99:0.0548342617)97:0.0459515135,(((((KM972549.1_Symbiodinium_microadriaticum:0.0000025850,(KP114226.1_Symbiodinium_sp._TLJ_2015c_strain_CCMP_2469:0.0000025850,JN558094.1_Symbiodinium_sp._A13:0.0000025850)99:0.0016481924)97:0.0078075203,(KM816405.1_Symbiodinium_sp._TLJ_2015a_strain_CCMP_832:0.0000025850,JN558091.1_Symbiodinium_sp._A3:0.0016553322)100:0.0110004173)96:0.0201012618,(KF740671.1_Symbiodinium_pilosum:0.0016486644,(JN558097.1_Symbiodinium_sp._A2:0.0000025850,JN558100.1_Symbiodinium_sp._A2:0.0016480879)52:0.0000025850)98:0.0230720027)99:0.1076537218,JN558103.1_Protodinium_simplex:0.2746897489)99:0.0813757725,(JN558084.1_Symbiodinium_sp._E1:0.0016535071,HF568830.1_Symbiodinium_voratum:0.0000021307)100:0.2142616462)95:0.0867657152)78:0.0244319886,((JN558089.1_Symbiodinium_sp._G2:0.0033578123,JN558088.1_Symbiodinium_sp._G2b:0.0000025850)100:0.0672503937,(MF322789.1_Symbiodinium_endoclionum:0.0000025850,MF322787.1_Symbiodinium_spongiolum:0.0033584528)99:0.0357545271)100:0.2063854723)95:0.0439218630)99:0.0612249375)98:0.0249422661)100:0.0339126283)92:0.0016297723)96:0.0016632817,KF740677.1_Symbiodinium_sp._C7a:0.0103710345)59:0.0000025850);
+
+ALISIM COMMAND
+--------------
+To simulate an alignment of the same length as the original alignment, using the tree and model parameters estimated from this analysis, you can use the following command:
+
+--alisim simulated_MSA -t LSU_J.treefile -m "GTR{0.766658,3.05083,0.522896,0.363218,5.97978}+F{0.243156,0.202545,0.298257,0.256043}+I{0.339911}+G4{1.15116}" --length 617
+
+To mimic the alignment used to produce this analysis, i.e. simulate an alignment of the same length as the original alignment, using the tree and model parameters estimated from this analysis *and* copying the same gap positions as the original alignment, you can use the following command:
+
+iqtree -s LSU_combined_with_J_trimmed.fasta --alisim mimicked_MSA
+
+To simulate any number of alignments in either of the two commandlines above, use the --num-alignments options, for example mimic 100 alignments you would use the command line:
+
+iqtree -s LSU_combined_with_J_trimmed.fasta --alisim mimicked_MSA --num-alignments 100
+
+For more information on using AliSim, please visit: www.iqtree.org/doc/AliSim
+
+TIME STAMP
+----------
+
+Date and time: Mon Aug 25 08:36:05 2025
+Total CPU time used: 196.275884 seconds (0h:3m:16s)
+Total wall-clock time used: 104.6257278 seconds (0h:1m:44s)
+

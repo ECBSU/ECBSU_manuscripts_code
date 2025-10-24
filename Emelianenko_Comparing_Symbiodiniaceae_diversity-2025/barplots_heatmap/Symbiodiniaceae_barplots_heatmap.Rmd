@@ -1,0 +1,1314 @@
+---
+title: "Symbiodiniaceae barplots heatmap"
+author: "Vera Emelianenko"
+date: "`r Sys.Date()`"
+output: html_document
+toc: true
+---
+
+This is the R code for generating barplots and heatmaps from SymPortal and dada2 outputs. 
+
+```{r setup, include=FALSE}
+
+# function to load the packages and install if not installed
+load_packages <- function(package_name)
+  {
+    if (!require(package_name, character.only = TRUE)) 
+    {
+      install.packages(package_name)
+      library(package_name, character.only = TRUE)
+    }
+    else
+    {
+      library(package_name, character.only = TRUE)
+    }
+        
+  }
+
+# change the name of required packages
+Packages = c(
+  "magrittr", # to use %>% 
+  "dplyr", # to work with tables 
+  "tidyr", # to work with tables 
+  "tidyverse", # to work with tables 
+  "data.table", # to work with tables 
+  "ggplot2", # for plots
+  "stringr", # for string operations
+  "patchwork", # to combine  two plots into one 
+  "showtext", # for fonts 
+  "ComplexHeatmap", # to make heatmaps
+  'circlize', # to make continuous color scale
+  "cowplot", # for plots
+  "ggplotify", # for plots
+  "colorspace", # to make colors for profiles
+  "svglite", #to save to svg
+  "ggtext"
+  ) 
+
+invisible(lapply(Packages, load_packages))
+
+# Setup knitr defaults with standard formatting changes
+knitr::opts_chunk$set(echo=T, message=F, eval=T, fig.show="markup", include=T, warning=F, results="markup", tidy=T)
+
+options(scipen=999) # disable scientific notation when displaying numbers
+
+#  Empty workspace
+rm(list=ls())
+```
+
+# Prepare the data
+
+Copy the files
+
+```{r}
+source("../shared_settings.R") # Define color palettes, order of samples, theme
+
+files_to_copy <- c(
+  "../dada2_assign_taxonomy/output/ASV_counts_Dino_t.tsv",
+  "../dada2_assign_taxonomy/output/ASV_counts_Symbiodiniaceae_filtered_t.tsv",
+  "../dada2_assign_taxonomy/output/ASV_tax_Dinoflagellata.tsv",
+  "../dada2_assign_taxonomy/output/ASV_tax_Symbiodiniaceae_filtered.tsv", 
+  "../dada2_assign_taxonomy/output/DIV_counts_filtered_t.tsv", 
+  "../symportal_output_tables/meta.txt", 
+  "../dada2_assign_taxonomy/output/ASV_tax_Symbiodiniaceae_unfiltered.tsv", 
+  "../dada2_assign_taxonomy/output/ASV_counts_Symbiodiniaceae_aliquotes_t.tsv"
+)
+
+# define the destination folder (current folder = "./")
+dest_folder <- "./input"
+
+# copy files
+success <- file.copy(from = files_to_copy, to = dest_folder, overwrite = TRUE)
+
+# check which files copied successfully
+data.frame(
+  file = basename(files_to_copy),
+  copied = success
+)
+```
+
+Set order of Symbiodiniaceae profiles
+```{r Symbiodiniaceae_clade_genera_ASV_order}
+Symbiodiniaceae_profile_order  <- c(
+  #Symbiodinium
+  "A3",
+  "A6/A3-A3g",
+  # Cladocopium
+  "C1-C1c-C1b",
+  "C21dp",
+  "C15",
+  "5718",
+  "5638-5640-C1w",
+  "C1-C1by-C3ju",
+  "C1-C1g-C1b-C39",
+  "C1-C1g-C1b-C39-C1ai",
+  #Durusdinium
+  "D1-D4-D4f-5585",
+  "D1-D4",
+  "D1",
+  "D4l",
+  #clade F
+  "5621_F/F3w",
+  "F5.1",
+  "F5.1a/F5u"
+)
+
+# ASV order
+# edit manually after a heatmap table step
+ASV_order <- c(
+"ASV7 A3",
+"ASV6 A6", 
+"ASV45 75.8 A1my",   
+"ASV63 97.5 A2e A2x",
+"ASV121 A1", 
+"Symbiodinium other",
+
+# Cladocopium 
+"ASV1 C1 C78a",
+"ASV3 C15", 
+"ASV9 C21dp", 
+"ASV15 98.9 C3gi",
+"Cladocopium other",  
+
+# Durusdinium 
+"ASV2 D1",   
+"ASV8 D4", 
+"Durusdinium other",      
+
+# Freudenthalidium 
+"ASV5 96.7 F3o", 
+"ASV11 F3w",
+"ASV26 96.3 F3o",
+
+"Freudenthalidium other", 
+ 
+# Fugacium 
+"ASV4 F5.1 F5c",      
+"ASV20 F5.1a/F5u", 
+"Fugacium other",
+
+#Miliolidium 
+"ASV12 91 M D1.2",
+"Miliolidium other",  
+#clade J 
+"clade J",  
+# clade I 
+"ASV111 I4f",
+"clade I other",      
+
+# Halluxium
+  "Halluxium", 
+#clade Fr4
+"clade Fr4" 
+) 
+```
+
+Choose colors for different genera and set order of the genera
+
+Check for color-blindness
+https://projects.susielu.com/viz-palette?colors=[%22#7AC74F%22,%22#F8333C%22,%22#57B8FF%22,%22#2176AE%22,%22#34113F%22,%22#592E83%22,%22#729EA1%22,%22#ffffff%22,%22#68EDC6%22,%22#FFEE7F%22]&backgroundColor=%22white%22&fontColor=%22black%22&mode=%22normal%22 
+
+Sequential:
+https://gka.github.io/palettes/#/11|s|31083b,96ffea,dafed5|ffffe0,ff005e,93003a|1|1
+
+```{r colorpalette}
+#viridisLite::viridis(11) if want to use viridis color scale
+
+cutoff <- 0.001
+# build a sequence of breakpoints
+low_breaks <- 10^seq(log10(0.01),log10(cutoff),  length.out = 3)   # 0.001–1%
+high_breaks <- seq( 1, 0.01,, length.out = 8)                       # 1–100%
+breaks <- (c(high_breaks, low_breaks, 0.0009, 0))
+colors <- c('#501a4e', '#5c3169', '#684782', '#765d99', '#8772af', '#9a87c2', '#b09dd3', '#c8b3e2',
+            '#c8b3e2', '#e3c9ef', '#ffdffa',
+            "#f2f2f2", "#f2f2f2")  # below cut off
+
+abundances_color_scale <- colorRamp2(breaks, colors)
+```
+
+Make new color palette for profiles
+Chunk generated with ChatGPT, profiles names taken from SymPortal output. 
+```{r}
+# color-mixing using grDevices::col2rgb
+mix_with <- function(cols, other = "#808080", amount = 0.3) {
+  cols <- as.character(cols)
+  other <- rep(as.character(other), length.out = length(cols))
+  amount <- rep(amount, length.out = length(cols))
+  
+  res <- vapply(seq_along(cols), function(i) {
+    c1 <- as.numeric(grDevices::col2rgb(cols[i]) / 255)
+    c2 <- as.numeric(grDevices::col2rgb(other[i]) / 255)
+    mix <- (1 - amount[i]) * c1 + amount[i] * c2
+    grDevices::rgb(mix[1], mix[2], mix[3])
+  }, character(1), USE.NAMES = FALSE)
+  
+  names(res) <- cols
+  res
+}
+
+mute_color    <- function(col, amount = 0.2) mix_with(col, "#808080", amount)
+lighten_color <- function(col, amount = 0.2) mix_with(col, "#FFFFFF", amount)
+darken_color  <- function(col, amount = 0.2) mix_with(col, "#000000", amount)
+
+# profile lists & rares 
+sym_profiles  <- c("A3", "A6/A3-A3g")
+
+clado_order <- c(
+  "C1-C1c-C1b",
+  "C21dp",
+  "5638-5640-C1w", "C1-C1g-C1b-C39",
+  "C1-C1c-C1b",
+  "5718",
+  "C1-C1by-C3ju",
+  "C15",
+  "C1-C1g-C1b-C39-C1ai"
+  
+)
+clado_rare <- c("5638-5640-C1w", "C1-C1g-C1b-C39")
+
+duru_profiles <- c("D1-D4-D4f-5585", "D1-D4", "D1", "D4l")
+duru_rare     <- c("D1-D4", "D1", "D4l")
+
+freu_profiles <- c("5621_F/F3w")
+fuga_profiles <- c("F5.1", "F5.1a/F5u")
+
+# generator: muted base + light/dark split; rare -> paler+more muted 
+make_profile_colors <- function(base_color, profile_names, rare_names = character(),
+                                mute = 0.45, 
+                                light_amount_min = 0.05, light_amount_max = 0.35,
+                                dark_amount_min = 0.05, dark_amount_max = 0.35,
+                                rare_light = 0.55, rare_mute = 0.70) {
+  
+  uniq <- unique(profile_names)
+  n <- length(uniq)
+  if(n == 0) return(character(0))
+  
+  # start from a muted version of the base color
+  base_muted <- mute_color(base_color, mute)[1]
+  
+  # split profiles: first half lightened, second half darkened
+  half <- ceiling(n / 2)
+  light_indices <- 1:half
+  dark_indices  <- (half+1):n
+  
+  light_steps <- seq(light_amount_min, light_amount_max, length.out = length(light_indices))
+  dark_steps  <- seq(dark_amount_min, dark_amount_max, length.out = length(dark_indices))
+  
+  cols <- character(n)
+  if(length(light_indices) > 0) cols[light_indices] <- lighten_color(rep(base_muted, length(light_indices)), light_steps)
+  if(length(dark_indices) > 0)  cols[dark_indices]  <- darken_color(rep(base_muted, length(dark_indices)), dark_steps)
+  
+  # apply rare treatment: paler + more muted
+  if(length(rare_names)) {
+    idx <- match(rare_names, uniq, nomatch = 0)
+    idx <- idx[idx > 0]
+    if(length(idx)) {
+      cols[idx] <- lighten_color(mute_color(base_color, rare_mute)[1], rare_light)
+    }
+  }
+  
+  stats::setNames(cols, uniq)
+}
+
+# build palettes per genus 
+pal_sym  <- make_profile_colors(Symbiodiniaceae_color_palette["Symbiodinium"],
+                                sym_profiles,
+                                mute = 0.2, 
+                                light_amount_min = 0.2, light_amount_max = 0.6,
+                                dark_amount_min = 0.08, dark_amount_max = 0.3)
+
+pal_clad <- make_profile_colors(Symbiodiniaceae_color_palette["Cladocopium"],
+                                clado_order, clado_rare,
+                                mute = 0, 
+                                light_amount_min = 0.1, light_amount_max = 0.99,
+                                dark_amount_min = 0.05, dark_amount_max = 0.4,
+                                rare_light = 0.50, rare_mute = 0.5)
+
+pal_duru <- make_profile_colors(Symbiodiniaceae_color_palette["Durusdinium"],
+                                duru_profiles, duru_rare,
+                                mute = 0.1, 
+                                light_amount_min = 0.05, light_amount_max = 0.30,
+                                dark_amount_min = 0.05, dark_amount_max = 0.25,
+                                rare_light = 0.55, rare_mute = 0.3)
+
+pal_fuga <- make_profile_colors(Symbiodiniaceae_color_palette["Fugacium"],
+                                fuga_profiles,
+                                mute = 0.2, 
+                                light_amount_min = 0.2, light_amount_max = 0.8,
+                                dark_amount_min = 0.1, dark_amount_max = 0.2)
+
+pal_freu <- make_profile_colors(Symbiodiniaceae_color_palette["Freudenthalidium"],
+                                freu_profiles,
+                                mute = 0.15, 
+                                light_amount_min = 0.1, light_amount_max = 0.2,
+                                dark_amount_min = 0, dark_amount_max = 0.05)
+
+# combined vector (ready to use in scale_fill_manual etc.) 
+Profiles_color_palette <- c(pal_sym, pal_clad, pal_duru, pal_fuga, pal_freu)
+
+Profiles_color_palette
+
+# Check
+df <- data.frame(
+  profile = names(Profiles_color_palette),
+  genus   = c(rep("Symbiodinium", length(pal_sym)),
+              rep("Cladocopium", length(pal_clad)),
+              rep("Durusdinium", length(pal_duru)),
+              rep("Fugacium", length(pal_fuga)),
+              rep("Freudenthalidium", length(pal_freu)))
+)
+
+ggplot(df, aes(profile, 1, fill = profile)) +
+  geom_tile() +
+  scale_fill_manual(values = Profiles_color_palette) +
+  facet_wrap(~ genus, scales = "free_x") +
+  theme_minimal(base_size = 12) +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid = element_blank())
+
+```
+# Explore different aliquotes of sediment and macroalgae 
+
+## Aliquotes barplot 
+
+### Load the table
+```{r}
+env_df <-  
+  data.table::fread('./input/ASV_counts_Symbiodiniaceae_aliquotes_t.tsv') %>% 
+  dplyr::mutate(sample_name = factor(sample_name)) %>% 
+  dplyr::arrange(sample_name) %>%
+  dplyr::mutate(count = rowSums(select(., where(is.numeric)), na.rm = TRUE))
+```
+
+### Transform the dataframe to long format
+```{r}
+# get taxonomy for each ASV
+ASVs_tax_Sym_unf_df  <- data.table::fread('./input/ASV_tax_Symbiodiniaceae_unfiltered.tsv') %>% dplyr::select(-Phylum, -Class, -Order, -Family, -Species, -Best_match)
+
+# transform to long
+env_asv_long_df <-env_df %>% 
+  tidyr::pivot_longer(!c("sample_name", "count"), names_to = "ASV", values_to = "num_seqs")  %>% 
+  dplyr::rename(aliquote_name=sample_name) %>% 
+  dplyr::mutate(sample_name=str_sub(aliquote_name, end = -3)) %>% 
+  left_join(
+  ., ASVs_tax_Sym_unf_df, 
+  by=join_by(ASV == ASV)) %>% 
+  dplyr::mutate(Genus = factor(Genus, levels = Symbiodiniaceae_genera_order))
+
+```
+
+### Aliquotes barplot plotting 
+```{r}
+env_asv_plt <- ggplot(
+  env_asv_long_df,
+  aes(y = aliquote_name, x = num_seqs, fill = Genus)) +
+  geom_bar(stat = "identity", position = position_fill(reverse = TRUE), color = "#555555", linewidth = 0.1) +
+  facet_grid(sample_name ~ ., scales = "free_y", space = "free_y") +  # separate the samples according to the sample name, such as Algae1-1, Sediment1-5, etc. 
+  scale_fill_manual(
+    values = Symbiodiniaceae_color_palette, 
+    labels = Symbiodiniaceae_genera_labels, 
+    guide = guide_legend(reverse = FALSE)) + 
+  theme_minimal() +
+  theme(
+    axis.ticks.x = element_blank(), 
+    axis.text.x  = element_blank(),
+    panel.grid   = element_blank(),
+    strip.text.y = element_blank(),
+    axis.title   = element_blank(), 
+    plot.margin = margin(5, 0, 5, 5))+
+  scale_x_continuous(
+    expand=expansion(mult = c(0, 0))) +
+  theme(
+    axis.text = element_text(),
+    legend.text = element_text()
+  )
+
+env_asv_plt 
+```
+
+Plot the number of reads identified in the sample
+```{r}
+# get the df with rows for each aliquote 
+env_asv_count_df <- env_asv_long_df %>% 
+  dplyr::distinct(sample_name, aliquote_name, count)
+
+# variables needed to position the labels properly 
+max_abs <- max(env_asv_count_df$count, na.rm = TRUE)
+nudge   <- 0.08 * max_abs 
+
+env_asv_count_plt <- ggplot(
+    env_asv_count_df, 
+    aes(y = aliquote_name, x = count)) +
+  geom_col(fill = "#777777", width = 0.8, color = "#555555", size = 0.2) +
+  facet_grid(sample_name ~ ., scales = "free_y", space = "free_y") +
+  geom_text(aes(x = count + nudge, label = count), hjust = 0, size = 3) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0))) +  
+  coord_cartesian(clip = "off") +         # let labels continue into the margin
+  theme_minimal() +
+  theme(
+    axis.text  = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    strip.text.y = element_blank(),
+    axis.title = element_blank(),
+    plot.margin = margin(5.5, 50, 5.5, 0))
+
+env_asv_count_plt
+# env_abs_numseq_plt
+```
+
+Combine the two plots with "patchwork" library and save
+This chunk was created with assistance from ChatGPT
+```{r}
+env_asv_count_combined_plt <- env_asv_plt + env_asv_count_plt +
+  plot_layout(widths = c(1, 0.08), guides = "collect") &
+    theme(
+    legend.position = "bottom",           # bottom avoids stealing panel width
+    legend.box = "horizontal",
+    legend.margin = margin(t = 6, unit = "pt"), 
+    legend.title = element_blank(),
+    legend.justification = "left",   # anchor to the left
+    legend.box.just = "left" )&
+  guides(fill = guide_legend(nrow = 2))
+env_asv_count_combined_plt
+
+ggsave(
+  plot = env_asv_count_combined_plt, 
+  filename = "plots/env_asv_count_plt.png",
+  width = 20, height = 20, units = "cm", dpi = 300,
+  bg = "white")
+
+ggsave_clean(
+  plot = env_asv_count_combined_plt, 
+  filename = 'plots/env_asv_count_plt.svg',
+  device = svglite,
+  width = 20, height = 20, units = c("cm"), dpi = 300, 
+  bg = "white")
+```
+
+# DIVs from SymPortal "all" barplot 
+## Load the data
+
+Load the table (convert to tsv, then command to make the metadata table in command line `> tail -n +2 input/meta.txt > symportal_meta.txt`)
+
+```{r}
+symportal_meta_df <- data.table::fread('./symportal_meta.txt') %>%
+  dplyr::select (sample_name, type, site) %>% 
+  dplyr::mutate(type = factor(type, levels = type_order)) %>% 
+  arrange(type)  %>%
+  dplyr::mutate(env_or_host = case_when(
+        type == "Algae" | type == "Sediment" | type == "Water" ~ "env",
+        .default = "host")) %>% 
+  dplyr::mutate(host_type = case_when(
+        type == "Algae" | type == "Sediment" | type == "Water" ~ "Environment",
+        type == "Amphisorus" | type == "Sorites"  ~ "Foraminifera",
+        .default = "Multicellular hosts")) %>% 
+  dplyr::mutate(host_tax = case_when(
+        type == "Algae" ~ "Algae", 
+        type == "Sediment" ~ "Sediment",
+        type == "Water" ~ "Water",
+        type == "Amphisorus" ~ "Amphisorus",
+        type == "Sorites"  ~ "Sorites",
+        type == "Tridacna" ~ "Tridacna",
+        .default = "Anthozoa")) 
+
+write.table(symportal_meta_df, './output/symportal_meta_df.tsv', sep = "\t", quote = F, row.names = F, col.names = T)
+```
+
+Import the data
+```{r import_symportal_all_data}
+symportal_all_div_df <-  
+  data.table::fread('./input/DIV_counts_filtered_t.tsv') %>% 
+  dplyr::mutate(sample_name = factor(sample_name, levels = Symbiodiniaceae_sample_order)) %>%
+  arrange(sample_name) %>% 
+  rowwise() %>%
+  mutate(total_DIVs = sum(c_across(-sample_name)))
+  #left_join(symportal_all_post_med, by =join_by(sample_name == sample_name) )
+
+
+symportal_meta_df <- data.table::fread('./output/symportal_meta_df.tsv') %>%
+  dplyr::select (sample_name, type, site) %>% 
+  dplyr::mutate(type = factor(type, levels = type_order)) %>% 
+  arrange(type)
+```
+
+Transform the dataframe to long format
+```{r transform_symportal_all_data}
+symportal_all_div_long_df <- left_join(
+  symportal_all_div_df, symportal_meta_df, 
+  by=join_by(sample_name == sample_name)) %>% 
+  tidyr::pivot_longer(!c("sample_name", "total_DIVs", "type", "site"), names_to = "DIV", values_to = "num_seqs") %>%
+  dplyr::mutate(clade = case_when(
+                              startsWith(DIV, "A") | endsWith(DIV, "_A") ~ "clade A",
+                              startsWith(DIV, "C") | endsWith(DIV, "_C") ~ "clade C",
+                              startsWith(DIV, "D") | endsWith(DIV, "_D") ~ "clade D",
+                              startsWith(DIV, "F") | endsWith(DIV, "_F") ~ "clade F",
+                              startsWith(DIV, "I") | endsWith(DIV, "_I") ~ "clade I",
+                              startsWith(DIV, "H") | endsWith(DIV, "_H") ~ "clade H",
+                              startsWith(DIV, "B") | endsWith(DIV, "_B") ~ "clade B",
+                              .default = "unknown"))  %>% 
+  dplyr::mutate(clade = factor(clade, levels = Symbiodiniaceae_clade_order))
+
+# make sure all the clades are accounted for
+symportal_all_div_long_df %>% filter(is.na(clade))
+```
+
+## Plot DIVs barplot 
+```{r plot_barplot_symportal_all_data}
+symportal_all_div_plt <- ggplot(
+  symportal_all_div_long_df,
+  aes(y = factor(sample_name, rev(Symbiodiniaceae_sample_order)), x = num_seqs, fill = clade)) +
+  geom_bar(stat = "identity", position = position_fill(reverse = TRUE), color = "#555555", size = 0.1) +
+  facet_grid(type ~ ., scales = "free_y", space = "free_y") +  # separate the samples according to the sample type, such as Algae, Sediment, Tridacna, etc. 
+  scale_fill_manual(values = clades_color_palette, guide = guide_legend(reverse = FALSE)) + # color the clades according to clades_color_palette
+  theme_minimal() +
+  theme(
+    axis.ticks.x = element_blank(), 
+    axis.text.x  = element_blank(),
+    panel.grid   = element_blank(),
+    strip.text.y = element_blank(),
+    axis.title   = element_blank(), 
+    plot.margin = margin(5, 0, 5, 5))+
+  scale_x_continuous(
+    expand=expansion(mult = c(0, 0)))+
+  theme(
+    axis.text = element_text(),
+    legend.text = element_text()
+  )
+
+symportal_all_div_plt
+```
+## Plot counts
+```{r plot_barplot_symportal_all_numseq_data}
+# get the df with rows for each sample
+symportal_all_div_numseq_df <- symportal_all_div_long_df %>% 
+  dplyr::distinct(type, sample_name, total_DIVs)
+
+# variables needed to position the labels properly 
+max_abs <- max(symportal_all_div_numseq_df$total_DIVs, na.rm = TRUE)
+nudge   <- 0.08 * max_abs 
+
+symportal_all_numseq_plt <- ggplot(
+    symportal_all_div_numseq_df, 
+    aes(y = factor(sample_name, rev(Symbiodiniaceae_sample_order)), x = total_DIVs)) +
+  geom_col(fill = "black", width = 0.8) +
+  facet_grid(type ~ ., scales = "free_y", space = "free_y") +
+  geom_text(aes(x = total_DIVs + nudge, label = total_DIVs), hjust = 0, size = 3) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0))) +  
+  coord_cartesian(clip = "off") +         # let labels continue into the margin
+  theme_minimal() +
+  theme(
+    axis.text  = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    strip.text.y = element_blank(),
+    axis.title = element_blank(),
+    plot.margin = margin(5.5, 50, 5.5, 0))
+symportal_all_numseq_plt
+```
+
+Combine SymPortal barplots and save them 
+```{r combine_barplots_symportal_all}
+symportal_all_div_numseq_plt <- symportal_all_div_plt + symportal_all_numseq_plt +
+  plot_layout(widths = c(1, 0.08), guides = "collect") &
+    theme(
+    legend.position = "bottom",         
+    legend.box = "horizontal",
+    legend.title = element_blank(), 
+    legend.justification = "left",  
+    #legend.margin        = margin(t = 0, b = 0.8029029, unit = "cm"),
+    legend.box.just = "left"
+  )&
+  guides(fill = guide_legend(nrow = 2, byrow = TRUE))
+    
+
+symportal_all_div_numseq_plt
+
+ggsave(
+  plot = symportal_all_div_numseq_plt, 
+  filename = "plots/symportal_all_div_numseq_plt.png",
+  width = 20, height = 30, units = "cm", dpi = 300,
+  bg = "white")
+
+ggsave_clean(
+  plot = symportal_all_div_numseq_plt, 
+  filename = 'plots/symportal_all_div_numseq_plt.svg',
+  device = svglite,
+  width = 20, height = 30, units = c("cm"), dpi = 300, 
+  bg = "white")
+```
+
+
+
+# DADA2 Dinoflagellates barplot
+## Load the data
+```{r}
+# get metadata
+symportal_meta_df <- data.table::fread('./output/symportal_meta_df.tsv') %>%
+  dplyr::select (sample_name, type, site) %>% 
+  dplyr::mutate(type = factor(type, levels = type_order)) %>% 
+  arrange(type)
+
+# get counts table
+ASVs_counts_df <-  
+  data.table::fread('./input/ASV_counts_Dino_t.tsv')
+
+# get taxonomy for each ASV
+ASVs_tax_df  <- data.table::fread('./input/ASV_tax_Dinoflagellata.tsv') %>% dplyr::select(-Phylum)
+
+
+dinoflagellate_orders <- c("Symbiodiniaceae",
+                            "Suessiales spp.", 
+                           "Suessiales ASV16",
+                            "Gymnodiniales" ,
+                           'Dinoflagellates NA', 
+                           "Peridiniales",
+                           "Dinoflagellates other")
+
+# transform the counts table to long
+ASVs_counts_long_df <- left_join(
+  ASVs_counts_df, symportal_meta_df, 
+  by=join_by(sample_name == sample_name)) %>% 
+  tidyr::pivot_longer(!c("sample_name", "type", "site"), names_to = "ASV", values_to = "num_seqs") 
+
+# merge counts table with taxonomy table 
+ASVs_counts_tax_long_df <- left_join(
+  ASVs_counts_long_df, ASVs_tax_df, 
+  by=join_by(ASV == ASV)) %>% 
+  dplyr::select(-Class) %>% 
+  dplyr::mutate(Order = case_when(is.na(Order) ~ "Dinoflagellates NA",
+                       .default = Order)) %>% 
+  dplyr::mutate(Order_Family = case_when(
+    #Order=="Suessiales" & ASV == "ASV_16" ~ "Suessiales ASV16", 
+    Order=="Suessiales" & is.na(Family) ~ "Suessiales spp.",
+    Order=="Suessiales" & is.na(Genus) ~ "Suessiales spp.",
+    Order=="Suessiales" & Family!= "Symbiodiniaceae" ~ "Suessiales spp.",
+    Order=="Suessiales" & Family== "Symbiodiniaceae" ~ "Symbiodiniaceae",
+    Order=="Prorocentrales" |  Order=="Thoracosphaerales" |  Order=="Dinophysiales" | Order == "Gonyaulacales" ~ "Dinoflagellates other",
+    .default = Order)) %>% 
+  dplyr::mutate(Order_Family = factor(Order_Family, levels = dinoflagellate_orders))
+
+ 
+ASVs_counts_tax_Dino_long_df <- ASVs_counts_tax_long_df %>% 
+  dplyr::select(-Order, -Family, -Genus, -Species) %>% 
+  dplyr::rename(Order=Order_Family) %>% 
+  dplyr::mutate(Order = factor(Order, levels = dinoflagellate_orders))
+
+ASVs_counts_tax_Dino_long_df$Order %>% unique()
+
+ASVs_counts_tax_Dino_long_sum_df <- ASVs_counts_tax_Dino_long_df  %>%
+  group_by(Order) %>%
+  summarise(total_num_seqs = sum(num_seqs)) %>%
+  arrange(desc(total_num_seqs))
+
+ASVs_counts_tax_Dino_long_sum_df 
+```
+
+
+## Dino ASVs barplot
+```{r}
+dada_dino_plt <- ggplot(
+  ASVs_counts_tax_Dino_long_df,
+  aes(y = factor(sample_name, rev(Symbiodiniaceae_sample_order)), x = num_seqs, fill = Order)) +
+  geom_bar(stat = "identity", position = position_fill(reverse = TRUE), color = "#555555", size = 0.1) +
+  facet_grid(type ~ ., scales = "free_y", space = "free_y") +  # separate the samples according to the sample type, such as Algae, Sediment, Tridacna, etc. 
+  scale_fill_manual(
+    values = dinoflagellates_order_palette,
+    guide = guide_legend(reverse = FALSE)) +
+  theme_minimal() +
+  theme(
+    axis.ticks.x = element_blank(), 
+    axis.text.x  = element_blank(),
+    panel.grid   = element_blank(),
+    strip.text.y = element_blank(),
+    axis.title   = element_blank(), 
+    plot.margin = margin(5, 0, 5, 5))+
+  scale_x_continuous(
+    expand=expansion(mult = c(0, 0)))+
+  theme(
+    axis.text = element_text(),
+    legend.text = element_text(),
+  )
+
+dada_dino_plt
+```
+
+
+## Dino total counts barplot 
+```{r}
+ASVs_counts_sum_df <- left_join(
+  ASVs_counts_df, symportal_meta_df, 
+  by=join_by(sample_name == sample_name)) %>%
+  dplyr::rowwise() %>% 
+  dplyr::mutate(counts_sum = sum(c_across(where(is.numeric)))) %>% 
+  ungroup() %>% 
+  dplyr::select(sample_name, counts_sum, type)
+
+# variables needed to position the labels properly 
+max_abs <- max(ASVs_counts_sum_df$counts_sum)
+nudge   <- 0.08 * max_abs 
+
+dada_dino_numseq_plt <- ggplot(
+    ASVs_counts_sum_df, 
+    aes(y = factor(sample_name, rev(Symbiodiniaceae_sample_order)), x = counts_sum)) +
+  geom_col(fill = "black", width = 0.8) +
+  facet_grid(type ~ ., scales = "free_y", space = "free_y") +
+  geom_text(aes(x = counts_sum + nudge, label = counts_sum), hjust = 0, size = 3) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0))) +  
+  coord_cartesian(clip = "off") +         # let labels continue into the margin
+  theme_minimal() +
+  theme(
+    axis.text  = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    strip.text.y = element_blank(),
+    axis.title = element_blank(),
+    plot.margin = margin(5.5, 50, 5.5, 0))
+# dada_dino_numseq_plt 
+```
+
+Combine both barplots in one plot 
+```{r}
+dada_dino_combined_plt <- dada_dino_plt + dada_dino_numseq_plt +
+  plot_layout(widths = c(1, 0.08), guides = "collect") &  #the barplot on the right will be 8% of the left one 
+  theme(
+    legend.position = "bottom",           # bottom avoids stealing panel width
+    legend.box = "horizontal",     # make legend horizontal
+    legend.title = element_blank(),  # remove legend title
+    legend.justification = "left",   # anchor to the left
+    legend.box.just = "left"  # start the legend from the left 
+  )&
+  guides(fill = guide_legend(nrow = 2, byrow = TRUE))  # split the legend into two rows by rows (default is by column)
+
+# show the plot in RStudio
+dada_dino_combined_plt
+
+# save png
+ggsave(
+  plot = dada_dino_combined_plt, 
+  filename = "plots/dada_dino_combined_plt.png",
+  width = 20, height = 30, units = "cm", dpi = 300,
+  bg = "white")
+
+# save svg
+ggsave_clean(
+  plot = dada_dino_combined_plt, 
+  filename = 'plots/dada_dino_combined_plt.svg',
+  device = svglite,
+  width = 20, height = 30, units = c("cm"), dpi = 300, 
+  bg = "white")
+```
+
+Explore what's going on in Sorites, what Suessiales do they have
+```{r explore_Sorites_Suessiales}
+left_join(
+  ASVs_counts_long_df, ASVs_tax_df, 
+  by=join_by(ASV == ASV)) %>% 
+  dplyr::select(-Class) %>% 
+  dplyr::filter(type=="Sorites" & Order == "Suessiales" & Family != "Symbiodiniaceae" &num_seqs>0 )
+
+#ASV16 occupies most of Sorites non-Sym Suessiales
+#ASV_16s blastn matches are
+# ASV_16 genus Polarella 
+#ASV_16	Eukaryota;Dinoflagellata;Dinophyceae;Suessiales;Suessiaceae;Pelagodinium;Pelagodinium_beii	75.728	309	52	11	1	288	21	327	4.29e-49	191
+#ASV_16	Eukaryota;Dinoflagellata;Dinophyceae;Suessiales;Suessiaceae;Pelagodinium;Pelagodinium_sp	75.728	309	52	11	1	288	21	327	4.29e-49	191
+#ASV_16	Eukaryota;Dinoflagellata;Dinophyceae;Suessiales;Suessiaceae;Pelagodinium;Pelagodinium_beii	75.563	311	49	12	1	288	21	327	1.50e-48	189
+# also has 90% identity to  LC503343.1  Uncultured dinoflagellate genes for 18S rRNA, ITS1, 5.8S rRNA,    ITS2, partial and complete sequence, clone: 13OKTw52-15 when searched with blastn against ncbi
+
+
+left_join(
+  ASVs_counts_long_df, ASVs_tax_df, 
+  by=join_by(ASV == ASV)) %>% 
+  dplyr::select(-Class) %>% 
+  dplyr::filter(ASV=="ASV_16" &num_seqs>0 )
+
+# seems it's present in forams, algae, and sediment, but in much lower proportion
+# what about Peridiniales? 
+left_join(
+  ASVs_counts_long_df, ASVs_tax_df, 
+  by=join_by(ASV == ASV)) %>% 
+  dplyr::select(-Class) %>% 
+  dplyr::filter(type=="Sorites" & Order == "Peridiniales" &num_seqs>0 )
+
+# ASV36 when searched with online blastn matches  JF784159.1	Vulcanodinium rugosum with 99.68% identity and 100% query coverage.
+```
+
+# DADA2 Symbiodiniaceae ASVs 
+## Import the data
+Get the data - same as when making the dada2 all dinos barplot
+```{r}
+# get metadata
+symportal_meta_df <- data.table::fread('./output/symportal_meta_df.tsv') %>%
+  dplyr::select (sample_name, type, site) %>% 
+  dplyr::mutate(type = factor(type, levels = type_order)) %>% 
+  arrange(type)
+
+# get counts table
+ASVs_counts_Sym_df <-  
+  data.table::fread('./input/ASV_counts_Symbiodiniaceae_filtered_t.tsv') %>% 
+  dplyr::filter(sample_name!= "Algae2-2")
+
+# get taxonomy for each ASV
+ASVs_tax_Sym_df  <- data.table::fread('./input/ASV_tax_Symbiodiniaceae_filtered.tsv') %>% dplyr::select(-Phylum, -Class, -Order, -Family)
+
+# transform the counts table to long
+ASVs_counts_Symb_long_df <- left_join(
+  ASVs_counts_Sym_df, symportal_meta_df, 
+  by=join_by(sample_name == sample_name)) %>% 
+  tidyr::pivot_longer(!c("sample_name", "type", "site"), names_to = "ASV", values_to = "num_seqs")%>% 
+  left_join(
+  ., ASVs_tax_Sym_df, 
+  by=join_by(ASV == ASV)) %>% 
+  dplyr::mutate(Genus = factor(Genus, levels = Symbiodiniaceae_genera_order))
+
+# sanity check
+ASVs_counts_Symb_long_df %>% dplyr::filter(is.na(Genus))
+```
+
+## DADA2 Symbiodiniaceae barplot (genera) 
+Labels were italicized with assistance from ChatGPT
+```{r}
+type_labels <- c(
+  Tridacna      = "<i>Tridacna</i>", 
+  Porites       = "<i>Porites</i>",
+  Montipora     = "<i>Mon</i>",
+  Goniastrea    = "<i>Goniastrea</i>",
+  Stichodactyla = "<i>Sti</i>", 
+  Amphisorus    = "<i>Amphisorus</i>", 
+  Sorites       = "<i>Sorites</i>", 
+  Algae         = "Algae (bulk)", 
+  Sediment      = "Sediment (bulk)", 
+  Water         = "Water"
+)
+
+dada_symb_asv_plt <- ggplot(
+  ASVs_counts_Symb_long_df,
+  aes(y = factor(sample_name, rev(Symbiodiniaceae_sample_order)), x = num_seqs, fill = Genus)) +
+  geom_bar(stat = "identity", position = position_fill(reverse = TRUE), color = "#555555", size = 0.2, width = 1) +
+  geom_point(
+  aes(y = factor(sample_name, rev(Symbiodiniaceae_sample_order)), 
+      shape = factor(site)), 
+  x = 1.02,   # fixed x for all dots
+  size = 3,
+  inherit.aes = FALSE, 
+  color = "#555555", 
+  show.legend = FALSE
+)+
+  facet_grid(type ~ ., scales = "free_y", space = "free_y", labeller = labeller(type = type_labels), switch = "y" ) +  # separate the samples according to the sample type, such as Algae, Sediment, Tridacna, etc. 
+  scale_fill_manual(
+    values = Symbiodiniaceae_color_palette, 
+    labels = Symbiodiniaceae_genera_labels,
+    guide = guide_legend(reverse = FALSE)) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.ticks.x = element_blank(), 
+    axis.text.y  = element_blank(),
+    axis.text.x  = element_blank(),
+    panel.grid   = element_blank(),
+    strip.text.y = ggtext::element_markdown(size = 12),
+    axis.title   = element_blank(), 
+    plot.margin = margin(0, 0, 5, 5), 
+    axis.text = element_text(),
+    legend.text = element_text(), 
+    legend.title = element_blank() )+
+  scale_x_continuous(
+    expand=expansion(mult = c(0, 0.04)))+ labs(title = "Symbiodiniaceae genera composition")
+
+dada_symb_asv_plt 
+
+
+ggsave(
+  plot = dada_symb_asv_plt, 
+  filename = 'plots/dada_symb_asv_plt.png',
+  width = 20, height = 30, units = c("cm"), dpi = 300, 
+  bg = "white")
+```
+
+
+### DADA2 counts Symbiodiniaceae 
+Make the small barplot of the counts
+
+```{r}
+ASVs_counts_Symb_sum_df <- ASVs_counts_Symb_long_df %>% 
+  dplyr::select(sample_name, num_seqs, type) %>%   
+  group_by(sample_name, type) %>%   
+  summarise(total_num_seqs = sum(num_seqs), .groups = "drop")
+
+# variables needed to position the labels properly 
+max_abs <- max(ASVs_counts_Symb_sum_df$counts_sum)
+nudge   <- 0.08 * max_abs 
+
+dada_Symb_numseq_plt <- ggplot(
+    ASVs_counts_Symb_sum_df, 
+    aes(y = factor(sample_name, rev(Symbiodiniaceae_sample_order)), x = total_num_seqs)) +
+  geom_col(fill = "#777777", width = 1, color = "#555555", size = 0.2) +
+  facet_grid(type ~ ., scales = "free_y", space = "free_y", labeller = labeller(type = type_labels)) +
+  #geom_text(aes(x = counts_sum + nudge, label = counts_sum, hjust = 0, size = 3) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0))) +  
+  #coord_cartesian(clip = "off") +         # let labels continue into the margin
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.text  = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    strip.text.y = element_blank(),
+    axis.title = element_blank(),
+    plot.margin = margin(15, 30, 30, 0)) + labs(title = "Count")
+dada_Symb_numseq_plt 
+```
+Combine the barplots
+```{r}
+dada_Sym_combined_plt <- dada_symb_asv_plt + dada_Symb_numseq_plt +
+  plot_layout(widths = c(1, 0.08), guides = "collect") &  #the barplot on the right will be 8% of the left one 
+  theme(
+    legend.position = "bottom",           # bottom avoids stealing panel width
+    legend.box = "horizontal",     # make legend horizontal
+    legend.title = element_blank(),  # remove legend title
+    legend.justification = "left",   # anchor to the left
+    legend.box.just = "left", # start the legend from the left 
+    legend.spacing.x = unit(1, "cm"),
+    legend.text = element_text(margin = margin(l = 0.2, r = 0.6, unit = "cm"))
+    )&
+  guides(fill = guide_legend(
+    nrow = 2,
+    byrow = TRUE,
+))  # split the legend into two rows by rows (default is by column)
+
+  
+dada_Sym_combined_plt
+
+# save png
+ggsave(
+  plot = dada_Sym_combined_plt, 
+  filename = "plots/dada_Sym_combined_plt.png",
+  width = 20, height = 35, units = "cm", dpi = 300,
+  bg = "white")
+
+# save svg
+ggsave_clean(
+  plot =  dada_Sym_combined_plt, 
+  filename = 'plots/dada_Sym_combined_plt.svg',
+  device = svglite,
+  width = 20, height = 35, units = c("cm"), dpi = 300, 
+  bg = "white")
+
+```
+
+# ITS2 profiles from SymPortal  
+## Load the data: 
+```{r}
+# get metadata
+symportal_meta_df <- data.table::fread('./output/symportal_meta_df.tsv') %>%
+  dplyr::select (sample_name, type, site) %>% 
+  dplyr::filter(sample_name!="Algae2-2") %>% 
+  dplyr::mutate(type = factor(type, levels = type_order)) %>% 
+  arrange(type)
+
+# get counts table
+symportal_hosts_df <-  data.table::fread('./input/3_host_analysis_20250805T090154.profiles.relative.abund_and_meta.txt', skip=6, header=TRUE)  %>% #drop first six row that contain extra information
+  dplyr::rename(sample_name=V2) %>%
+  dplyr::select(-"ITS2 type profile")  %>% 
+  dplyr::mutate(sample_name = factor(sample_name, levels = Symbiodiniaceae_sample_order)) %>%
+  dplyr::arrange(sample_name) %>% 
+  dplyr::filter(!is.na(sample_name))
+
+# add environmental samples with 0 counts for the consistency of plot making
+symportal_hosts_combined_df <- left_join(
+  ASVs_counts_Sym_df %>% dplyr::select(sample_name), symportal_hosts_df, 
+  by=join_by(sample_name == sample_name)) %>% 
+  dplyr::mutate(across(everything(), ~replace_na(.x, "0")))
+
+
+symportal_hosts_long_df <- left_join(
+  symportal_hosts_combined_df, symportal_meta_df, 
+  by=join_by(sample_name == sample_name)) %>% 
+  tidyr::pivot_longer(!c("sample_name","type", "site"), names_to = "profile", values_to = "proportion") %>% 
+  dplyr::mutate(profile = factor(profile, levels = Symbiodiniaceae_profile_order)) %>% 
+  dplyr::mutate(proportion = as.numeric(proportion))
+
+# get the profiles names to construct color palette
+write.table(symportal_hosts_long_df %>% .$profile %>% unique() %>% unlist() %>% as.data.frame(), 'ITS2_profiles.tsv', sep = "\t", quote = F, row.names = F, col.names = F)
+
+
+```
+
+
+## ITS2 profiles barplot plotting
+```{r}
+symportal_profiles_plt <- ggplot(
+  symportal_hosts_long_df,
+  aes(y = factor(sample_name, rev(Symbiodiniaceae_sample_order)), x = proportion, fill = profile)) +
+  geom_bar(stat = "identity", position = position_fill(reverse = TRUE)) +
+  facet_grid(type ~ ., scales = "free_y", space = "free_y") +  # separate the samples according to the sample type, such as Algae, Sediment, Tridacna, etc. 
+  scale_fill_manual(values = Profiles_color_palette, guide = guide_legend(reverse = FALSE)) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.ticks.x = element_blank(), 
+    axis.text.x  = element_blank(),
+    panel.grid   = element_blank(),
+    strip.text.y = element_blank(),
+    axis.title   = element_blank(), 
+    plot.margin = margin(15, 10, 15, 0))+
+  scale_x_continuous(
+    expand=expansion(mult = c(0, 0)))+
+  theme(
+    axis.text = element_blank(),
+    legend.text = element_text()
+  ) + labs(title = "Profile")
+
+
+
+
+
+symportal_profiles_labels_plt <- ggplot(
+  symportal_hosts_long_df,
+  aes(y = factor(sample_name, rev(Symbiodiniaceae_sample_order)), x = proportion, fill = profile)) +
+  geom_bar(stat = "identity", position = position_fill(reverse = TRUE)) +
+  facet_grid(type ~ ., scales = "free_y", space = "free_y") +  # separate the samples according to the sample type, such as Algae, Sediment, Tridacna, etc. 
+  scale_fill_manual(values = Profiles_color_palette, guide = guide_legend(reverse = FALSE)) + 
+  theme_minimal() +
+  theme(
+    axis.ticks.x = element_blank(), 
+    axis.text.x  = element_blank(),
+    panel.grid   = element_blank(),
+    strip.text.y = element_blank(),
+    axis.title   = element_blank(), 
+    plot.margin = margin(15, 10, 15, 0))+
+  scale_x_continuous(
+    expand=expansion(mult = c(0, 0)))+
+  theme(
+    #axis.text = element_blank(),
+    legend.text = element_text()
+  )
+
+
+
+# save png
+ggsave(
+  plot = symportal_profiles_labels_plt, 
+  filename = "plots/symportal_profiles_labels_plt.png",
+  width = 20, height = 35, units = "cm", dpi = 300,
+  bg = "white")
+
+```
+
+
+# ASVs Heatmap 
+## Get a table of most abundant variants 
+
+Summary as following: 
+If ASV is > 10% in a sample, plot as is, if <10%, summarize into "Genus_other" category; keep only those "Other" categories if they constitute > 10% in a sample collectively.  
+
+Table creation was assisted by ChatGPT
+```{r}
+# get the metadata
+sample_metadata <- symportal_meta_df %>%
+  dplyr::select(sample_name, type) %>% dplyr::filter(sample_name!= "Algae2-2")
+
+# define cut off at which to show the ASVs
+rel_ab_cut_off <- 0.1  # 10%
+
+# get relative abundances per ASV
+ASVs_counts_Symb_long_rel_df  <- ASVs_counts_Symb_long_df  %>%
+  group_by(sample_name) %>%
+  mutate(rel_abund = num_seqs / sum(num_seqs)) %>%
+  ungroup()
+
+# get list of "abundant ASVs" (more than cut off relative abundance)
+abundant_asvs <- ASVs_counts_Symb_long_rel_df %>%
+  group_by(ASV) %>%
+  summarise(max_rel = max(rel_abund)) %>%
+  filter(max_rel > rel_ab_cut_off) %>%
+  pull(ASV)
+
+# assign ASV groups, essentially individual ASVs or "Genus_other"
+ASVs_counts_Symb_split_df <- ASVs_counts_Symb_long_rel_df  %>%
+  mutate(
+    ASV_group = if_else(ASV %in% abundant_asvs,
+                        paste0(Label_match),   # or Species if unique
+                        paste0(Genus, "_other"))
+  )
+
+# aggregate to ASV_group
+ASVs_counts_Symb_rel_final_df <- ASVs_counts_Symb_split_df %>%
+  group_by(sample_name, type, site, ASV_group) %>%
+  summarise(rel_abund = sum(rel_abund), .groups = "drop") %>% 
+  dplyr::select(-site, -type)
+
+# filter out "Genus_other" groups that never exceed cutoff
+#other_to_keep <- ASVs_counts_Symb_rel_final_df %>%
+  #filter(grepl("_other$", ASV_group)) %>%
+  #group_by(ASV_group) %>%
+  #summarise(max_rel = max(rel_abund)) %>%
+  #filter(max_rel > rel_ab_cut_off) %>%
+  #pull(ASV_group)
+
+#ASVs_counts_Symb_rel_final_df <- ASVs_counts_Symb_rel_final_df %>%
+  #filter(!grepl("_other$", ASV_group) | ASV_group %in% other_to_keep)
+
+# write down the ASV names 
+ 
+write.table(ASVs_counts_Symb_rel_final_df %>% .$ASV_group %>% unique() %>% unlist() %>% as.data.frame(), 'ASV_groups.tsv', sep = "\t", quote = F, row.names = F, col.names = F)
+
+
+ASVs_tax_Genus_to_label_df  <- data.table::fread('./input/ASV_tax_Symbiodiniaceae_filtered.tsv') %>% dplyr::select(Genus, Label_match)
+
+ASVs_groups_final <- ASVs_counts_Symb_rel_final_df %>% dplyr::select(ASV_group) %>% unique %>% as_data_frame() %>% left_join(ASVs_tax_Genus_to_label_df, by=join_by(ASV_group == Label_match)) %>% 
+  dplyr::mutate(Genus = case_when(
+                              ASV_group=="Cladocopium_other" ~ "Cladocopium",
+                              ASV_group=="Durusdinium_other" ~ "Durusdinium",
+                              ASV_group=="Freudenthalidium_other" ~ "Freudenthalidium", 
+                              ASV_group=="Fugacium_other" ~ "Fugacium", 
+                              ASV_group=="Halluxium_other" ~ "Other", 
+                              ASV_group=="Miliolidium_other" ~ "Miliolidium", 
+                              ASV_group=="Symbiodinium_other" ~ "Symbiodinium", 
+                              ASV_group=="clade_Fr4_other" ~ "Other", 
+                              ASV_group=="clade_I_other" ~ "Other", 
+                              ASV_group=="clade_J_other" ~ "Other",
+                              ASV_group=="ASV_111_I4f" ~ "Other", 
+                              .default = Genus))
+
+
+#arrange according to the sample_name and transform to wide form and to matrix 
+ 
+ASVs_counts_mt <- ASVs_counts_Symb_rel_final_df %>%
+  dplyr::mutate(sample_name = factor(sample_name, levels = Symbiodiniaceae_sample_order)) %>%
+  dplyr::arrange(sample_name) %>%
+  dplyr::left_join(ASVs_groups_final, by=join_by(ASV_group == ASV_group))%>% 
+  dplyr::mutate(ASV_group = case_when(
+                              ASV_group=="Halluxium_other" ~ "Halluxium", 
+                              ASV_group=="clade_Fr4_other" ~ "clade_Fr4", 
+                              ASV_group=="clade_J_other" ~ "clade_J", 
+                              .default = ASV_group)) %>% 
+  dplyr::mutate(ASV_group = gsub("\\_", " ",ASV_group))%>% 
+  dplyr::mutate(ASV_group = gsub("\\ASV ", "ASV",ASV_group)) %>% 
+  mutate(Genus = factor(Genus, levels = Symbiodiniaceae_genera_order)) %>%
+  mutate(ASV_group = factor(ASV_group, levels = ASV_order)) %>% 
+  arrange(Genus)%>%
+  arrange(factor(ASV_group, levels = ASV_order))%>%
+  dplyr::select(-Genus) %>% 
+  #dplyr::summarise(n = dplyr::n(), .by = c(sample_name, ASV_group)) |>
+  #dplyr::filter(n > 1L)
+  tidyr::pivot_wider(names_from = ASV_group, values_from = rel_abund) %>%
+  column_to_rownames("sample_name") %>%
+  as.matrix()
+```
+
+Prepare grouping
+```{r}
+row_split_vector <- sample_metadata %>%
+  mutate(type = factor(type, levels = type_order)) %>%
+  arrange(factor(sample_name, levels = Symbiodiniaceae_sample_order)) %>%
+  pull(type)
+
+
+#ASVs_groups_final %>% .$ASV_group
+
+column_split_vector <- ASVs_groups_final%>%
+  dplyr::mutate(ASV_group = case_when(
+                              ASV_group=="Halluxium_other" ~ "Halluxium", 
+                              ASV_group=="clade_Fr4_other" ~ "clade_Fr4", 
+                              ASV_group=="clade_J_other" ~ "clade_J", 
+                              .default = ASV_group)) %>% 
+  dplyr::mutate(ASV_group = gsub("\\_", " ",ASV_group))%>% 
+  dplyr::mutate(ASV_group = gsub("\\ASV ", "ASV",ASV_group)) %>% 
+  mutate(Genus = factor(Genus, levels = Symbiodiniaceae_genera_order)) %>%
+  mutate(ASV_group = factor(ASV_group, levels = ASV_order)) %>%
+  arrange(Genus)%>%
+  arrange(factor(ASV_group, levels = ASV_order)) %>%
+  pull(Genus)
+```
+
+
+## Plot a heatmap
+```{r}
+ASV_heatmap_new <- Heatmap(
+  ASVs_counts_mt, 
+  name = "relative_abundance",  
+  cluster_rows = FALSE, 
+  row_split = row_split_vector,
+  column_split = column_split_vector,
+  row_title = NULL,
+  column_title = NULL,
+  cluster_columns = FALSE, 
+  col = abundances_color_scale, 
+  row_gap = unit(2.65, "mm"),
+  column_gap = unit(0, "mm"),
+  show_row_names = FALSE,
+  show_column_names = FALSE,
+  border_gp = gpar(col = "#555555", lty = 1, lwd = 1), # make the border around each split piece, grey color, line type solid (1), line width 0.5
+  heatmap_legend_param = list(
+  title = "", 
+  legend_height = unit(8, "cm"),
+  title_position = "lefttop-rot",
+  at = c(0, 0.015, 0.2, 0.4, 0.6, 0.8, 1), 
+        labels = c("0", "1%", "20%", "40%", "60%", "80%", "100%")
+  )
+) 
+
+
+
+
+```
+
+### Save heatmap + barplot
+Combining heatmap and barplot was assisted by ChatGPT
+```{r}
+ASV_heatmap_grob_new <- grid::grid.grabExpr(
+  draw(
+    ASV_heatmap_new,
+    heatmap_legend_side = "right",
+    padding = unit(c(0.035, 0, 0.035, 0), "cm")  # top, right, bottom, left
+  )
+)
+
+# 2) Wrap the heatmap grob as a ggplot for patchwork
+heatmap_gg <- ggplotify::as.ggplot(~grid::grid.draw(ASV_heatmap_grob_new)) + 
+  labs(title = "Relative abundance heatmap (ASVs)") +
+  theme(
+    plot.title = element_text(size = 14, face = "bold", family = "Arial", hjust = 0)
+  )
+
+# 3) Arrange: [left barplots] [heatmap] [right barplot]
+combined_pw <- (dada_Sym_combined_plt  | heatmap_gg | symportal_profiles_plt ) +
+  plot_layout(ncol = 3, widths = c(1, 0.8, 0.06)) + 
+  plot_annotation(tag_levels = 'A') &   
+  theme(plot.tag = element_text(size = 20, face = "bold", family = "Arial"))
+
+# Save to png 
+ggsave(
+  "plots/combined_barplot_heatmap_profiles_patch.png",
+  combined_pw,
+  width = 40, height = 40, units = "cm", dpi = 300, bg = "white"
+)
+
+# Save to svg
+ggsave_clean(
+  "plots/combined_barplot_heatmap_profiles_patch.svg",
+  combined_pw,
+  device = svglite,
+  width = 40, height = 40, units = "cm", dpi = 300   # width = 50, height = 35,
+)
+
+```
+ 
+Save the heatmap labels separately
+```{r}
+ASV_heatmap_labels <- Heatmap(
+  ASVs_counts_mt, 
+  name = "relative_abundance",  
+  cluster_rows = FALSE, 
+  row_split = row_split_vector,
+  column_split = column_split_vector,
+  row_title = NULL,
+  #column_title = NULL,
+  cluster_columns = FALSE, 
+  col = abundances_color_scale, 
+  row_gap = unit(2.65, "mm"),
+  column_gap = unit(0, "mm"),
+  border_gp = gpar(col = "#555555", lty = 1, lwd = 0.5),  # make the border around each split piece, grey color, line type solid (1), line width 0.5
+  #column_title_gp = gpar(fill = c("#F8333C", "#FFEE7F","#7AC74F", "#2176AE", "#57B8FF","#68EDC6","grey"), font = 3, fontsize=0, lwd = 0.5),
+  show_row_names = TRUE,
+  heatmap_legend_param = list(
+  title = "", 
+  legend_height = unit(4, "cm"),
+  title_position = "lefttop-rot",
+  at = c(0, 0.001, 0.01), 
+        labels = c("0", "0.1%", "1%")   # control heatmap span 
+  )
+)
+
+
+ASV_heatmap_labels_grob <- grid::grid.grabExpr(
+  draw(
+    ASV_heatmap_labels,
+    heatmap_legend_side = "right",
+    padding = unit(c(1, 1, 1, 1), "cm")  # top, right, bottom, left
+  )
+)
+
+# 2) Wrap the heatmap grob as a ggplot for patchwork
+heatmap_labels_gg <- ggplotify::as.ggplot(~grid::grid.draw(ASV_heatmap_labels_grob))
+
+# Save to png 
+ggsave(
+  "plots/heatmap_labels_gg.png",
+  heatmap_labels_gg,
+  width = 20, height = 35, units = "cm", dpi = 300, bg = "white"
+)
+
+# Save to svg
+ggsave_clean(
+  "plots/heatmap_labels_gg.svg",
+  heatmap_labels_gg,
+  device = svglite,
+  width = 20, height = 35, units = "cm", dpi = 300
+)
+
+```
+

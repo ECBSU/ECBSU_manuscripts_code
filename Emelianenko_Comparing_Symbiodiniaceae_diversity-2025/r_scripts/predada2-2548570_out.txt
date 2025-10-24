@@ -1,0 +1,646 @@
+Loading required package: Rcpp
+[1] ‘1.26.0’
+Loading required package: BiocGenerics
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, aperm, append, as.data.frame, basename, cbind,
+    colnames, dirname, do.call, duplicated, eval, evalq, Filter, Find,
+    get, grep, grepl, intersect, is.unsorted, lapply, Map, mapply,
+    match, mget, order, paste, pmax, pmax.int, pmin, pmin.int,
+    Position, rank, rbind, Reduce, rownames, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which.max, which.min
+
+Loading required package: BiocParallel
+Loading required package: Biostrings
+Loading required package: S4Vectors
+Loading required package: stats4
+
+Attaching package: ‘S4Vectors’
+
+The following objects are masked from ‘package:base’:
+
+    expand.grid, I, unname
+
+Loading required package: IRanges
+Loading required package: XVector
+Loading required package: GenomeInfoDb
+
+Attaching package: ‘Biostrings’
+
+The following object is masked from ‘package:base’:
+
+    strsplit
+
+Loading required package: Rsamtools
+Loading required package: GenomicRanges
+Loading required package: GenomicAlignments
+Loading required package: SummarizedExperiment
+Loading required package: MatrixGenerics
+Loading required package: matrixStats
+
+Attaching package: ‘MatrixGenerics’
+
+The following objects are masked from ‘package:matrixStats’:
+
+    colAlls, colAnyNAs, colAnys, colAvgsPerRowSet, colCollapse,
+    colCounts, colCummaxs, colCummins, colCumprods, colCumsums,
+    colDiffs, colIQRDiffs, colIQRs, colLogSumExps, colMadDiffs,
+    colMads, colMaxs, colMeans2, colMedians, colMins, colOrderStats,
+    colProds, colQuantiles, colRanges, colRanks, colSdDiffs, colSds,
+    colSums2, colTabulates, colVarDiffs, colVars, colWeightedMads,
+    colWeightedMeans, colWeightedMedians, colWeightedSds,
+    colWeightedVars, rowAlls, rowAnyNAs, rowAnys, rowAvgsPerColSet,
+    rowCollapse, rowCounts, rowCummaxs, rowCummins, rowCumprods,
+    rowCumsums, rowDiffs, rowIQRDiffs, rowIQRs, rowLogSumExps,
+    rowMadDiffs, rowMads, rowMaxs, rowMeans2, rowMedians, rowMins,
+    rowOrderStats, rowProds, rowQuantiles, rowRanges, rowRanks,
+    rowSdDiffs, rowSds, rowSums2, rowTabulates, rowVarDiffs, rowVars,
+    rowWeightedMads, rowWeightedMeans, rowWeightedMedians,
+    rowWeightedSds, rowWeightedVars
+
+Loading required package: Biobase
+Welcome to Bioconductor
+
+    Vignettes contain introductory material; view with
+    'browseVignettes()'. To cite Bioconductor, see
+    'citation("Biobase")', and for packages 'citation("pkgname")'.
+
+
+Attaching package: ‘Biobase’
+
+The following object is masked from ‘package:MatrixGenerics’:
+
+    rowMedians
+
+The following objects are masked from ‘package:matrixStats’:
+
+    anyMissing, rowMedians
+
+[1] ‘1.56.1’
+[1] ‘2.66.0’
+  [1] "A1_1a1_ITS2_S179_R1_001.fastq.gz"    
+  [2] "A1_1a1_ITS2_S179_R2_001.fastq.gz"    
+  [3] "A1_1a2_ITS2_S180_R1_001.fastq.gz"    
+  [4] "A1_1a2_ITS2_S180_R2_001.fastq.gz"    
+  [5] "A1_2a1_ITS2_S181_R1_001.fastq.gz"    
+  [6] "A1_2a1_ITS2_S181_R2_001.fastq.gz"    
+  [7] "A1_2a2_ITS2_S182_R1_001.fastq.gz"    
+  [8] "A1_2a2_ITS2_S182_R2_001.fastq.gz"    
+  [9] "A1_5a1_ITS2_S183_R1_001.fastq.gz"    
+ [10] "A1_5a1_ITS2_S183_R2_001.fastq.gz"    
+ [11] "A1_5a2_ITS2_S184_R1_001.fastq.gz"    
+ [12] "A1_5a2_ITS2_S184_R2_001.fastq.gz"    
+ [13] "A1_6a1_ITS2_S185_R1_001.fastq.gz"    
+ [14] "A1_6a1_ITS2_S185_R2_001.fastq.gz"    
+ [15] "A1_6a2_ITS2_S186_R1_001.fastq.gz"    
+ [16] "A1_6a2_ITS2_S186_R2_001.fastq.gz"    
+ [17] "A2_2a5_ITS2_S191_R1_001.fastq.gz"    
+ [18] "A2_2a5_ITS2_S191_R2_001.fastq.gz"    
+ [19] "A2_2a6_ITS2_S192_R1_001.fastq.gz"    
+ [20] "A2_2a6_ITS2_S192_R2_001.fastq.gz"    
+ [21] "A2_5a3_ITS2_S187_R1_001.fastq.gz"    
+ [22] "A2_5a3_ITS2_S187_R2_001.fastq.gz"    
+ [23] "A2_5a4_ITS2_S188_R1_001.fastq.gz"    
+ [24] "A2_5a4_ITS2_S188_R2_001.fastq.gz"    
+ [25] "A2_6a3_ITS2_S189_R1_001.fastq.gz"    
+ [26] "A2_6a3_ITS2_S189_R2_001.fastq.gz"    
+ [27] "A2_6a4_ITS2_S190_R1_001.fastq.gz"    
+ [28] "A2_6a4_ITS2_S190_R2_001.fastq.gz"    
+ [29] "A2_7a3_ITS2_S193_R1_001.fastq.gz"    
+ [30] "A2_7a3_ITS2_S193_R2_001.fastq.gz"    
+ [31] "A2_7a4_ITS2_S194_R1_001.fastq.gz"    
+ [32] "A2_7a4_ITS2_S194_R2_001.fastq.gz"    
+ [33] "An1_ITS2_S125_R1_001.fastq.gz"       
+ [34] "An1_ITS2_S125_R2_001.fastq.gz"       
+ [35] "An2_ITS2_S126_R1_001.fastq.gz"       
+ [36] "An2_ITS2_S126_R2_001.fastq.gz"       
+ [37] "C1_1_ITS2_S107_R1_001.fastq.gz"      
+ [38] "C1_1_ITS2_S107_R2_001.fastq.gz"      
+ [39] "C1_12_corr_ITS2_S112_R1_001.fastq.gz"
+ [40] "C1_12_corr_ITS2_S112_R2_001.fastq.gz"
+ [41] "C1_14_ITS2_S111_R1_001.fastq.gz"     
+ [42] "C1_14_ITS2_S111_R2_001.fastq.gz"     
+ [43] "C1_2_corr_ITS2_S114_R1_001.fastq.gz" 
+ [44] "C1_2_corr_ITS2_S114_R2_001.fastq.gz" 
+ [45] "C1_3_ITS2_S108_R1_001.fastq.gz"      
+ [46] "C1_3_ITS2_S108_R2_001.fastq.gz"      
+ [47] "C1_5_ITS2_S109_R1_001.fastq.gz"      
+ [48] "C1_5_ITS2_S109_R2_001.fastq.gz"      
+ [49] "C1_6_ITS2_S113_R1_001.fastq.gz"      
+ [50] "C1_6_ITS2_S113_R2_001.fastq.gz"      
+ [51] "C1_9_ITS2_S110_R1_001.fastq.gz"      
+ [52] "C1_9_ITS2_S110_R2_001.fastq.gz"      
+ [53] "C2_1_ITS2_S115_R1_001.fastq.gz"      
+ [54] "C2_1_ITS2_S115_R2_001.fastq.gz"      
+ [55] "C2_14b_ITS2_S121_R1_001.fastq.gz"    
+ [56] "C2_14b_ITS2_S121_R2_001.fastq.gz"    
+ [57] "C2_16_ITS2_S122_R1_001.fastq.gz"     
+ [58] "C2_16_ITS2_S122_R2_001.fastq.gz"     
+ [59] "C2_18_ITS2_S123_R1_001.fastq.gz"     
+ [60] "C2_18_ITS2_S123_R2_001.fastq.gz"     
+ [61] "C2_19_ITS2_S124_R1_001.fastq.gz"     
+ [62] "C2_19_ITS2_S124_R2_001.fastq.gz"     
+ [63] "C2_2_ITS2_S120_R1_001.fastq.gz"      
+ [64] "C2_2_ITS2_S120_R2_001.fastq.gz"      
+ [65] "C2_3_ITS2_S116_R1_001.fastq.gz"      
+ [66] "C2_3_ITS2_S116_R2_001.fastq.gz"      
+ [67] "C2_6_ITS2_S117_R1_001.fastq.gz"      
+ [68] "C2_6_ITS2_S117_R2_001.fastq.gz"      
+ [69] "C2_7_ITS2_S118_R1_001.fastq.gz"      
+ [70] "C2_7_ITS2_S118_R2_001.fastq.gz"      
+ [71] "C2_9_ITS2_S119_R1_001.fastq.gz"      
+ [72] "C2_9_ITS2_S119_R2_001.fastq.gz"      
+ [73] "F1_10_ITS2_S141_R1_001.fastq.gz"     
+ [74] "F1_10_ITS2_S141_R2_001.fastq.gz"     
+ [75] "F1_12_ITS2_S149_R1_001.fastq.gz"     
+ [76] "F1_12_ITS2_S149_R2_001.fastq.gz"     
+ [77] "F1_13_ITS2_S150_R1_001.fastq.gz"     
+ [78] "F1_13_ITS2_S150_R2_001.fastq.gz"     
+ [79] "F1_14_ITS2_S151_R1_001.fastq.gz"     
+ [80] "F1_14_ITS2_S151_R2_001.fastq.gz"     
+ [81] "F1_2_ITS2_S136_R1_001.fastq.gz"      
+ [82] "F1_2_ITS2_S136_R2_001.fastq.gz"      
+ [83] "F1_3_ITS2_S137_R1_001.fastq.gz"      
+ [84] "F1_3_ITS2_S137_R2_001.fastq.gz"      
+ [85] "F1_4_ITS2_S138_R1_001.fastq.gz"      
+ [86] "F1_4_ITS2_S138_R2_001.fastq.gz"      
+ [87] "F1_5_ITS2_S139_R1_001.fastq.gz"      
+ [88] "F1_5_ITS2_S139_R2_001.fastq.gz"      
+ [89] "F1_7_ITS2_S140_R1_001.fastq.gz"      
+ [90] "F1_7_ITS2_S140_R2_001.fastq.gz"      
+ [91] "F1_9_ITS2_S148_R1_001.fastq.gz"      
+ [92] "F1_9_ITS2_S148_R2_001.fastq.gz"      
+ [93] "F2_1_ITS2_S142_R1_001.fastq.gz"      
+ [94] "F2_1_ITS2_S142_R2_001.fastq.gz"      
+ [95] "F2_2_ITS2_S143_R1_001.fastq.gz"      
+ [96] "F2_2_ITS2_S143_R2_001.fastq.gz"      
+ [97] "F2_21_ITS2_S152_R1_001.fastq.gz"     
+ [98] "F2_21_ITS2_S152_R2_001.fastq.gz"     
+ [99] "F2_22_ITS2_S153_R1_001.fastq.gz"     
+[100] "F2_22_ITS2_S153_R2_001.fastq.gz"     
+[101] "F2_29_ITS2_S154_R1_001.fastq.gz"     
+[102] "F2_29_ITS2_S154_R2_001.fastq.gz"     
+[103] "F2_3_ITS2_S144_R1_001.fastq.gz"      
+[104] "F2_3_ITS2_S144_R2_001.fastq.gz"      
+[105] "F2_30_ITS2_S146_R1_001.fastq.gz"     
+[106] "F2_30_ITS2_S146_R2_001.fastq.gz"     
+[107] "F2_31_ITS2_S147_R1_001.fastq.gz"     
+[108] "F2_31_ITS2_S147_R2_001.fastq.gz"     
+[109] "F2_4_ITS2_S145_R1_001.fastq.gz"      
+[110] "F2_4_ITS2_S145_R2_001.fastq.gz"      
+[111] "S1_5a1_ITS2_S155_R1_001.fastq.gz"    
+[112] "S1_5a1_ITS2_S155_R2_001.fastq.gz"    
+[113] "S1_5a2_ITS2_S156_R1_001.fastq.gz"    
+[114] "S1_5a2_ITS2_S156_R2_001.fastq.gz"    
+[115] "S1_6a1_ITS2_S157_R1_001.fastq.gz"    
+[116] "S1_6a1_ITS2_S157_R2_001.fastq.gz"    
+[117] "S1_6a2_ITS2_S158_R1_001.fastq.gz"    
+[118] "S1_6a2_ITS2_S158_R2_001.fastq.gz"    
+[119] "S1_7a1_ITS2_S159_R1_001.fastq.gz"    
+[120] "S1_7a1_ITS2_S159_R2_001.fastq.gz"    
+[121] "S1_7a2_ITS2_S160_R1_001.fastq.gz"    
+[122] "S1_7a2_ITS2_S160_R2_001.fastq.gz"    
+[123] "S1_8a3_ITS2_S161_R1_001.fastq.gz"    
+[124] "S1_8a3_ITS2_S161_R2_001.fastq.gz"    
+[125] "S1_8a4_ITS2_S162_R1_001.fastq.gz"    
+[126] "S1_8a4_ITS2_S162_R2_001.fastq.gz"    
+[127] "S2_4a3_ITS2_S163_R1_001.fastq.gz"    
+[128] "S2_4a3_ITS2_S163_R2_001.fastq.gz"    
+[129] "S2_4a4_ITS2_S164_R1_001.fastq.gz"    
+[130] "S2_4a4_ITS2_S164_R2_001.fastq.gz"    
+[131] "S2_5a1_ITS2_S165_R1_001.fastq.gz"    
+[132] "S2_5a1_ITS2_S165_R2_001.fastq.gz"    
+[133] "S2_5a2_ITS2_S166_R1_001.fastq.gz"    
+[134] "S2_5a2_ITS2_S166_R2_001.fastq.gz"    
+[135] "S2_6a1_ITS2_S167_R1_001.fastq.gz"    
+[136] "S2_6a1_ITS2_S167_R2_001.fastq.gz"    
+[137] "S2_6a2_ITS2_S168_R1_001.fastq.gz"    
+[138] "S2_6a2_ITS2_S168_R2_001.fastq.gz"    
+[139] "S2_9a1_ITS2_S169_R1_001.fastq.gz"    
+[140] "S2_9a1_ITS2_S169_R2_001.fastq.gz"    
+[141] "S2_9a2_ITS2_S170_R1_001.fastq.gz"    
+[142] "S2_9a2_ITS2_S170_R2_001.fastq.gz"    
+[143] "TN1a_ITS2_S127_R1_001.fastq.gz"      
+[144] "TN1a_ITS2_S127_R2_001.fastq.gz"      
+[145] "TN2a_ITS2_S128_R1_001.fastq.gz"      
+[146] "TN2a_ITS2_S128_R2_001.fastq.gz"      
+[147] "TN3a_ITS2_S129_R1_001.fastq.gz"      
+[148] "TN3a_ITS2_S129_R2_001.fastq.gz"      
+[149] "TN4a_ITS2_S130_R1_001.fastq.gz"      
+[150] "TN4a_ITS2_S130_R2_001.fastq.gz"      
+[151] "TN5a_ITS2_S131_R1_001.fastq.gz"      
+[152] "TN5a_ITS2_S131_R2_001.fastq.gz"      
+[153] "TN6a_ITS2_S132_R1_001.fastq.gz"      
+[154] "TN6a_ITS2_S132_R2_001.fastq.gz"      
+[155] "TN7a_ITS2_S133_R1_001.fastq.gz"      
+[156] "TN7a_ITS2_S133_R2_001.fastq.gz"      
+[157] "TN8a_ITS2_S134_R1_001.fastq.gz"      
+[158] "TN8a_ITS2_S134_R2_001.fastq.gz"      
+[159] "TN9a_ITS2_S135_R1_001.fastq.gz"      
+[160] "TN9a_ITS2_S135_R2_001.fastq.gz"      
+[161] "W1_1_ITS2_S171_R1_001.fastq.gz"      
+[162] "W1_1_ITS2_S171_R2_001.fastq.gz"      
+[163] "W1_2_ITS2_S172_R1_001.fastq.gz"      
+[164] "W1_2_ITS2_S172_R2_001.fastq.gz"      
+[165] "W1_3_ITS2_S173_R1_001.fastq.gz"      
+[166] "W1_3_ITS2_S173_R2_001.fastq.gz"      
+[167] "W1_4_ITS2_S174_R1_001.fastq.gz"      
+[168] "W1_4_ITS2_S174_R2_001.fastq.gz"      
+[169] "W2_5_ITS2_S175_R1_001.fastq.gz"      
+[170] "W2_5_ITS2_S175_R2_001.fastq.gz"      
+[171] "W2_6_ITS2_S176_R1_001.fastq.gz"      
+[172] "W2_6_ITS2_S176_R2_001.fastq.gz"      
+[173] "W2_7_ITS2_S177_R1_001.fastq.gz"      
+[174] "W2_7_ITS2_S177_R2_001.fastq.gz"      
+[175] "W2_8_ITS2_S178_R1_001.fastq.gz"      
+[176] "W2_8_ITS2_S178_R2_001.fastq.gz"      
+               Forward             Complement                Reverse 
+"GTGAATTGCAGAACTCCGTG" "CACTTAACGTCTTGAGGCAC" "GTGCCTCAAGACGTTAAGTG" 
+               RevComp 
+"CACGGAGTTCTGCAATTCAC" 
+Creating output directory: /flash/HusnikU/Vera/Symbiodiniaceae/raw_seq/run1/filtN
+                 Forward Complement Reverse RevComp
+FWD.ForwardReads   54970          0       0       0
+FWD.ReverseReads       0          0       0      83
+REV.ForwardReads       0          0       0     202
+REV.ReverseReads   53699          0       0       0
+Loading required package: Rcpp
+[1] ‘1.26.0’
+Loading required package: BiocGenerics
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, aperm, append, as.data.frame, basename, cbind,
+    colnames, dirname, do.call, duplicated, eval, evalq, Filter, Find,
+    get, grep, grepl, intersect, is.unsorted, lapply, Map, mapply,
+    match, mget, order, paste, pmax, pmax.int, pmin, pmin.int,
+    Position, rank, rbind, Reduce, rownames, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which.max, which.min
+
+Loading required package: BiocParallel
+Loading required package: Biostrings
+Loading required package: S4Vectors
+Loading required package: stats4
+
+Attaching package: ‘S4Vectors’
+
+The following objects are masked from ‘package:base’:
+
+    expand.grid, I, unname
+
+Loading required package: IRanges
+Loading required package: XVector
+Loading required package: GenomeInfoDb
+
+Attaching package: ‘Biostrings’
+
+The following object is masked from ‘package:base’:
+
+    strsplit
+
+Loading required package: Rsamtools
+Loading required package: GenomicRanges
+Loading required package: GenomicAlignments
+Loading required package: SummarizedExperiment
+Loading required package: MatrixGenerics
+Loading required package: matrixStats
+
+Attaching package: ‘MatrixGenerics’
+
+The following objects are masked from ‘package:matrixStats’:
+
+    colAlls, colAnyNAs, colAnys, colAvgsPerRowSet, colCollapse,
+    colCounts, colCummaxs, colCummins, colCumprods, colCumsums,
+    colDiffs, colIQRDiffs, colIQRs, colLogSumExps, colMadDiffs,
+    colMads, colMaxs, colMeans2, colMedians, colMins, colOrderStats,
+    colProds, colQuantiles, colRanges, colRanks, colSdDiffs, colSds,
+    colSums2, colTabulates, colVarDiffs, colVars, colWeightedMads,
+    colWeightedMeans, colWeightedMedians, colWeightedSds,
+    colWeightedVars, rowAlls, rowAnyNAs, rowAnys, rowAvgsPerColSet,
+    rowCollapse, rowCounts, rowCummaxs, rowCummins, rowCumprods,
+    rowCumsums, rowDiffs, rowIQRDiffs, rowIQRs, rowLogSumExps,
+    rowMadDiffs, rowMads, rowMaxs, rowMeans2, rowMedians, rowMins,
+    rowOrderStats, rowProds, rowQuantiles, rowRanges, rowRanks,
+    rowSdDiffs, rowSds, rowSums2, rowTabulates, rowVarDiffs, rowVars,
+    rowWeightedMads, rowWeightedMeans, rowWeightedMedians,
+    rowWeightedSds, rowWeightedVars
+
+Loading required package: Biobase
+Welcome to Bioconductor
+
+    Vignettes contain introductory material; view with
+    'browseVignettes()'. To cite Bioconductor, see
+    'citation("Biobase")', and for packages 'citation("pkgname")'.
+
+
+Attaching package: ‘Biobase’
+
+The following object is masked from ‘package:MatrixGenerics’:
+
+    rowMedians
+
+The following objects are masked from ‘package:matrixStats’:
+
+    anyMissing, rowMedians
+
+[1] ‘1.56.1’
+[1] ‘2.66.0’
+  [1] "A1-1a1-ITS2_S179_L001_R1_001.fastq.gz"    
+  [2] "A1-1a1-ITS2_S179_L001_R2_001.fastq.gz"    
+  [3] "A1-1a2-ITS2_S180_L001_R1_001.fastq.gz"    
+  [4] "A1-1a2-ITS2_S180_L001_R2_001.fastq.gz"    
+  [5] "A1-2a1-ITS2_S181_L001_R1_001.fastq.gz"    
+  [6] "A1-2a1-ITS2_S181_L001_R2_001.fastq.gz"    
+  [7] "A1-2a2-ITS2_S182_L001_R1_001.fastq.gz"    
+  [8] "A1-2a2-ITS2_S182_L001_R2_001.fastq.gz"    
+  [9] "A1-5a1-ITS2_S183_L001_R1_001.fastq.gz"    
+ [10] "A1-5a1-ITS2_S183_L001_R2_001.fastq.gz"    
+ [11] "A1-5a2-ITS2_S184_L001_R1_001.fastq.gz"    
+ [12] "A1-5a2-ITS2_S184_L001_R2_001.fastq.gz"    
+ [13] "A1-6a1-ITS2_S185_L001_R1_001.fastq.gz"    
+ [14] "A1-6a1-ITS2_S185_L001_R2_001.fastq.gz"    
+ [15] "A1-6a2-ITS2_S186_L001_R1_001.fastq.gz"    
+ [16] "A1-6a2-ITS2_S186_L001_R2_001.fastq.gz"    
+ [17] "A2-2a5-ITS2_S191_L001_R1_001.fastq.gz"    
+ [18] "A2-2a5-ITS2_S191_L001_R2_001.fastq.gz"    
+ [19] "A2-2a6-ITS2_S192_L001_R1_001.fastq.gz"    
+ [20] "A2-2a6-ITS2_S192_L001_R2_001.fastq.gz"    
+ [21] "A2-5a3-ITS2_S187_L001_R1_001.fastq.gz"    
+ [22] "A2-5a3-ITS2_S187_L001_R2_001.fastq.gz"    
+ [23] "A2-5a4-ITS2_S188_L001_R1_001.fastq.gz"    
+ [24] "A2-5a4-ITS2_S188_L001_R2_001.fastq.gz"    
+ [25] "A2-6a3-ITS2_S189_L001_R1_001.fastq.gz"    
+ [26] "A2-6a3-ITS2_S189_L001_R2_001.fastq.gz"    
+ [27] "A2-6a4-ITS2_S190_L001_R1_001.fastq.gz"    
+ [28] "A2-6a4-ITS2_S190_L001_R2_001.fastq.gz"    
+ [29] "A2-7a3-ITS2_S193_L001_R1_001.fastq.gz"    
+ [30] "A2-7a3-ITS2_S193_L001_R2_001.fastq.gz"    
+ [31] "A2-7a4-ITS2_S194_L001_R1_001.fastq.gz"    
+ [32] "A2-7a4-ITS2_S194_L001_R2_001.fastq.gz"    
+ [33] "An1-ITS2_S125_L001_R1_001.fastq.gz"       
+ [34] "An1-ITS2_S125_L001_R2_001.fastq.gz"       
+ [35] "An2-ITS2_S126_L001_R1_001.fastq.gz"       
+ [36] "An2-ITS2_S126_L001_R2_001.fastq.gz"       
+ [37] "C1-1-ITS2_S107_L001_R1_001.fastq.gz"      
+ [38] "C1-1-ITS2_S107_L001_R2_001.fastq.gz"      
+ [39] "C1-12-corr-ITS2_S112_L001_R1_001.fastq.gz"
+ [40] "C1-12-corr-ITS2_S112_L001_R2_001.fastq.gz"
+ [41] "C1-14-ITS2_S111_L001_R1_001.fastq.gz"     
+ [42] "C1-14-ITS2_S111_L001_R2_001.fastq.gz"     
+ [43] "C1-2-corr-ITS2_S114_L001_R1_001.fastq.gz" 
+ [44] "C1-2-corr-ITS2_S114_L001_R2_001.fastq.gz" 
+ [45] "C1-3-ITS2_S108_L001_R1_001.fastq.gz"      
+ [46] "C1-3-ITS2_S108_L001_R2_001.fastq.gz"      
+ [47] "C1-5-ITS2_S109_L001_R1_001.fastq.gz"      
+ [48] "C1-5-ITS2_S109_L001_R2_001.fastq.gz"      
+ [49] "C1-6-ITS2_S113_L001_R1_001.fastq.gz"      
+ [50] "C1-6-ITS2_S113_L001_R2_001.fastq.gz"      
+ [51] "C1-9-ITS2_S110_L001_R1_001.fastq.gz"      
+ [52] "C1-9-ITS2_S110_L001_R2_001.fastq.gz"      
+ [53] "C2-1-ITS2_S115_L001_R1_001.fastq.gz"      
+ [54] "C2-1-ITS2_S115_L001_R2_001.fastq.gz"      
+ [55] "C2-14b-ITS2_S121_L001_R1_001.fastq.gz"    
+ [56] "C2-14b-ITS2_S121_L001_R2_001.fastq.gz"    
+ [57] "C2-16-ITS2_S122_L001_R1_001.fastq.gz"     
+ [58] "C2-16-ITS2_S122_L001_R2_001.fastq.gz"     
+ [59] "C2-18-ITS2_S123_L001_R1_001.fastq.gz"     
+ [60] "C2-18-ITS2_S123_L001_R2_001.fastq.gz"     
+ [61] "C2-19-ITS2_S124_L001_R1_001.fastq.gz"     
+ [62] "C2-19-ITS2_S124_L001_R2_001.fastq.gz"     
+ [63] "C2-2-ITS2_S120_L001_R1_001.fastq.gz"      
+ [64] "C2-2-ITS2_S120_L001_R2_001.fastq.gz"      
+ [65] "C2-3-ITS2_S116_L001_R1_001.fastq.gz"      
+ [66] "C2-3-ITS2_S116_L001_R2_001.fastq.gz"      
+ [67] "C2-6-ITS2_S117_L001_R1_001.fastq.gz"      
+ [68] "C2-6-ITS2_S117_L001_R2_001.fastq.gz"      
+ [69] "C2-7-ITS2_S118_L001_R1_001.fastq.gz"      
+ [70] "C2-7-ITS2_S118_L001_R2_001.fastq.gz"      
+ [71] "C2-9-ITS2_S119_L001_R1_001.fastq.gz"      
+ [72] "C2-9-ITS2_S119_L001_R2_001.fastq.gz"      
+ [73] "F1-10-ITS2_S141_L001_R1_001.fastq.gz"     
+ [74] "F1-10-ITS2_S141_L001_R2_001.fastq.gz"     
+ [75] "F1-12-ITS2_S149_L001_R1_001.fastq.gz"     
+ [76] "F1-12-ITS2_S149_L001_R2_001.fastq.gz"     
+ [77] "F1-13-ITS2_S150_L001_R1_001.fastq.gz"     
+ [78] "F1-13-ITS2_S150_L001_R2_001.fastq.gz"     
+ [79] "F1-14-ITS2_S151_L001_R1_001.fastq.gz"     
+ [80] "F1-14-ITS2_S151_L001_R2_001.fastq.gz"     
+ [81] "F1-2-ITS2_S136_L001_R1_001.fastq.gz"      
+ [82] "F1-2-ITS2_S136_L001_R2_001.fastq.gz"      
+ [83] "F1-3-ITS2_S137_L001_R1_001.fastq.gz"      
+ [84] "F1-3-ITS2_S137_L001_R2_001.fastq.gz"      
+ [85] "F1-4-ITS2_S138_L001_R1_001.fastq.gz"      
+ [86] "F1-4-ITS2_S138_L001_R2_001.fastq.gz"      
+ [87] "F1-5-ITS2_S139_L001_R1_001.fastq.gz"      
+ [88] "F1-5-ITS2_S139_L001_R2_001.fastq.gz"      
+ [89] "F1-7-ITS2_S140_L001_R1_001.fastq.gz"      
+ [90] "F1-7-ITS2_S140_L001_R2_001.fastq.gz"      
+ [91] "F1-9-ITS2_S148_L001_R1_001.fastq.gz"      
+ [92] "F1-9-ITS2_S148_L001_R2_001.fastq.gz"      
+ [93] "F2-1-ITS2_S142_L001_R1_001.fastq.gz"      
+ [94] "F2-1-ITS2_S142_L001_R2_001.fastq.gz"      
+ [95] "F2-2-ITS2_S143_L001_R1_001.fastq.gz"      
+ [96] "F2-2-ITS2_S143_L001_R2_001.fastq.gz"      
+ [97] "F2-21-ITS2_S152_L001_R1_001.fastq.gz"     
+ [98] "F2-21-ITS2_S152_L001_R2_001.fastq.gz"     
+ [99] "F2-22-ITS2_S153_L001_R1_001.fastq.gz"     
+[100] "F2-22-ITS2_S153_L001_R2_001.fastq.gz"     
+[101] "F2-29-ITS2_S154_L001_R1_001.fastq.gz"     
+[102] "F2-29-ITS2_S154_L001_R2_001.fastq.gz"     
+[103] "F2-3-ITS2_S144_L001_R1_001.fastq.gz"      
+[104] "F2-3-ITS2_S144_L001_R2_001.fastq.gz"      
+[105] "F2-30-ITS2_S146_L001_R1_001.fastq.gz"     
+[106] "F2-30-ITS2_S146_L001_R2_001.fastq.gz"     
+[107] "F2-31-ITS2_S147_L001_R1_001.fastq.gz"     
+[108] "F2-31-ITS2_S147_L001_R2_001.fastq.gz"     
+[109] "F2-4-ITS2_S145_L001_R1_001.fastq.gz"      
+[110] "F2-4-ITS2_S145_L001_R2_001.fastq.gz"      
+[111] "S1-5a1-ITS2_S155_L001_R1_001.fastq.gz"    
+[112] "S1-5a1-ITS2_S155_L001_R2_001.fastq.gz"    
+[113] "S1-5a2-ITS2_S156_L001_R1_001.fastq.gz"    
+[114] "S1-5a2-ITS2_S156_L001_R2_001.fastq.gz"    
+[115] "S1-6a1-ITS2_S157_L001_R1_001.fastq.gz"    
+[116] "S1-6a1-ITS2_S157_L001_R2_001.fastq.gz"    
+[117] "S1-6a2-ITS2_S158_L001_R1_001.fastq.gz"    
+[118] "S1-6a2-ITS2_S158_L001_R2_001.fastq.gz"    
+[119] "S1-7a1-ITS2_S159_L001_R1_001.fastq.gz"    
+[120] "S1-7a1-ITS2_S159_L001_R2_001.fastq.gz"    
+[121] "S1-7a2-ITS2_S160_L001_R1_001.fastq.gz"    
+[122] "S1-7a2-ITS2_S160_L001_R2_001.fastq.gz"    
+[123] "S1-8a3-ITS2_S161_L001_R1_001.fastq.gz"    
+[124] "S1-8a3-ITS2_S161_L001_R2_001.fastq.gz"    
+[125] "S1-8a4-ITS2_S162_L001_R1_001.fastq.gz"    
+[126] "S1-8a4-ITS2_S162_L001_R2_001.fastq.gz"    
+[127] "S2-4a3-ITS2_S163_L001_R1_001.fastq.gz"    
+[128] "S2-4a3-ITS2_S163_L001_R2_001.fastq.gz"    
+[129] "S2-4a4-ITS2_S164_L001_R1_001.fastq.gz"    
+[130] "S2-4a4-ITS2_S164_L001_R2_001.fastq.gz"    
+[131] "S2-5a1-ITS2_S165_L001_R1_001.fastq.gz"    
+[132] "S2-5a1-ITS2_S165_L001_R2_001.fastq.gz"    
+[133] "S2-5a2-ITS2_S166_L001_R1_001.fastq.gz"    
+[134] "S2-5a2-ITS2_S166_L001_R2_001.fastq.gz"    
+[135] "S2-6a1-ITS2_S167_L001_R1_001.fastq.gz"    
+[136] "S2-6a1-ITS2_S167_L001_R2_001.fastq.gz"    
+[137] "S2-6a2-ITS2_S168_L001_R1_001.fastq.gz"    
+[138] "S2-6a2-ITS2_S168_L001_R2_001.fastq.gz"    
+[139] "S2-9a1-ITS2_S169_L001_R1_001.fastq.gz"    
+[140] "S2-9a1-ITS2_S169_L001_R2_001.fastq.gz"    
+[141] "S2-9a2-ITS2_S170_L001_R1_001.fastq.gz"    
+[142] "S2-9a2-ITS2_S170_L001_R2_001.fastq.gz"    
+[143] "TN1a-ITS2_S127_L001_R1_001.fastq.gz"      
+[144] "TN1a-ITS2_S127_L001_R2_001.fastq.gz"      
+[145] "TN2a-ITS2_S128_L001_R1_001.fastq.gz"      
+[146] "TN2a-ITS2_S128_L001_R2_001.fastq.gz"      
+[147] "TN3a-ITS2_S129_L001_R1_001.fastq.gz"      
+[148] "TN3a-ITS2_S129_L001_R2_001.fastq.gz"      
+[149] "TN4a-ITS2_S130_L001_R1_001.fastq.gz"      
+[150] "TN4a-ITS2_S130_L001_R2_001.fastq.gz"      
+[151] "TN5a-ITS2_S131_L001_R1_001.fastq.gz"      
+[152] "TN5a-ITS2_S131_L001_R2_001.fastq.gz"      
+[153] "TN6a-ITS2_S132_L001_R1_001.fastq.gz"      
+[154] "TN6a-ITS2_S132_L001_R2_001.fastq.gz"      
+[155] "TN7a-ITS2_S133_L001_R1_001.fastq.gz"      
+[156] "TN7a-ITS2_S133_L001_R2_001.fastq.gz"      
+[157] "TN8a-ITS2_S134_L001_R1_001.fastq.gz"      
+[158] "TN8a-ITS2_S134_L001_R2_001.fastq.gz"      
+[159] "TN9a-ITS2_S135_L001_R1_001.fastq.gz"      
+[160] "TN9a-ITS2_S135_L001_R2_001.fastq.gz"      
+[161] "W1-1-ITS2_S171_L001_R1_001.fastq.gz"      
+[162] "W1-1-ITS2_S171_L001_R2_001.fastq.gz"      
+[163] "W1-2-ITS2_S172_L001_R1_001.fastq.gz"      
+[164] "W1-2-ITS2_S172_L001_R2_001.fastq.gz"      
+[165] "W1-3-ITS2_S173_L001_R1_001.fastq.gz"      
+[166] "W1-3-ITS2_S173_L001_R2_001.fastq.gz"      
+[167] "W1-4-ITS2_S174_L001_R1_001.fastq.gz"      
+[168] "W1-4-ITS2_S174_L001_R2_001.fastq.gz"      
+[169] "W2-5-ITS2_S175_L001_R1_001.fastq.gz"      
+[170] "W2-5-ITS2_S175_L001_R2_001.fastq.gz"      
+[171] "W2-6-ITS2_S176_L001_R1_001.fastq.gz"      
+[172] "W2-6-ITS2_S176_L001_R2_001.fastq.gz"      
+[173] "W2-7-ITS2_S177_L001_R1_001.fastq.gz"      
+[174] "W2-7-ITS2_S177_L001_R2_001.fastq.gz"      
+[175] "W2-8-ITS2_S178_L001_R1_001.fastq.gz"      
+[176] "W2-8-ITS2_S178_L001_R2_001.fastq.gz"      
+               Forward             Complement                Reverse 
+"GTGAATTGCAGAACTCCGTG" "CACTTAACGTCTTGAGGCAC" "GTGCCTCAAGACGTTAAGTG" 
+               RevComp 
+"CACGGAGTTCTGCAATTCAC" 
+Creating output directory: /flash/HusnikU/Vera/Symbiodiniaceae/raw_seq/run2/filtN
+                 Forward Complement Reverse RevComp
+FWD.ForwardReads   55887          0       0       0
+FWD.ReverseReads       0          0       0      34
+REV.ForwardReads       0          0       0     115
+REV.ReverseReads   53936          0       0       0
+Loading required package: Rcpp
+[1] ‘1.26.0’
+Loading required package: BiocGenerics
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, aperm, append, as.data.frame, basename, cbind,
+    colnames, dirname, do.call, duplicated, eval, evalq, Filter, Find,
+    get, grep, grepl, intersect, is.unsorted, lapply, Map, mapply,
+    match, mget, order, paste, pmax, pmax.int, pmin, pmin.int,
+    Position, rank, rbind, Reduce, rownames, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which.max, which.min
+
+Loading required package: BiocParallel
+Loading required package: Biostrings
+Loading required package: S4Vectors
+Loading required package: stats4
+
+Attaching package: ‘S4Vectors’
+
+The following objects are masked from ‘package:base’:
+
+    expand.grid, I, unname
+
+Loading required package: IRanges
+Loading required package: XVector
+Loading required package: GenomeInfoDb
+
+Attaching package: ‘Biostrings’
+
+The following object is masked from ‘package:base’:
+
+    strsplit
+
+Loading required package: Rsamtools
+Loading required package: GenomicRanges
+Loading required package: GenomicAlignments
+Loading required package: SummarizedExperiment
+Loading required package: MatrixGenerics
+Loading required package: matrixStats
+
+Attaching package: ‘MatrixGenerics’
+
+The following objects are masked from ‘package:matrixStats’:
+
+    colAlls, colAnyNAs, colAnys, colAvgsPerRowSet, colCollapse,
+    colCounts, colCummaxs, colCummins, colCumprods, colCumsums,
+    colDiffs, colIQRDiffs, colIQRs, colLogSumExps, colMadDiffs,
+    colMads, colMaxs, colMeans2, colMedians, colMins, colOrderStats,
+    colProds, colQuantiles, colRanges, colRanks, colSdDiffs, colSds,
+    colSums2, colTabulates, colVarDiffs, colVars, colWeightedMads,
+    colWeightedMeans, colWeightedMedians, colWeightedSds,
+    colWeightedVars, rowAlls, rowAnyNAs, rowAnys, rowAvgsPerColSet,
+    rowCollapse, rowCounts, rowCummaxs, rowCummins, rowCumprods,
+    rowCumsums, rowDiffs, rowIQRDiffs, rowIQRs, rowLogSumExps,
+    rowMadDiffs, rowMads, rowMaxs, rowMeans2, rowMedians, rowMins,
+    rowOrderStats, rowProds, rowQuantiles, rowRanges, rowRanks,
+    rowSdDiffs, rowSds, rowSums2, rowTabulates, rowVarDiffs, rowVars,
+    rowWeightedMads, rowWeightedMeans, rowWeightedMedians,
+    rowWeightedSds, rowWeightedVars
+
+Loading required package: Biobase
+Welcome to Bioconductor
+
+    Vignettes contain introductory material; view with
+    'browseVignettes()'. To cite Bioconductor, see
+    'citation("Biobase")', and for packages 'citation("pkgname")'.
+
+
+Attaching package: ‘Biobase’
+
+The following object is masked from ‘package:MatrixGenerics’:
+
+    rowMedians
+
+The following objects are masked from ‘package:matrixStats’:
+
+    anyMissing, rowMedians
+
+[1] ‘1.56.1’
+[1] ‘2.66.0’
+[1] "C1-1_S71_L001_R1_001.fastq.gz" "C1-1_S71_L001_R2_001.fastq.gz"
+[3] "F2-5_S72_L001_R1_001.fastq.gz" "F2-5_S72_L001_R2_001.fastq.gz"
+[5] "F2-6_S73_L001_R1_001.fastq.gz" "F2-6_S73_L001_R2_001.fastq.gz"
+               Forward             Complement                Reverse 
+"GTGAATTGCAGAACTCCGTG" "CACTTAACGTCTTGAGGCAC" "GTGCCTCAAGACGTTAAGTG" 
+               RevComp 
+"CACGGAGTTCTGCAATTCAC" 
+Creating output directory: /flash/HusnikU/Vera/Symbiodiniaceae/raw_seq/run3/filtN
+                 Forward Complement Reverse RevComp
+FWD.ForwardReads   75716          0       0       0
+FWD.ReverseReads       0          0       0       0
+REV.ForwardReads       1          0       0       0
+REV.ReverseReads   75713          0       0       0

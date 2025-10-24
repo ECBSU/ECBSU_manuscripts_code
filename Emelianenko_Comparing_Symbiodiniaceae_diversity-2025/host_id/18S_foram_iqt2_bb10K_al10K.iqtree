@@ -1,0 +1,345 @@
+IQ-TREE 2.4.0 built Feb  7 2025
+
+Input file name: ./Foraminifera_18S_aln.fasta
+Type of analysis: ModelFinder + tree reconstruction + ultrafast bootstrap (10000 replicates)
+Random seed number: 968429
+
+REFERENCES
+----------
+
+To cite IQ-TREE please use:
+
+Bui Quang Minh, Heiko A. Schmidt, Olga Chernomor, Dominik Schrempf,
+Michael D. Woodhams, Arndt von Haeseler, and Robert Lanfear (2020)
+IQ-TREE 2: New models and efficient methods for phylogenetic inference
+in the genomic era. Mol. Biol. Evol., in press.
+https://doi.org/10.1093/molbev/msaa015
+
+To cite ModelFinder please use: 
+
+Subha Kalyaanamoorthy, Bui Quang Minh, Thomas KF Wong, Arndt von Haeseler,
+and Lars S Jermiin (2017) ModelFinder: Fast model selection for
+accurate phylogenetic estimates. Nature Methods, 14:587–589.
+https://doi.org/10.1038/nmeth.4285
+
+Since you used ultrafast bootstrap (UFBoot) please also cite: 
+
+Diep Thi Hoang, Olga Chernomor, Arndt von Haeseler, Bui Quang Minh,
+and Le Sy Vinh (2018) UFBoot2: Improving the ultrafast bootstrap
+approximation. Mol. Biol. Evol., 35:518–522.
+https://doi.org/10.1093/molbev/msx281
+
+SEQUENCE ALIGNMENT
+------------------
+
+Input data: 35 sequences with 365 nucleotide sites
+Number of constant sites: 273 (= 74.7945% of all sites)
+Number of invariant (constant or ambiguous constant) sites: 273 (= 74.7945% of all sites)
+Number of parsimony informative sites: 69
+Number of distinct site patterns: 122
+
+ModelFinder
+-----------
+
+Best-fit model according to BIC: K3Pu+F+I+R2
+
+List of models sorted by BIC scores: 
+
+Model                  LogL         AIC      w-AIC        AICc     w-AICc         BIC      w-BIC
+K3Pu+F+I+R2       -1314.283    2734.566 -  0.00996    2752.971 -   0.0283    2941.261 +    0.461
+TVM+F+I+R2        -1308.930    2727.860 +    0.285    2747.795 +    0.376    2942.354 +    0.267
+TIM+F+I+R2        -1312.544    2733.088 -   0.0209    2752.250 -   0.0405    2943.683 +    0.137
+GTR+F+I+R2        -1307.597    2727.194 +    0.397    2747.921 +    0.353    2945.588 +    0.053
+K3Pu+F+R3         -1314.233    2736.466 -  0.00385    2755.627 -  0.00749    2947.060 -   0.0254
+TPM2u+F+I+R2      -1317.449    2740.898 -  0.00042    2759.304 -  0.00119    2947.593 -   0.0194
+TVM+F+R3          -1308.724    2729.448 +    0.129    2750.175 +    0.114    2947.842 -   0.0172
+TIM+F+R3          -1312.533    2735.067 -  0.00776    2755.002 -   0.0102    2949.561 -  0.00726
+TIM2+F+I+R2       -1315.840    2739.681 - 0.000772    2758.842 -   0.0015    2950.275 -  0.00508
+TVM+F+R2          -1316.765    2741.529 - 0.000306    2760.691 - 0.000596    2952.124 -  0.00202
+TPM2u+F+R3        -1317.007    2742.014 -  0.00024    2761.175 - 0.000468    2952.608 -  0.00158
+K3Pu+F+R2         -1322.973    2749.947 - 4.55e-06    2767.613 - 1.87e-05    2952.741 -  0.00148
+GTR+F+R3          -1308.590    2731.181 +   0.0541    2752.718 -   0.0321    2953.475 -  0.00103
+TIM+F+R2          -1320.928    2747.857 - 1.29e-05    2766.262 - 3.67e-05    2954.551 - 0.000599
+GTR+F+R2          -1315.114    2740.229 - 0.000587    2760.164 - 0.000775    2954.723 -  0.00055
+TIM2+F+R3         -1315.560    2741.120 - 0.000376    2761.055 - 0.000496    2955.614 - 0.000352
+GTR+F+I+R3        -1307.298    2730.597 +   0.0725    2752.963 -   0.0284    2956.791 - 0.000196
+TPM2u+F+R2        -1327.118    2758.236 - 7.22e-08    2775.903 - 2.96e-07    2961.031 - 2.35e-05
+TIM2+F+R2         -1325.077    2756.154 - 2.04e-07    2774.559 -  5.8e-07    2962.848 - 9.46e-06
+F81+F+I+R2        -1331.171    2764.342 - 3.41e-09    2781.288 - 2.01e-08    2963.237 - 7.79e-06
+GTR+F+R4          -1307.725    2733.449 -   0.0174    2756.662 -  0.00446    2963.543 - 6.68e-06
+TPM3u+F+I+R2      -1325.430    2756.860 - 1.44e-07    2775.265 - 4.08e-07    2963.555 - 6.64e-06
+TIM3+F+I+R2       -1324.196    2756.392 - 1.81e-07    2775.553 - 3.53e-07    2966.987 - 1.19e-06
+F81+F+R3          -1331.140    2766.279 - 1.29e-09    2783.946 - 5.31e-09    2969.074 - 4.21e-07
+TPM3u+F+R3        -1325.244    2758.488 - 6.37e-08    2777.649 - 1.24e-07    2969.082 - 4.19e-07
+HKY+F+I+R2        -1331.149    2766.298 - 1.28e-09    2783.965 - 5.26e-09    2969.093 - 4.17e-07
+TPM3u+F+R2        -1332.527    2769.054 - 3.23e-10    2786.721 - 1.33e-09    2971.849 - 1.05e-07
+TN+F+I+R2         -1329.729    2765.458 - 1.95e-09    2783.863 - 5.54e-09    2972.152 - 9.03e-08
+TIM3+F+R3         -1324.049    2758.098 - 7.73e-08    2778.033 - 1.02e-07    2972.592 - 7.24e-08
+TIM3+F+R2         -1330.698    2767.397 -  7.4e-10    2785.802 -  2.1e-09    2974.091 - 3.42e-08
+GTR+F+I+G4        -1325.223    2760.446 - 2.39e-08    2780.381 - 3.16e-08    2974.940 - 2.24e-08
+HKY+F+R3          -1331.138    2768.276 - 4.77e-10    2786.681 - 1.35e-09    2974.970 - 2.21e-08
+F81+F+R2          -1340.346    2780.692 -  9.6e-13    2796.934 - 8.03e-12    2975.687 - 1.54e-08
+TN+F+R3           -1329.687    2767.374 - 7.48e-10    2786.535 - 1.46e-09    2977.969 - 4.93e-09
+HKY+F+R2          -1340.296    2782.593 - 3.71e-13    2799.538 - 2.18e-12    2981.487 - 8.48e-10
+GTR+F+G4          -1332.097    2772.194 - 6.72e-11    2791.355 - 1.31e-10    2982.788 - 4.43e-10
+TN+F+R2           -1338.190    2780.380 - 1.12e-12    2798.047 -  4.6e-12    2983.175 - 3.65e-10
+TVMe+I+R2         -1348.285    2800.569 - 4.63e-17    2818.236 -  1.9e-16    3003.364 - 1.51e-14
+GTR+F+I           -1343.031    2794.063 -  1.2e-15    2813.224 - 2.33e-15    3004.657 - 7.89e-15
+TVMe+R2           -1351.943    2805.886 - 3.25e-18    2822.832 - 1.91e-17    3004.781 - 7.42e-15
+TVMe+R3           -1347.999    2801.999 - 2.27e-17    2820.404 - 6.43e-17    3008.693 - 1.05e-15
+SYM+I+R2          -1348.248    2802.497 - 1.77e-17    2820.902 - 5.02e-17    3009.191 - 8.18e-16
+SYM+R2            -1351.732    2807.464 - 1.47e-18    2825.131 - 6.05e-18    3010.259 -  4.8e-16
+SYM+R3            -1348.029    2804.059 - 8.09e-18    2823.220 - 1.57e-17    3014.653 - 5.33e-17
+K3P+I+R2          -1367.270    2834.540 - 1.95e-24    2850.782 - 1.63e-23    3029.534 - 3.13e-20
+TIMe+I+R2         -1367.172    2836.343 -  7.9e-25    2853.289 - 4.65e-24    3035.238 - 1.81e-21
+K3P+R3            -1367.261    2836.523 - 7.22e-25    2853.468 - 4.25e-24    3035.417 - 1.65e-21
+K3P+R2            -1373.968    2845.936 - 6.53e-27    2861.491 -  7.7e-26    3037.031 - 7.37e-22
+TIMe+R3           -1367.189    2838.378 - 2.86e-25    2856.044 - 1.17e-24    3041.172 - 9.29e-23
+TIMe+R2           -1373.693    2847.386 - 3.16e-27    2863.628 - 2.64e-26    3042.381 - 5.08e-23
+TPM3+I+R2         -1378.353    2856.706 - 2.99e-29    2872.948 -  2.5e-28    3051.701 - 4.81e-25
+TPM3+R2           -1381.339    2860.678 - 4.11e-30    2876.234 - 4.84e-29    3051.773 - 4.63e-25
+TPM2+I+R2         -1378.477    2856.955 - 2.64e-29    2873.197 - 2.21e-28    3051.950 - 4.24e-25
+TIM3e+R2          -1380.802    2861.604 - 2.58e-30    2877.846 - 2.16e-29    3056.598 - 4.15e-26
+TPM2+R3           -1377.910    2857.820 - 1.71e-29    2874.766 - 1.01e-28    3056.715 - 3.92e-26
+TIM3e+I+R2        -1377.990    2857.980 - 1.58e-29    2874.926 - 9.31e-29    3056.875 - 3.62e-26
+TPM3+R3           -1378.394    2858.787 - 1.06e-29    2875.733 - 6.22e-29    3057.682 - 2.42e-26
+TIM2e+I+R2        -1378.456    2858.913 - 9.93e-30    2875.858 - 5.84e-29    3057.808 - 2.27e-26
+TPM2+R2           -1385.108    2868.217 - 9.47e-32    2883.772 - 1.12e-30    3059.312 - 1.07e-26
+TIM2e+R3          -1377.927    2859.853 -  6.2e-30    2877.520 - 2.55e-29    3062.648 - 2.02e-27
+TIM3e+R3          -1378.148    2860.295 - 4.97e-30    2877.962 - 2.04e-29    3063.090 - 1.62e-27
+TIM2e+R2          -1385.073    2870.147 - 3.61e-32    2886.389 - 3.02e-31    3065.142 -  5.8e-28
+JC+I+R2           -1403.679    2903.359 - 2.22e-39    2918.245 - 3.65e-38    3090.554 - 1.76e-33
+K2P+I+R2          -1402.468    2902.936 - 2.74e-39    2918.491 - 3.23e-38    3094.031 - 3.09e-34
+JC+R3             -1403.470    2904.940 -    1e-39    2920.496 - 1.19e-38    3096.035 - 1.13e-34
+JC+R2             -1410.473    2914.947 - 6.75e-42    2929.180 - 1.54e-40    3098.242 - 3.76e-35
+K2P+R3            -1402.242    2904.485 - 1.26e-39    2920.727 - 1.06e-38    3099.480 - 2.03e-35
+TNe+I+R2          -1402.401    2904.802 - 1.08e-39    2921.044 - 9.01e-39    3099.797 - 1.73e-35
+K2P+R2            -1408.793    2913.586 - 1.33e-41    2928.472 -  2.2e-40    3100.781 - 1.06e-35
+TNe+R3            -1402.149    2906.298 -  5.1e-40    2923.244 -    3e-39    3105.193 - 1.16e-36
+TNe+R2            -1408.433    2914.866 - 7.03e-42    2930.421 - 8.29e-41    3105.961 - 7.93e-37
+GTR+F             -1402.261    2910.521 - 6.17e-41    2928.926 - 1.75e-40    3117.216 - 2.85e-39
+
+AIC, w-AIC   : Akaike information criterion scores and weights.
+AICc, w-AICc : Corrected AIC scores and weights.
+BIC, w-BIC   : Bayesian information criterion scores and weights.
+
+Plus signs denote the 95% confidence sets.
+Minus signs denote significant exclusion.
+
+SUBSTITUTION PROCESS
+--------------------
+
+Model of substitution: K3Pu+F+I+R2
+
+Rate parameter R:
+
+  A-C: 1.0000
+  A-G: 4.1221
+  A-T: 6.1508
+  C-G: 6.1508
+  C-T: 4.1221
+  G-T: 1.0000
+
+State frequencies: (empirical counts from alignment)
+
+  pi(A) = 0.3279
+  pi(C) = 0.1265
+  pi(G) = 0.1969
+  pi(T) = 0.3488
+
+Rate matrix Q:
+
+  A     -1.09   0.04471    0.2868    0.7583
+  C    0.1159    -1.052     0.428    0.5082
+  G    0.4777     0.275    -0.876    0.1233
+  T    0.7128    0.1843   0.06958   -0.9667
+
+Model of rate heterogeneity: Invar+FreeRate with 2 categories
+Proportion of invariable sites: 0.5539
+Site proportion and rates:  (0.3977,0.5842) (0.04838,15.87)
+
+ Category  Relative_rate  Proportion
+  0         0              0.5539
+  1         0.5842         0.3977
+  2         15.87          0.04838
+
+MAXIMUM LIKELIHOOD TREE
+-----------------------
+
+Log-likelihood of the tree: -1308.0377 (s.e. 78.6594)
+Unconstrained log-likelihood (without tree): -1378.7846
+Number of free parameters (#branches + #model parameters): 53
+Akaike information criterion (AIC) score: 2722.0754
+Corrected Akaike information criterion (AICc) score: 2740.4806
+Bayesian information criterion (BIC) score: 2928.7700
+
+Total tree length (sum of branch lengths): 1.5359
+Sum of internal branch lengths: 0.9269 (60.3511% of tree length)
+
+WARNING: 5 near-zero internal branches (<0.0027) should be treated with caution
+         Such branches are denoted by '**' in the figure below
+
+NOTE: Tree is UNROOTED although outgroup taxon 'Amphisorus1-4' is drawn at root
+Numbers in parentheses are SH-aLRT support (%) / ultrafast bootstrap support (%)
+
++**Amphisorus1-4
+|
++**Amphisorus1-5
+|
+|                             +--HF582885_Sorites_orbiculus
+|                          +**| (0/50)
+|                          |  +--HF582883_Sorites_orbiculus
+|                       +**| (0/29)
+|                       |  |  +--KC802024_Marginopora_vertebralis
+|                       |  +--| (88/72)
+|                       |     +--KC802043_Marginopora_vertebralis
+|                    +--| (88.1/89)
+|                    |  |      +**Sorites2-22
+|                    |  |  +---| (94.6/97)
+|                    |  |  |   +**Sorites1-14
+|                    |  +--| (76.5/57)
+|                    |     +--Sorites1-13
+|                 +--| (73.5/73)
+|                 |  |     +--AJ404305_Parasorites_sp
+|                 |  +-----| (96.5/90)
+|                 |        +**AJ404307_Parasorites_sp
+|              +--| (83.8/88)
+|              |  |                              +----------AJ404294_Alveolinella_quoi
+|              |  +------------------------------| (100/100)
+|              |                                 +-----------FM877702_Borelis_schlumbergeri
+|          +---| (91.8/95)
+|          |   |    +--AJ404313_Amphisorus_sp
+|          |   +----| (94.9/99)
+|          |        +**HF582899_Sorites_variabilis
+|     +----| (93.3/93)
+|     |    +-----AJ842186_Amphisorus_hemprichii
+|  +--| (88.4/88)
+|  |  +**AJ842181_Amphisorus_kudakajimaensis
++--| (86.3/93)
+   |         +**HF582901_Amphisorus_hemprichii
+   |      +**| (0/72)
+   |      |  +**AJ842182_Amphisorus_hemprichii
+   |   +--| (82.6/87)
+   |   |  |     +**Amphisorus1-2
+   |   |  |  +**| (0/79)
+   |   |  |  |  +**Amphisorus1-3
+   |   |  +--| (98.9/97)
+   |   |     |  +**LC813358_Amphisorus_kudakajimaensis
+   |   |     +**| (0/82)
+   |   |        +**LC813333_Amphisorus_kudakajimaensis
+   +---| (93.5/95)
+       +--AJ278048_Amphisorus_hemprichii
+
+Tree in newick format:
+
+(Amphisorus1-4:0.0000010186,Amphisorus1-5:0.0000010186,(((((((((HF582885_Sorites_orbiculus:0.0042293557,HF582883_Sorites_orbiculus:0.0084572862)0/50:0.0000023832,(KC802024_Marginopora_vertebralis:0.0348192963,KC802043_Marginopora_vertebralis:0.0214939284)88/72:0.0324195625)0/29:0.0000021334,((Sorites2-22:0.0000010186,Sorites1-14:0.0000010186)94.6/97:0.0548165729,Sorites1-13:0.0169043026)76.5/57:0.0208692670)88.1/89:0.0368927929,(AJ404305_Parasorites_sp:0.0193597731,AJ404307_Parasorites_sp:0.0000021642)96.5/90:0.0764494725)73.5/73:0.0238153001,(AJ404294_Alveolinella_quoi:0.1399814370,FM877702_Borelis_schlumbergeri:0.1620027059)100/100:0.3952030249)83.8/88:0.0450092116,(AJ404313_Amphisorus_sp:0.0033596146,HF582899_Sorites_variabilis:0.0000010186)94.9/99:0.0696595743)91.8/95:0.0575255423,AJ842186_Amphisorus_hemprichii:0.0804319598)93.3/93:0.0635579769,AJ842181_Amphisorus_kudakajimaensis:0.0000020392)88.4/88:0.0174642395,(((HF582901_Amphisorus_hemprichii:0.0000010186,AJ842182_Amphisorus_hemprichii:0.0000010186)0/72:0.0000021061,((Amphisorus1-2:0.0000010186,Amphisorus1-3:0.0000010186)0/79:0.0000010186,(LC813358_Amphisorus_kudakajimaensis:0.0000010186,LC813333_Amphisorus_kudakajimaensis:0.0000010186)0/82:0.0000010186)98.9/97:0.0412700597)82.6/87:0.0144313192,AJ278048_Amphisorus_hemprichii:0.0218158052)93.5/95:0.0563462512)86.3/93:0.0172751998);
+
+CONSENSUS TREE
+--------------
+
+Consensus tree is constructed from 10000 bootstrap trees
+Log-likelihood of consensus tree: -1308.042659
+Robinson-Foulds distance between ML tree and consensus tree: 0
+
+Branches with support >0.000000% are kept (extended consensus)
+Branch lengths are optimized by maximum likelihood on original alignment
+Numbers in parentheses are bootstrap supports (%)
+
++**Amphisorus1-4
+|
+|                 +--Amphisorus1-5
+|              +--|
+|              |  |                             +--HF582885_Sorites_orbiculus
+|              |  |                          +--| (50)
+|              |  |                          |  +--HF582883_Sorites_orbiculus
+|              |  |                       +--| (29)
+|              |  |                       |  |  +--KC802024_Marginopora_vertebralis
+|              |  |                       |  +--| (72)
+|              |  |                       |     +--KC802043_Marginopora_vertebralis
+|              |  |                    +--| (89)
+|              |  |                    |  |      +--Sorites2-22
+|              |  |                    |  |  +---| (97)
+|              |  |                    |  |  |   +--Sorites1-14
+|              |  |                    |  +--| (57)
+|              |  |                    |     +--Sorites1-13
+|              |  |                 +--| (73)
+|              |  |                 |  |     +--AJ404305_Parasorites_sp
+|              |  |                 |  +-----| (90)
+|              |  |                 |        +--AJ404307_Parasorites_sp
+|              |  |              +--| (88)
+|              |  |              |  |                              +----------AJ404294_Alveolinella_quoi
+|              |  |              |  +------------------------------| (100)
+|              |  |              |                                 +-----------FM877702_Borelis_schlumbergeri
+|              |  |          +---| (95)
+|              |  |          |   |    +--AJ404313_Amphisorus_sp
+|              |  |          |   +----| (99)
+|              |  |          |        +--HF582899_Sorites_variabilis
+|              |  |     +----| (93)
+|              |  |     |    +-----AJ842186_Amphisorus_hemprichii
+|              |  |  +--| (88)
+|              |  |  |  +--AJ842181_Amphisorus_kudakajimaensis
+|              |  +--| (93)
+|              |     |         +--HF582901_Amphisorus_hemprichii
+|              |     |      +--| (72)
+|              |     |      |  +--AJ842182_Amphisorus_hemprichii
+|              |     |   +--| (87)
+|              |     |   |  |                 +**Amphisorus1-2
+|              |     |   |  |              +**|
+|              |     |   |  |              |  +**Amphisorus2-3
+|              |     |   |  |           +**|
+|              |     |   |  |           |  +**Amphisorus2-1
+|              |     |   |  |        +**|
+|              |     |   |  |        |  +**Amphisorus1-7
+|              |     |   |  |     +--|
+|              |     |   |  |     |  +**Amphisorus2-5
+|              |     |   |  |  +--| (79)
+|              |     |   |  |  |  +--Amphisorus1-3
+|              |     |   |  +--| (97)
+|              |     |   |     |     +**LC813358_Amphisorus_kudakajimaensis
+|              |     |   |     |  +--|
+|              |     |   |     |  |  +**LC813322_Amphisorus_kudakajimaensis
+|              |     |   |     +--| (82)
+|              |     |   |        +--LC813333_Amphisorus_kudakajimaensis
+|              |     +---| (95)
+|              |         +--AJ278048_Amphisorus_hemprichii
+|           +**|
+|           |  +**Amphisorus2-6
+|        +**|
+|        |  +**Amphisorus2-4
+|     +**|
+|     |  +**Amphisorus1-10
+|  +**|
+|  |  +**Amphisorus2-31
++**|
+|  +**Amphisorus2-2
+|
++**Amphisorus2-30
+
+
+Consensus tree in newick format: 
+
+(Amphisorus1-4:0.0000000000,((((((Amphisorus1-5:0.0000023424,(((((((((HF582885_Sorites_orbiculus:0.0042312560,HF582883_Sorites_orbiculus:0.0084612798)50:0.0000021724,(KC802024_Marginopora_vertebralis:0.0348330943,KC802043_Marginopora_vertebralis:0.0215122883)72:0.0324304895)29:0.0000020592,((Sorites2-22:0.0000023424,Sorites1-14:0.0000023424)97:0.0549060563,Sorites1-13:0.0169647807)57:0.0208345995)89:0.0369094408,(AJ404305_Parasorites_sp:0.0193661196,AJ404307_Parasorites_sp:0.0000021153)90:0.0764862831)73:0.0238067149,(AJ404294_Alveolinella_quoi:0.1399845898,FM877702_Borelis_schlumbergeri:0.1620599731)100:0.3953553151)88:0.0450245549,(AJ404313_Amphisorus_sp:0.0033602253,HF582899_Sorites_variabilis:0.0000021830)99:0.0696814115)95:0.0575308170,AJ842186_Amphisorus_hemprichii:0.0804281316)93:0.0635720037,AJ842181_Amphisorus_kudakajimaensis:0.0000020268)88:0.0174653842,(((HF582901_Amphisorus_hemprichii:0.0000023424,AJ842182_Amphisorus_hemprichii:0.0000023424)72:0.0000026081,((((((Amphisorus1-2:0.0000000000,Amphisorus2-3:0.0000000000):0.0000000000,Amphisorus2-1:0.0000000000):0.0000000000,Amphisorus1-7:0.0000000000):0.0000000000,Amphisorus2-5:0.0000000000):0.0000023424,Amphisorus1-3:0.0000023424)79:0.0000023424,((LC813358_Amphisorus_kudakajimaensis:0.0000000000,LC813322_Amphisorus_kudakajimaensis:0.0000000000):0.0000023424,LC813333_Amphisorus_kudakajimaensis:0.0000023424)82:0.0000023424)97:0.0412734756)87:0.0144332109,AJ278048_Amphisorus_hemprichii:0.0218183733)95:0.0563487858)93:0.0172755480):0.0000023424,Amphisorus2-6:0.0000000000):0.0000000000,Amphisorus2-4:0.0000000000):0.0000000000,Amphisorus1-10:0.0000000000):0.0000000000,Amphisorus2-31:0.0000000000):0.0000000000,Amphisorus2-2:0.0000000000):0.0000000000,Amphisorus2-30:0.0000000000);
+
+ALISIM COMMAND
+--------------
+To simulate an alignment of the same length as the original alignment, using the tree and model parameters estimated from this analysis, you can use the following command:
+
+--alisim simulated_MSA -t 18S_foram_iqt2_bb10K_al10K.treefile -m "K3Pu{4.1221,6.15082}+F{0.327869,0.126483,0.196855,0.348794}+I{0.5539}+R2{0.397721,0.584168,0.0483788,15.8678}" --length 365
+
+To mimic the alignment used to produce this analysis, i.e. simulate an alignment of the same length as the original alignment, using the tree and model parameters estimated from this analysis *and* copying the same gap positions as the original alignment, you can use the following command:
+
+iqtree -s ./Foraminifera_18S_aln.fasta --alisim mimicked_MSA
+
+To simulate any number of alignments in either of the two commandlines above, use the --num-alignments options, for example mimic 100 alignments you would use the command line:
+
+iqtree -s ./Foraminifera_18S_aln.fasta --alisim mimicked_MSA --num-alignments 100
+
+For more information on using AliSim, please visit: www.iqtree.org/doc/AliSim
+
+TIME STAMP
+----------
+
+Date and time: Mon Sep  1 11:53:27 2025
+Total CPU time used: 61.149252 seconds (0h:1m:1s)
+Total wall-clock time used: 37.09323933 seconds (0h:0m:37s)
+

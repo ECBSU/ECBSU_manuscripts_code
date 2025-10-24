@@ -1,0 +1,61 @@
+Measure,Dataset,group1,group2,p.adj,Wilcox_sig,Pipeline
+Chao1,Filtered,Foraminifera,Environment,3.70E-07,***,DADA2
+Chao1,Filtered,Multicellular hosts,Environment,1.60E-09,***,DADA2
+Chao1,Filtered,Multicellular hosts,Foraminifera,0.061,ns,DADA2
+Chao1,Pre_lulu,Foraminifera,Environment,8.50E-05,***,DADA2
+Chao1,Pre_lulu,Multicellular hosts,Environment,6.30E-04,***,DADA2
+Chao1,Pre_lulu,Multicellular hosts,Foraminifera,0.025,*,DADA2
+Chao1,Unfiltered,Foraminifera,Environment,1.40E-07,***,DADA2
+Chao1,Unfiltered,Multicellular hosts,Environment,1.60E-09,***,DADA2
+Chao1,Unfiltered,Multicellular hosts,Foraminifera,0.046,*,DADA2
+FaithPD,Filtered,Foraminifera,Environment,3.60E-08,***,DADA2
+FaithPD,Filtered,Multicellular hosts,Environment,2.40E-09,***,DADA2
+FaithPD,Filtered,Multicellular hosts,Foraminifera,0.594,ns,DADA2
+FaithPD,Pre_lulu,Foraminifera,Environment,2.80E-11,***,DADA2
+FaithPD,Pre_lulu,Multicellular hosts,Environment,1.70E-14,***,DADA2
+FaithPD,Pre_lulu,Multicellular hosts,Foraminifera,0.612,ns,DADA2
+FaithPD,Unfiltered,Foraminifera,Environment,4.20E-08,***,DADA2
+FaithPD,Unfiltered,Multicellular hosts,Environment,2.40E-09,***,DADA2
+FaithPD,Unfiltered,Multicellular hosts,Foraminifera,0.595,ns,DADA2
+Shannon,Filtered,Foraminifera,Environment,1.20E-06,***,DADA2
+Shannon,Filtered,Multicellular hosts,Environment,9.70E-08,***,DADA2
+Shannon,Filtered,Multicellular hosts,Foraminifera,0.992,ns,DADA2
+Shannon,Pre_lulu,Foraminifera,Environment,6.80E-08,***,DADA2
+Shannon,Pre_lulu,Multicellular hosts,Environment,3.00E-06,***,DADA2
+Shannon,Pre_lulu,Multicellular hosts,Foraminifera,0.002,**,DADA2
+Shannon,Unfiltered,Foraminifera,Environment,1.20E-06,***,DADA2
+Shannon,Unfiltered,Multicellular hosts,Environment,7.90E-08,***,DADA2
+Shannon,Unfiltered,Multicellular hosts,Foraminifera,1,ns,DADA2
+Simpson,Filtered,Foraminifera,Environment,9.30E-06,***,DADA2
+Simpson,Filtered,Multicellular hosts,Environment,1.60E-06,***,DADA2
+Simpson,Filtered,Multicellular hosts,Foraminifera,0.851,ns,DADA2
+Simpson,Pre_lulu,Foraminifera,Environment,7.30E-07,***,DADA2
+Simpson,Pre_lulu,Multicellular hosts,Environment,3.00E-06,***,DADA2
+Simpson,Pre_lulu,Multicellular hosts,Foraminifera,0.046,*,DADA2
+Simpson,Unfiltered,Foraminifera,Environment,9.40E-06,***,DADA2
+Simpson,Unfiltered,Multicellular hosts,Environment,1.60E-06,***,DADA2
+Simpson,Unfiltered,Multicellular hosts,Foraminifera,0.875,ns,DADA2
+Chao1,Filtered,Foraminifera,Environment,2.20E-08,***,SymPortal
+Chao1,Filtered,Multicellular hosts,Environment,2.50E-09,***,SymPortal
+Chao1,Filtered,Multicellular hosts,Foraminifera,0.609,ns,SymPortal
+Chao1,Unfiltered,Foraminifera,Environment,2.20E-08,***,SymPortal
+Chao1,Unfiltered,Multicellular hosts,Environment,2.50E-09,***,SymPortal
+Chao1,Unfiltered,Multicellular hosts,Foraminifera,0.694,ns,SymPortal
+FaithPD,Filtered,Foraminifera,Environment,3.40E-08,***,SymPortal
+FaithPD,Filtered,Multicellular hosts,Environment,1.70E-14,***,SymPortal
+FaithPD,Filtered,Multicellular hosts,Foraminifera,0.479,ns,SymPortal
+FaithPD,Unfiltered,Foraminifera,Environment,1.50E-12,***,SymPortal
+FaithPD,Unfiltered,Multicellular hosts,Environment,1.70E-14,***,SymPortal
+FaithPD,Unfiltered,Multicellular hosts,Foraminifera,0.483,ns,SymPortal
+Shannon,Filtered,Foraminifera,Environment,2.10E-10,***,SymPortal
+Shannon,Filtered,Multicellular hosts,Environment,6.30E-12,***,SymPortal
+Shannon,Filtered,Multicellular hosts,Foraminifera,0.049,*,SymPortal
+Shannon,Unfiltered,Foraminifera,Environment,2.10E-10,***,SymPortal
+Shannon,Unfiltered,Multicellular hosts,Environment,4.60E-12,***,SymPortal
+Shannon,Unfiltered,Multicellular hosts,Foraminifera,0.049,*,SymPortal
+Simpson,Filtered,Foraminifera,Environment,6.70E-09,***,SymPortal
+Simpson,Filtered,Multicellular hosts,Environment,1.10E-09,***,SymPortal
+Simpson,Filtered,Multicellular hosts,Foraminifera,0.112,ns,SymPortal
+Simpson,Unfiltered,Foraminifera,Environment,6.70E-09,***,SymPortal
+Simpson,Unfiltered,Multicellular hosts,Environment,1.10E-09,***,SymPortal
+Simpson,Unfiltered,Multicellular hosts,Foraminifera,0.116,ns,SymPortal

@@ -1,0 +1,211 @@
+IQ-TREE multicore version 2.4.0 for Linux x86 64-bit built Feb  7 2025
+Developed by Bui Quang Minh, Nguyen Lam Tung, Olga Chernomor, Heiko Schmidt,
+Dominik Schrempf, Michael Woodhams, Ly Trong Nhan, Thomas Wong
+
+Host:    DZDSTG3 (AVX512, FMA3, 7 GB RAM)
+Command: /mnt/c/Users/vera-emelianenko/Documents/scripts/iqtree-2.4.0-Linux-intel/bin/iqtree2 -s LSU_combined_with_J_trimmed.fasta -m GTR+G+I -bb 10000 -alrt 10000 -pre LSU_J -nt AUTO
+Seed:    715371 (Using SPRNG - Scalable Parallel Random Number Generator)
+Time:    Mon Aug 25 08:34:20 2025
+Kernel:  AVX+FMA - auto-detect threads (8 CPU cores detected)
+
+Reading alignment file LSU_combined_with_J_trimmed.fasta ... Fasta format detected
+Reading fasta file: done in 0.0012511 secs using 18.78% CPU
+Alignment most likely contains DNA/RNA sequences
+Alignment has 69 sequences with 617 columns, 347 distinct patterns
+311 parsimony-informative, 17 singleton sites, 289 constant sites
+                                                         Gap/Ambiguity  Composition  p-value
+Analyzing sequences: done in 6.26e-05 secs using 92.65% CPU
+   1  JN558040.1_Symbiodinium_sp._C1                             1.94%    passed     99.84%
+   2  KR996308.1_Symbiodinium_thermophilum                       1.78%    passed     99.86%
+   3  JN558045.1_Symbiodinium_sp._C90                            1.78%    passed     99.86%
+   4  JN558048.1_Symbiodinium_sp._C91                            1.78%    passed     99.96%
+   5  JN558042.1_Symbiodinium_sp._C15                            1.78%    passed     99.96%
+   6  KF740677.1_Symbiodinium_sp._C7a                            7.13%    passed     99.70%
+   7  JN558051.1_Symbiodinium_sp._H1                             6.65%    passed     94.96%
+   8  JN558053.1_Symbiodinium_sp._H1a                            6.65%    passed     96.37%
+   9  AJ621148.1_Symbiodinium_sp._H_isolate_FL34_1286x           6.65%    passed     96.22%
+  10  AJ291513.1_Symbiodinium_sp._clade_H_751                    7.29%    passed     94.76%
+  11  AJ291520.2_Symbiodinium_sp._clade_H_isolate_1678J          6.65%    passed     95.97%
+  12  MT015652.1_Symbiodinium_sp_P1C4_Clade_H_Heron_Island       1.78%    passed     99.96%
+  13  JQ247043.1_Symbiodinium_sp._F2                             1.78%    passed     70.62%
+  14  JQ247044.1_Symbiodinium_sp._F2ae                           1.78%    passed     70.62%
+  15  AJ830912.1_Symbiodinium_sp._clade_F_isolate_El67b_1335j    1.78%    passed     48.29%
+  16  AJ830914.1_Symbiodinium_sp._clade_F_El52_1320j             1.94%    passed     41.38%
+  17  JQ247046.1_Symbiodinium_sp._F3.2                           1.78%    passed     99.34%
+  18  AJ872076.1_Symbiodinium_sp._clade_F_isolate_MS8_5243X      1.78%    passed     98.24%
+  19  MT015653.1_Symbiodinium_sp_P2D2_Clade_Fr3_Heron_Island     1.78%    passed     99.67%
+  20  JQ247045.1_Symbiodinium_sp._F3.1a                          1.78%    passed     99.98%
+  21  AJ308895.1_Symbiodinium_sp._FG188C1                        1.78%    passed     99.94%
+  22  AJ291525.1_Symbiodinium_sp._clade_F_isolate_1635_          2.11%    passed     99.31%
+  23  MT015654.1_Symbiodinium_sp_P1G6_Clade_Fr3_Heron_Island     1.78%    passed     99.07%
+  24  AJ830916.1_Symbiodinium_sp._clade_F_isolate_MS26_5244x     1.13%    passed     99.40%
+  25  JQ247047.1_Symbiodinium_sp._F4.1                           1.78%    passed     89.03%
+  26  AJ621146.1_Symbiodinium_sp._F_isolate_FL77_1349x           1.94%    passed     90.55%
+  27  JQ247048.1_Symbiodinium_sp._F4.8                           1.78%    passed     80.89%
+  28  AJ621145.1_Symbiodinium_sp._F_isolate_FL74_1334x           2.11%    passed     86.72%
+  29  AJ291527.1_Symbiodinium_sp._F_isolate_836                  2.43%    passed     84.09%
+  30  AJ621135.1_Symbiodinium_sp._F_isolate_PC227_1628x          1.78%    passed     85.96%
+  31  LK934666.1_Symbiodinium_kawagutii                          1.62%    passed     80.52%
+  32  JN558066.1_Symbiodinium_sp._F1                             1.94%    passed     86.22%
+  33  JN558072.1_Symbiodinium_sp._F5.2g                          1.78%    passed     89.23%
+  34  AJ872077.1_Symbiodinium_sp._clade_F_isolate_RII40_971X     1.94%    passed     94.82%
+  35  JN558063.1_Symbiodinium_sp._F5.1                           1.78%    passed     86.11%
+  36  JN558069.1_Symbiodinium_sp._F5.1d                          1.78%    passed     92.22%
+  37  KT149349.1_Symbiodinium_minutum_strain_Mf                  7.62%    passed     94.59%
+  38  KT149346.1_Symbiodinium_antillogorgium                     7.62%    passed     94.59%
+  39  KT149350.1_Symbiodinium_pseudominutum                      7.62%    passed     93.49%
+  40  KT149347.1_Symbiodinium_endomadracis                       7.62%    passed     93.49%
+  41  LK934671.1_Symbiodinium_psygmophilum                       1.78%    passed     97.44%
+  42  KT149345.1_Symbiodinium_aenigmaticum                       7.62%    passed     96.40%
+  43  FN561559.1_Symbiodinium_sp._nr_I1                          1.78%    passed     61.84%
+  44  FN561560.1_Symbiodinium_sp._nr_I2                          1.62%    passed     48.71%
+  45  LC503502.1                                                 1.78%    passed     72.75%
+  46  LC503503.1                                                 1.78%    passed     79.33%
+  47  LC503505.1                                                 1.78%    passed     86.13%
+  48  LC503504.1                                                 1.78%    passed     88.28%
+  49  KY131782.1_Symbiodinium_glynnii                            2.92%    passed     74.80%
+  50  JN558078.1_Symbiodinium_sp._D1a                            1.94%    passed     78.40%
+  51  KF740686.1_Symbiodinium_sp._D8                             6.97%    passed     72.20%
+  52  KF740688.1_Symbiodinium_sp._D15                            2.76%    passed     75.73%
+  53  JQ247049.1_Symbiodinium_sp._D1.1                           3.89%    passed     86.89%
+  54  JN558081.1_Symbiodinium_sp._D1.2                           4.05%    passed     95.57%
+  55  KM972549.1_Symbiodinium_microadriaticum                    6.97%    passed     93.97%
+  56  KP114226.1_Symbiodinium_sp._TLJ_2015c_strain_CCMP_2469     6.81%    passed     89.94%
+  57  JN558094.1_Symbiodinium_sp._A13                            1.78%    passed     93.91%
+  58  KM816405.1_Symbiodinium_sp._TLJ_2015a_strain_CCMP_832      6.81%    passed     90.65%
+  59  JN558091.1_Symbiodinium_sp._A3                             1.78%    passed     96.35%
+  60  KF740671.1_Symbiodinium_pilosum                            2.59%    passed     82.08%
+  61  JN558097.1_Symbiodinium_sp._A2                             1.78%    passed     86.40%
+  62  JN558100.1_Symbiodinium_sp._A2                             1.78%    passed     83.93%
+  63  JN558089.1_Symbiodinium_sp._G2                             1.78%    passed     90.67%
+  64  JN558088.1_Symbiodinium_sp._G2b                            1.78%    passed     90.67%
+  65  MF322789.1_Symbiodinium_endoclionum                        2.76%    passed     99.18%
+  66  MF322787.1_Symbiodinium_spongiolum                         2.76%    passed     97.63%
+  67  JN558084.1_Symbiodinium_sp._E1                             1.78%    passed     62.70%
+  68  HF568830.1_Symbiodinium_voratum                            1.78%    passed     69.34%
+  69  JN558103.1_Protodinium_simplex                             1.94%    passed     94.78%
+****  TOTAL                                                      3.10%  0 sequences failed composition chi2 test (p-value<5%; df=3)
+NOTE: JN558045.1_Symbiodinium_sp._C90 is identical to KR996308.1_Symbiodinium_thermophilum but kept for subsequent analysis
+NOTE: KT149346.1_Symbiodinium_antillogorgium is identical to KT149349.1_Symbiodinium_minutum_strain_Mf but kept for subsequent analysis
+NOTE: KT149347.1_Symbiodinium_endomadracis is identical to KT149350.1_Symbiodinium_pseudominutum but kept for subsequent analysis
+
+Create initial parsimony tree by phylogenetic likelihood library (PLL)... 0.012 seconds
+Generating 10000 samples for ultrafast bootstrap (seed: 715371)...
+
+NOTE: 16 MB RAM (0 GB) is required!
+Measuring multi-threading efficiency up to 8 CPU cores
+Increase to 10 rounds for branch lengths
+216 trees examined
+Threads: 1 / Time: 8.002 sec / Speedup: 1.000 / Efficiency: 100% / LogL: -16228
+Threads: 2 / Time: 6.595 sec / Speedup: 1.213 / Efficiency: 61% / LogL: -16228
+Threads: 3 / Time: 6.747 sec / Speedup: 1.186 / Efficiency: 40% / LogL: -16228
+BEST NUMBER OF THREADS: 2
+
+Estimate model parameters (epsilon = 0.100)
+Thoroughly optimizing +I+G parameters from 10 start values...
+Init pinv, alpha: 0.000, 1.000 / Estimate: 0.000, 0.417 / LogL: -5740.470
+Init pinv, alpha: 0.052, 1.000 / Estimate: 0.063, 0.472 / LogL: -5738.511
+Init pinv, alpha: 0.104, 1.000 / Estimate: 0.295, 0.931 / LogL: -5731.726
+Init pinv, alpha: 0.156, 1.000 / Estimate: 0.294, 0.927 / LogL: -5731.747
+Init pinv, alpha: 0.208, 1.000 / Estimate: 0.292, 0.920 / LogL: -5731.777
+Init pinv, alpha: 0.260, 1.000 / Estimate: 0.293, 0.922 / LogL: -5731.770
+Init pinv, alpha: 0.312, 1.000 / Estimate: 0.316, 1.022 / LogL: -5731.443
+Init pinv, alpha: 0.364, 1.000 / Estimate: 0.343, 1.173 / LogL: -5731.356
+Init pinv, alpha: 0.416, 1.000 / Estimate: 0.355, 1.248 / LogL: -5731.469
+Init pinv, alpha: 0.468, 1.000 / Estimate: 0.352, 1.232 / LogL: -5731.439
+Optimal pinv,alpha: 0.343, 1.173 / LogL: -5731.356
+
+Parameters optimization took 1.450 sec
+Wrote distance file to... 
+Computing ML distances based on estimated model parameters...
+Calculating distance matrix: done in 0.0138523 secs using 200.2% CPU
+Computing ML distances took 0.014747 sec (of wall-clock time) 0.028674 sec (of CPU time)
+Setting up auxiliary I and S matrices: done in 0.0003703 secs using 130.2% CPU
+Computing RapidNJ tree took 0.019441 sec (of wall-clock time) 0.003987 sec (of CPU time)
+Log-likelihood of RapidNJ tree: -5789.447
+--------------------------------------------------------------------
+|             INITIALIZING CANDIDATE TREE SET                      |
+--------------------------------------------------------------------
+Generating 98 parsimony trees... 0.450 second
+Computing log-likelihood of 98 initial trees ... 0.369 seconds
+Current best score: -5731.356
+
+Do NNI search on 20 best initial trees
+Estimate model parameters (epsilon = 0.100)
+BETTER TREE FOUND at iteration 1: -5726.005
+BETTER TREE FOUND at iteration 6: -5726.004
+BETTER TREE FOUND at iteration 7: -5726.004
+Iteration 10 / LogL: -5726.278 / Time: 0h:0m:27s
+Iteration 20 / LogL: -5726.278 / Time: 0h:0m:32s
+Finish initializing candidate tree set (19)
+Current best tree score: -5726.004 / CPU time: 9.738
+Number of iterations: 20
+--------------------------------------------------------------------
+|               OPTIMIZING CANDIDATE TREE SET                      |
+--------------------------------------------------------------------
+Iteration 30 / LogL: -5726.013 / Time: 0h:0m:35s (0h:1m:35s left)
+Iteration 40 / LogL: -5784.198 / Time: 0h:0m:38s (0h:1m:6s left)
+Iteration 50 / LogL: -5726.005 / Time: 0h:0m:42s (0h:0m:48s left)
+Log-likelihood cutoff on original alignment: -5757.839
+Iteration 60 / LogL: -5726.009 / Time: 0h:0m:47s (0h:0m:37s left)
+BETTER TREE FOUND at iteration 70: -5726.004
+Iteration 70 / LogL: -5726.004 / Time: 0h:0m:50s (0h:1m:13s left)
+Iteration 80 / LogL: -5726.005 / Time: 0h:0m:54s (0h:1m:2s left)
+Iteration 90 / LogL: -5890.035 / Time: 0h:0m:57s (0h:0m:52s left)
+Iteration 100 / LogL: -5731.687 / Time: 0h:1m:1s (0h:0m:43s left)
+Log-likelihood cutoff on original alignment: -5759.287
+NOTE: Bootstrap correlation coefficient of split occurrence frequencies: 0.994
+Iteration 110 / LogL: -5726.279 / Time: 0h:1m:7s (0h:0m:56s left)
+Iteration 120 / LogL: -5726.005 / Time: 0h:1m:11s (0h:0m:48s left)
+Iteration 130 / LogL: -5726.004 / Time: 0h:1m:16s (0h:0m:41s left)
+Iteration 140 / LogL: -5726.282 / Time: 0h:1m:19s (0h:0m:34s left)
+Iteration 150 / LogL: -5738.490 / Time: 0h:1m:22s (0h:0m:27s left)
+Log-likelihood cutoff on original alignment: -5760.110
+Iteration 160 / LogL: -5726.005 / Time: 0h:1m:28s (0h:0m:22s left)
+Iteration 170 / LogL: -5742.985 / Time: 0h:1m:36s (0h:0m:17s left)
+TREE SEARCH COMPLETED AFTER 171 ITERATIONS / Time: 0h:1m:36s
+
+--------------------------------------------------------------------
+|                    FINALIZING TREE SEARCH                        |
+--------------------------------------------------------------------
+Performs final model parameters optimization
+Estimate model parameters (epsilon = 0.010)
+1. Initial log-likelihood: -5726.004
+Optimal log-likelihood: -5725.997
+Rate parameters:  A-C: 0.76666  A-G: 3.05083  A-T: 0.52290  C-G: 0.36322  C-T: 5.97978  G-T: 1.00000
+Base frequencies:  A: 0.243  C: 0.203  G: 0.298  T: 0.256
+Proportion of invariable sites: 0.340
+Gamma shape alpha: 1.151
+Parameters optimization took 1 rounds (0.016 sec)
+BEST SCORE FOUND : -5725.997
+
+Testing tree branches by SH-like aLRT with 10000 replicates...
+5.803 sec.
+Creating bootstrap support values...
+Split supports printed to NEXUS file LSU_J.splits.nex
+Total tree length: 2.578
+
+Total number of iterations: 171
+CPU time used for tree search: 138.543 sec (0h:2m:18s)
+Wall-clock time used for tree search: 73.529 sec (0h:1m:13s)
+Total CPU time used: 196.276 sec (0h:3m:16s)
+Total wall-clock time used: 104.487 sec (0h:1m:44s)
+
+Computing bootstrap consensus tree...
+Reading input file LSU_J.splits.nex...
+69 taxa and 443 splits.
+Consensus tree written to LSU_J.contree
+Reading input trees file LSU_J.contree
+Log-likelihood of consensus tree: -5726.035
+
+Analysis results written to: 
+  IQ-TREE report:                LSU_J.iqtree
+  Maximum-likelihood tree:       LSU_J.treefile
+  Likelihood distances:          LSU_J.mldist
+
+Ultrafast bootstrap approximation results written to:
+  Split support values:          LSU_J.splits.nex
+  Consensus tree:                LSU_J.contree
+  Screen log file:               LSU_J.log
+
+Date and Time: Mon Aug 25 08:36:05 2025

@@ -1,0 +1,15 @@
+#!/bin/bash
+#SBATCH --partition=compute
+#SBATCH --job-name=dada2-ASV
+#SBATCH --time=2-0
+#SBATCH --mem=100G
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=40
+#SBATCH --output=dada2-ASV-%j_out.txt
+#SBATCH --mail-type=FAIL,END
+#SBATCH --mail-user=vera.emelianenko@oist.jp
+
+module load R/4.2.1
+Rscript dada2-ASV-r1.r
+Rscript dada2-ASV-r2.r
+Rscript dada2-ASV-r3.r

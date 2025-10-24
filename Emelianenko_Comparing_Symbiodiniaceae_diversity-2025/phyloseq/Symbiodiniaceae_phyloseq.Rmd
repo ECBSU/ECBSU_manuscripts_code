@@ -1,0 +1,1896 @@
+---
+title: "Symbiodiniaceae phyloseq"
+author: "Vera Emelianenko"
+date: "`r Sys.Date()`"
+output: html_document
+---
+This is the R code for generating diversity plots, PCoA, db-RDA, and Venn diagram plots based on DADA2 ASVs. 
+
+Figure and table formatting (especially for geom_encircle, species accumulation curves, Venn diagram) and troubleshooting were assisted by ChatGPT (GPT-5, OpenAI).
+
+```{r setup, include=FALSE}
+# function to load the packages and install if not installed
+load_packages <- function(package_name)
+  {
+    if (!require(package_name, character.only = TRUE)) 
+    {
+      install.packages(package_name)
+      library(package_name, character.only = TRUE)
+    }
+    else
+    {
+      library(package_name, character.only = TRUE)
+    }
+        
+  }
+
+# change the name of required packages
+Packages = c(
+  "magrittr",      # to use %>%
+  "data.table",    # to read tables 
+  "tidyverse",     # dplyr, tidyr, stringr, forcats, ggplot2
+  "purrr",         # tables 
+  "seqinr",        # for read.alignment()
+  "phyloseq",      # handling microbiome data objects
+  "microbiome",    # transformations like Hellinger
+  "DECIPHER",      # sequence alignment (AlignSeqs)
+  "Biostrings",    # DNAStringSet operations
+  "ape",           # phylogenetics: dist.alignment, write.tree
+  "phangorn",      # phylogenetics: UPGMA trees, making combined 28S tree
+  "ggtree",        # visualise phylogenetic trees
+  "reshape2",      # melt, acast
+  "scales",        # percentage axis labels
+  "ggsci",         # color palettes (pal_d3)
+  "ggalt",         # geom_encircle
+  "patchwork",     # combine plots
+  "picante",       # for Faith FD
+  "biomeUtils",    # for Faith FD - wrapper for picante
+  "vegan",         # ecological analyses (ordination, distances)
+  "pairwiseAdonis",# PERMANOVA pairwise comparisons
+  "ggVennDiagram", # for Venn diagrams
+  "ggpubr", 
+  "rstatix",       # for statistics tables
+  "ComplexUpset",  # for UpSet plot
+  "UpSetR"         # for UpSet plot
+)
+
+invisible(lapply(Packages, load_packages))
+
+# Uncomment if need to install 
+#if (!require("BiocManager", quietly = TRUE))
+    #install.packages("BiocManager")
+# BiocManager::install("microbiome")
+# BiocManager::install("DECIPHER")
+# remotes::install_github("hrbrmstr/ggalt") # only for geom_encircle; not the optimal option
+# BiocManager::install("ggtree")
+# devtools::install_github("RIVM-IIV-Microbiome/biomeUtils")
+# devtools::install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
+
+# Setup knitr defaults with standard formatting changes
+knitr::opts_chunk$set(echo=T, message=F, eval=T, fig.show="markup", include=T, warning=F, results="markup", tidy=T)
+
+options(scipen=999) # disable scientific notation when displaying numbers
+
+#  Empty workspace
+ rm(list=ls())
+```
+
+Copy the files and load source
+```{r}
+source("../shared_settings.R") # Define color palettes, order of samples, theme
+
+# define files to copy
+files_to_copy <- c(
+  "../dada2_assign_taxonomy/output/ASV_counts_Symbiodiniaceae_filtered.tsv",    # otu table filtered 
+  "../dada2_assign_taxonomy/output/ASV_Symbiodiniaceae_filtered.fasta",         # fasta file filtered 
+  "../dada2_assign_taxonomy/output/ASV_tax_Symbiodiniaceae_filtered.tsv",       # tax table filtered 
+  "../barplots_heatmap/output/symportal_meta_df.tsv",                           # metadata 
+  "../dada2_assign_taxonomy/output/ASV_counts_Symbiodiniaceae_unfiltered.tsv",  # otu table raw 
+  "../dada2_assign_taxonomy/output/ASV_tax_Symbiodiniaceae_unfiltered.tsv",     # tax table raw
+  "../dada2_assign_taxonomy/output/ASV_Symbiodiniaceae_unfiltered.fasta",       # fasta raw
+  "../dada2_assign_taxonomy/output/ASV_tax_Symbiodiniaceae_prelulu.tsv",        # before lulu tax table
+  "../dada2_assign_taxonomy/output/ASVs_counts_Sym_prelulu.tsv",                # before lulu otu table
+  "../dada2_assign_taxonomy/output/ASV_Symbiodiniaceae_prelulu.fasta"           # before lulu fasta
+)
+
+# define the destination folder 
+dest_folder <- "./input"
+
+# copy files
+success <- file.copy(from = files_to_copy, to = dest_folder, overwrite = TRUE)
+
+# check which files copied successfully
+data.frame(
+  file = basename(files_to_copy),
+  copied = success
+)
+
+# check package versions 
+packageVersion("vegan")
+packageVersion("pairwiseAdonis")
+packageVersion("ggtree")
+packageVersion("kmer")
+```
+
+# Create a phyloseq object 
+
+Need: 
+- otu table (each row is an otu, each column is a sample) - in this case ASV
+- tax table (each row is an otu, each column is a taxonomic rank (phylum, order ... species)) - in this case ASV
+- samples table (metadata: each row is a sample, each column a separate metadata such as type, site, etc)
+
+Here, 3 phyloseq objects are created: data before lulu curation, unfiltered data and filtered data.
+
+```{r}
+# read the data 
+asv_mat <- data.table::fread('./input/ASV_counts_Symbiodiniaceae_filtered.tsv') 
+tax_mat <- data.table::fread("./input/ASV_tax_Symbiodiniaceae_filtered.tsv")
+samples_df <-data.table::fread("./input/symportal_meta_df.tsv")
+# import sequences of each ASV
+dna_sequences <- Biostrings::readDNAStringSet("./input/ASV_Symbiodiniaceae_filtered.fasta")
+
+asv_mat_raw <- data.table::fread('./input/ASV_counts_Symbiodiniaceae_unfiltered.tsv') 
+tax_mat_raw <- data.table::fread("./input/ASV_tax_Symbiodiniaceae_unfiltered.tsv")
+#samples_df already present 
+dna_sequences_raw <- Biostrings::readDNAStringSet("./input/ASV_Symbiodiniaceae_unfiltered.fasta")
+
+asv_mat_lulu <- data.table::fread('./input/ASVs_counts_Sym_prelulu.tsv') 
+tax_mat_lulu <- data.table::fread("./input/ASV_tax_Symbiodiniaceae_prelulu.tsv")
+#samples_df already present 
+dna_sequences_lulu <- Biostrings::readDNAStringSet("./input/ASV_Symbiodiniaceae_prelulu.fasta")
+
+
+# define row names from ASv column and same for the other two dfs
+asv_mat <- asv_mat %>%    tibble::column_to_rownames("ASV") 
+tax_mat <- tax_mat %>%     tibble::column_to_rownames("ASV")
+samples_df <- samples_df %>%     tibble::column_to_rownames("sample_name") 
+# raw: define row names from ASv column and same for the other two dfs
+asv_mat_raw <- asv_mat_raw %>%    tibble::column_to_rownames("ASV") 
+tax_mat_raw <- tax_mat_raw %>%     tibble::column_to_rownames("ASV")
+#samples_df is done 
+asv_mat_lulu <- asv_mat_lulu %>%  tibble::column_to_rownames("ASV") 
+tax_mat_lulu <- tax_mat_lulu %>%  tibble::column_to_rownames("ASV")
+#samples_df is done 
+
+# transform to matrices
+asv_mat <- as.matrix(asv_mat)
+tax_mat <- as.matrix(tax_mat)
+#raw
+asv_mat_raw <- as.matrix(asv_mat_raw)
+tax_mat_raw <- as.matrix(tax_mat_raw)
+#lulu
+asv_mat_lulu <- as.matrix(asv_mat_lulu)
+tax_mat_lulu <- as.matrix(tax_mat_lulu)
+
+# turn into otu table and tax table
+# Filtered 
+OTU = otu_table(asv_mat, taxa_are_rows = TRUE)
+TAX = tax_table(tax_mat)
+samples = sample_data(samples_df)
+#Unfiltered 
+OTU_raw = otu_table(asv_mat_raw, taxa_are_rows = TRUE)
+TAX_raw = tax_table(tax_mat_raw)
+#samples_df is done 
+# Pre-lulu
+OTU_lulu = otu_table(asv_mat_lulu, taxa_are_rows = TRUE)
+TAX_lulu = tax_table(tax_mat_lulu)
+#samples_df is done 
+
+# create a phyloseq object 
+phyloseq_symbio <- phyloseq(OTU, TAX, samples)
+phyloseq_symbio_raw <- phyloseq(OTU_raw, TAX_raw, samples)
+phyloseq_symbio_lulu <- phyloseq(OTU_lulu, TAX_lulu, samples)
+
+# to check that no NAs
+#sample_sums(phyloseq_symbio_lulu_with_tree)
+
+# Merge sequences into phyloseq object
+phyloseq_symbio <- merge_phyloseq(phyloseq_symbio, dna_sequences)
+phyloseq_symbio_raw <- merge_phyloseq(phyloseq_symbio_raw, dna_sequences_raw)
+phyloseq_symbio_lulu <- merge_phyloseq(phyloseq_symbio_lulu, dna_sequences_lulu)
+
+# check the sequences 
+# refseq(symbio)[1:5]
+
+# filter out Algae2-2 because has only Cladocopium and no other dinos
+phyloseq_symbio <-subset_samples(phyloseq_symbio, sample_names(phyloseq_symbio) != "Algae2-2")
+phyloseq_symbio_raw <-subset_samples(phyloseq_symbio_raw, sample_names(phyloseq_symbio_raw) != "Algae2-2")
+phyloseq_symbio_lulu <-subset_samples(phyloseq_symbio_lulu, sample_names(phyloseq_symbio_lulu) != "Algae2-2")
+
+# save the object for later
+saveRDS(phyloseq_symbio, "phyloseq_symbio.rds")
+saveRDS(phyloseq_symbio_raw, "phyloseq_symbio_raw.rds")
+saveRDS(phyloseq_symbio_lulu, "phyloseq_symbio_lulu.rds")
+```
+Now, `phyloseq_symbio` is a phyloseq object which has sample metadata, ASV counts, ASV sequences, and ASV taxonomy. 
+
+For the "filtered" (default) dataset, the data was filtered in the followng way: 
+0) ASV length filtering: only ASVs > 250 bp. Anything less is discarded.
+1) lulu: collapsed ASVs with > 95% similarity and 95% co-occurrence (based on blastn match table)
+2) ASV taxonomy filtering: only contains Symbiodiniaceae (all NAs and other dinoflagellates filtered out)
+3) ASV global filtering: removed completely ASVs with <10 reads in any of the samples and ASVs with <0.01% abundance in any of the samples (second constrain didn't actually remove more samples than were already removed by the first one)
+4) ASV per-sample filtering: out of remaining ASVS, those that have <0.01% in a sample or <10 counts in a sample were set to zero in that particular sample
+5) sample filtering: one sample of algae was removed as it only had one ASV present, no other dinoflagellates, highly different from all other algae samples; piece of host tissue in the sample (or sampling handling error) suspected. 
+
+No filtering of rare and divergent ASVs was performed separately, but a couple of ASVs with low counts and very divergent were removed during the global filtering (identified as Symbiodiniaceae NA by dada2 taxonomy assignment, blastn closest hits Freudenthalidum)
+
+No normalization or rarefaction is done at this step (see further).
+
+On the contrast, `phyloseq_symbio_raw` has only steps 0-2 (lulu, length filtering, subset to Symbiodiniaceae). It still keeps raw counts potentially including singletons and doubletons (used for Chao1).
+
+Finally, 'phyloseq_symbio_lulu' only has been subjected to step 0 (>250 bp) and 2 (subset to Symbiodiniaceae). 
+
+# Add phylogenetic tree from FastTree
+See tree creation, comparison and visualization in `Symbiodiniaceae_phyloseq_combined_tree_workflow.Rmd`
+```{r}
+FastTree_tree <- ape::read.tree("./fasttree/ASV_Symbio_filt_mafft_aln_trim.nwk")
+
+# Get tips that belong to Symbiodinium
+symbio_tips <- data.frame(OTU = FastTree_tree$tip.label) %>%
+  dplyr::left_join(
+    phyloseq::psmelt(phyloseq_symbio) %>%
+      dplyr::select(OTU, Genus, Label_match) %>%
+      dplyr::distinct(),
+    by = "OTU"
+  )  %>%
+  dplyr::filter(Genus == "Symbiodinium") %>%
+  dplyr::pull(OTU)
+
+# Reroot the tree on these taxa (if multiple tips, midpoint them as a clade)
+FastTree_rooted <- ape::root(FastTree_tree, outgroup = symbio_tips, resolve.root = TRUE)
+ape::write.tree(FastTree_rooted, file = "./trees/FastTree_rooted.tre")
+
+# add tree to phyloseq object
+phyloseq_symbio_with_tree <- phyloseq_symbio
+phyloseq::phy_tree(phyloseq_symbio_with_tree) <- FastTree_rooted 
+```
+
+Do the same with raw dataset
+```{r}
+FastTree_unf <- ape::read.tree("./fasttree/ASV_Symbio_unfilt_mafft_aln_trim.nwk")
+
+# Get tips that belong to Symbiodinium
+symbio_tips_unf <- data.frame(OTU = FastTree_unf$tip.label) %>%
+  dplyr::left_join(
+    phyloseq::psmelt(phyloseq_symbio_raw) %>%
+      dplyr::select(OTU, Genus, Label_match) %>%
+      dplyr::distinct(),
+    by = "OTU"
+  )  %>%
+  dplyr::filter(Genus == "Symbiodinium") %>%
+  dplyr::pull(OTU)
+
+# Reroot the tree on these taxa (if multiple tips, midpoint them as a clade)
+FastTree_raw_rooted <- ape::root(FastTree_unf, outgroup = symbio_tips_unf, resolve.root = TRUE)
+ape::write.tree(FastTree_raw_rooted, file = "./trees/FastTree_raw_rooted.tre")
+
+phyloseq_symbio_raw_with_tree <- phyloseq_symbio_raw
+phyloseq::phy_tree(phyloseq_symbio_raw_with_tree) <- FastTree_raw_rooted
+```
+
+Same with dataset before lulu curation
+```{r}
+FastTree_prelulu <- read.tree("./fasttree/ASV_Symbio_prelulu_mafft_aln_trim.nwk")
+
+# Get tips that belong to Symbiodinium
+symbio_tips <- data.frame(OTU = FastTree_prelulu$tip.label) %>%
+  dplyr::left_join(
+    phyloseq::psmelt(phyloseq_symbio_lulu) %>%
+      dplyr::select(OTU, Genus, Species) %>%
+      dplyr::distinct(),
+    by = "OTU"
+  )  %>%
+  dplyr::filter(Genus == "Symbiodinium") %>%
+  dplyr::pull(OTU)
+
+# Reroot the tree on these taxa (if multiple tips, midpoint them as a clade)
+# FastTree_prelulu_rooted <- midpoint(FastTree_prelulu) # use if error - non monophyletic
+FastTree_prelulu_rooted <- ape::root(FastTree_prelulu, outgroup = symbio_tips, resolve.root = TRUE) 
+
+ape::write.tree(FastTree_prelulu_rooted, file = "./trees/FastTree_prelulu_rooted.tre")
+
+phyloseq_symbio_lulu_with_tree <- phyloseq_symbio_lulu
+phyloseq::phy_tree(phyloseq_symbio_lulu_with_tree) <- FastTree_prelulu_rooted 
+```
+
+# Calculate alpha-diversity metrics
+## Calculate Faith's PD on raw counts
+```{r}
+phyloseq_symbio_PD_df <- biomeUtils::calculatePD(phyloseq_symbio_with_tree, justDF = TRUE)
+#$PD is Faith's phylogenetic diversity, and SR is species richness (total nimber of ASVs)
+phyloseq_symbio_raw_PD_df <- biomeUtils::calculatePD(phyloseq_symbio_raw_with_tree, justDF = TRUE)
+phyloseq_symbio_lulu_PD_df <- biomeUtils::calculatePD(phyloseq_symbio_lulu_with_tree, justDF = TRUE)
+
+#add to phyloseq object
+sample_data(phyloseq_symbio_with_tree)$FaithPD <- phyloseq_symbio_PD_df$PD[match(
+  sample_names(phyloseq_symbio_with_tree),
+  rownames(phyloseq_symbio_PD_df)
+)]
+
+#add FaithPD  to phyloseq object raw
+sample_data(phyloseq_symbio_raw_with_tree)$FaithPD <- phyloseq_symbio_raw_PD_df$PD[match(
+  sample_names(phyloseq_symbio_raw_with_tree),
+  rownames(phyloseq_symbio_raw_PD_df)
+)]
+
+#add FaithPD to prelulu
+sample_data(phyloseq_symbio_lulu_with_tree)$FaithPD <- phyloseq_symbio_lulu_PD_df$PD[match(
+  sample_names(phyloseq_symbio_lulu_with_tree),
+  rownames(phyloseq_symbio_lulu_PD_df)
+)]
+#add Richness
+sample_data(phyloseq_symbio_with_tree)$Richness <- phyloseq_symbio_PD_df$SR[match(
+  sample_names(phyloseq_symbio_with_tree),
+  rownames(phyloseq_symbio_PD_df)
+)]
+
+#add Richness to phyloseq object raw
+sample_data(phyloseq_symbio_raw_with_tree)$Richness <- phyloseq_symbio_raw_PD_df$SR[match(
+  sample_names(phyloseq_symbio_raw_with_tree),
+  rownames(phyloseq_symbio_raw_PD_df)
+)]
+#add Richness to phyloseq object lulu
+sample_data(phyloseq_symbio_lulu_with_tree)$Richness <- phyloseq_symbio_lulu_PD_df$SR[match(
+  sample_names(phyloseq_symbio_lulu_with_tree),
+  rownames(phyloseq_symbio_lulu_PD_df)
+)]
+
+# check the data
+sample_data(phyloseq_symbio_with_tree)$FaithPD
+sample_data(phyloseq_symbio_with_tree)$Richness
+sample_data(phyloseq_symbio_raw_with_tree)$FaithPD
+sample_data(phyloseq_symbio_raw_with_tree)$Richness
+sample_data(phyloseq_symbio_lulu_with_tree)$FaithPD
+sample_data(phyloseq_symbio_lulu_with_tree)$Richness
+```
+
+
+## Calculate Shannon, Simpson indexes on counts 
+```{r}
+richness_df <- phyloseq::estimate_richness(
+  phyloseq_symbio_with_tree, 
+  measures = c("Shannon", "Simpson", "Chao1")
+)
+
+richness_raw_df <- phyloseq::estimate_richness(
+  phyloseq_symbio_raw_with_tree, 
+  measures = c("Shannon", "Simpson", "Chao1")
+)
+richness_lulu_df <- phyloseq::estimate_richness(
+  phyloseq_symbio_lulu_with_tree, 
+  measures = c("Shannon", "Simpson", "Chao1")
+)
+
+# fix crippled sample names
+rownames(richness_df) <- gsub("\\.", "-", rownames(richness_df))
+rownames(richness_raw_df) <- gsub("\\.", "-", rownames(richness_raw_df))
+rownames(richness_lulu_df) <- gsub("\\.", "-", rownames(richness_raw_df))
+
+# Add sample metadata 
+richness_df <- richness_df %>%
+  mutate(SampleID = rownames(.)) %>%
+  left_join(as(sample_data(phyloseq_symbio_with_tree), "data.frame") %>%
+              mutate(SampleID = rownames(.)),
+            by = "SampleID") %>% 
+  dplyr::mutate(site = as.factor(site)) %>%
+  dplyr::mutate(type = factor(type, levels = type_order))%>%
+  dplyr::mutate(host_type = factor(host_type, levels = host_type_order))%>% 
+  dplyr::mutate(Dataset = "Filtered")
+
+# Add sample metadata 
+richness_raw_df <- richness_raw_df %>%
+  mutate(SampleID = rownames(.)) %>%
+  left_join(as(sample_data(phyloseq_symbio_raw_with_tree), "data.frame") %>%
+              mutate(SampleID = rownames(.)),
+            by = "SampleID") %>% 
+  dplyr::mutate(site = as.factor(site)) %>%
+  dplyr::mutate(type = factor(type, levels = type_order))%>%
+  dplyr::mutate(host_type = factor(host_type, levels = host_type_order))%>% 
+  dplyr::mutate(Dataset = "Unfiltered")
+
+# Add sample metadata 
+richness_lulu_df <- richness_lulu_df %>%
+  mutate(SampleID = rownames(.)) %>%
+  left_join(as(sample_data(phyloseq_symbio_lulu_with_tree), "data.frame") %>%
+              mutate(SampleID = rownames(.)),
+            by = "SampleID") %>% 
+  dplyr::mutate(site = as.factor(site)) %>%
+  dplyr::mutate(type = factor(type, levels = type_order))%>%
+  dplyr::mutate(host_type = factor(host_type, levels = host_type_order))%>% 
+  dplyr::mutate(Dataset = "Pre_lulu")
+
+
+richness_fil_raw_df <- bind_rows(richness_df, richness_raw_df, richness_lulu_df) 
+```
+
+# Rarefy the samples 
+```{r}
+rarefaction_depth <- min(sample_sums(phyloseq_symbio_with_tree))
+set.seed(42) # Set a seed for reproducibility
+ps_rarefied <- rarefy_even_depth(
+      physeq = phyloseq_symbio_with_tree,
+      sample.size = rarefaction_depth,
+      rngseed = 42, # Use the same seed for reproducibility
+      replace = FALSE # Sample without replacement (recommended for microbiome data)
+    )
+
+# Check library sizes before rarefaction
+summary(sample_sums(phyloseq_symbio_with_tree))
+# After rarefaction
+summary(sample_sums(ps_rarefied))
+
+# Rarefy non filtered 
+rarefaction_depth_raw <- min(sample_sums(phyloseq_symbio_raw_with_tree))
+set.seed(42) # Set a seed for reproducibility
+ps_rarefied_raw <- rarefy_even_depth(
+      physeq = phyloseq_symbio_raw_with_tree,
+      sample.size = rarefaction_depth_raw,
+      rngseed = 42, # Use the same seed for reproducibility
+      replace = FALSE # Sample without replacement (recommended for microbiome data)
+    )
+
+# Check library sizes before rarefaction
+summary(sample_sums(phyloseq_symbio_raw_with_tree))
+# After rarefaction
+summary(sample_sums(ps_rarefied_raw))
+
+# Rarefy before lulu curation
+rarefaction_depth_lulu <- min(sample_sums(phyloseq_symbio_lulu_with_tree))
+set.seed(42) # Set a seed for reproducibility
+ps_rarefied_lulu <- rarefy_even_depth(
+      physeq = phyloseq_symbio_lulu_with_tree,
+      sample.size = rarefaction_depth_lulu,
+      rngseed = 42, # Use the same seed for reproducibility
+      replace = FALSE # Sample without replacement (recommended for microbiome data)
+    )
+
+# Check library sizes before rarefaction
+summary(sample_sums(phyloseq_symbio_lulu_with_tree))
+# After rarefaction
+summary(sample_sums(ps_rarefied_lulu))
+```
+
+### Calculate alpha-diversity metrics and Faith PD on all sets of data (Supplementary)
+
+```{r}
+ps_rarefied_df <- biomeUtils::calculatePD(ps_rarefied, justDF = TRUE)
+#$PD is Faith's phylogenetic diversity, and SR is species richness (total nimber of ASVs)
+
+#add to phyloseq object
+sample_data(ps_rarefied)$FaithPD <- ps_rarefied_df$PD[match(
+  sample_names(ps_rarefied),
+  rownames(ps_rarefied_df)
+)]
+
+sample_data(ps_rarefied)$Richness <- ps_rarefied_df$SR[match(
+  sample_names(ps_rarefied),
+  rownames(ps_rarefied_df)
+)]
+
+ps_rarefied_df_raw <- biomeUtils::calculatePD(ps_rarefied_raw, justDF = TRUE)
+
+#add to phyloseq object
+sample_data(ps_rarefied_raw)$FaithPD <- ps_rarefied_df_raw$PD[match(
+  sample_names(ps_rarefied_raw),
+  rownames(ps_rarefied_df_raw)
+)]
+
+sample_data(ps_rarefied_raw)$Richness <- ps_rarefied_df_raw$SR[match(
+  sample_names(ps_rarefied_raw),
+  rownames(ps_rarefied_df_raw)
+)]
+
+
+ps_rarefied_df_lulu <- biomeUtils::calculatePD(ps_rarefied_lulu, justDF = TRUE)
+
+#add to phyloseq object
+sample_data(ps_rarefied_lulu)$FaithPD <- ps_rarefied_df_lulu$PD[match(
+  sample_names(ps_rarefied_lulu),
+  rownames(ps_rarefied_df_lulu)
+)]
+
+sample_data(ps_rarefied_lulu)$Richness <- ps_rarefied_df_lulu$SR[match(
+  sample_names(ps_rarefied_lulu),
+  rownames(ps_rarefied_df_lulu)
+)]
+```
+
+Estimate Shannon's diversity and combine with unrarefied dataset
+```{r}
+richness_df_rare <- phyloseq::estimate_richness(
+  ps_rarefied, 
+   measures = c("Shannon", "Simpson", "Chao1")
+)
+richness_df_rare_raw <- phyloseq::estimate_richness(
+  ps_rarefied_raw, 
+  measures = c("Shannon", "Simpson", "Chao1")
+)
+
+richness_df_rare_lulu <- phyloseq::estimate_richness(
+  ps_rarefied_lulu, 
+  measures = c("Shannon", "Simpson", "Chao1")
+)
+
+rownames(richness_df_rare) <- gsub("\\.", "-", rownames(richness_df_rare))
+rownames(richness_df_rare_raw ) <- gsub("\\.", "-", rownames(richness_df_rare_raw))
+rownames(richness_df_rare_lulu) <- gsub("\\.", "-", rownames(richness_df_rare_lulu))
+
+richness_df_rare <- richness_df_rare %>%
+  tibble::rownames_to_column("SampleID") %>%
+  left_join(as(sample_data(ps_rarefied), "data.frame") %>%
+              tibble::rownames_to_column("SampleID"),
+            by = "SampleID") %>%
+  mutate(FaithPD = sample_data(ps_rarefied)$FaithPD[match(SampleID, sample_names(ps_rarefied))],
+         Richness = sample_data(ps_rarefied)$Richness[match(SampleID, sample_names(ps_rarefied))],
+         Dataset = "Filtered_Rarefied")  %>%
+  dplyr::mutate(type = factor(type, levels = type_order))%>%
+  dplyr::mutate(host_type = factor(host_type, levels = host_type_order)) %>% 
+  dplyr::mutate(site = as.factor(site))
+
+
+
+richness_df_rare_raw <- richness_df_rare_raw  %>%
+  tibble::rownames_to_column("SampleID") %>%
+  left_join(as(sample_data(ps_rarefied_raw), "data.frame") %>%
+              tibble::rownames_to_column("SampleID"),
+            by = "SampleID") %>%
+  mutate(Dataset = "Unfiltered_Rarefied")  %>%
+  dplyr::mutate(type = factor(type, levels = type_order))%>%
+  dplyr::mutate(host_type = factor(host_type, levels = host_type_order)) %>% 
+  dplyr::mutate(site = as.factor(site))
+
+richness_df_rare_lulu <- richness_df_rare_lulu %>%
+  tibble::rownames_to_column("SampleID") %>%
+  left_join(as(sample_data(ps_rarefied_lulu), "data.frame") %>%
+              tibble::rownames_to_column("SampleID"),
+            by = "SampleID") %>%
+  mutate(Dataset = "Pre_lulu_Rarefied")  %>%
+  dplyr::mutate(type = factor(type, levels = type_order))%>%
+  dplyr::mutate(host_type = factor(host_type, levels = host_type_order)) %>% 
+  dplyr::mutate(site = as.factor(site))
+
+
+#richness_fil_raw_df is unrarefied dataset
+richness_combined_df <- bind_rows(richness_fil_raw_df, richness_df_rare, richness_df_rare_raw, richness_df_rare_lulu) 
+
+# Explore
+richness_combined_df %>% filter(Chao1 != Richness)
+
+# convert to long format for ggplot
+richness_combined_long <- richness_combined_df %>%
+  pivot_longer(cols = c("Shannon","Simpson","FaithPD", "Richness", "Chao1"),
+               names_to = "Measure", values_to = "Value") %>% 
+  mutate(Dataset = factor(Dataset, levels = c("Pre_lulu", "Pre_lulu_Rarefied", "Unfiltered",  "Unfiltered_Rarefied" , "Filtered" , "Filtered_Rarefied"))) %>% 
+  mutate (host_tax = factor(host_tax, levels = host_tax_order )) 
+
+# Explore
+#richness_combined_long %>% .$Dataset %>% unique()
+#richness_combined_long %>% filter(is.na(host_tax))
+```
+
+## Plot to compare filtering and rarefaction 
+Make a plot showing that rarefaction didn't influence the samples 
+```{r}
+rich_horizontal_combined_plt <- ggplot(
+    richness_combined_long %>% filter(Measure!="Richness"), 
+    aes(x = host_tax, y = Value, fill = host_tax)) +
+  geom_boxplot(
+    outlier.shape = NA, 
+    alpha = 0.4, 
+    color = "#5b5b5b", 
+    linewidth = 0.4, 
+    aes(group = interaction(host_tax, Dataset)), 
+    position = position_dodge(width = 0.9), 
+    show.legend = FALSE) +
+  geom_jitter(
+    aes(color = host_tax, shape = Dataset, group = interaction(host_tax, Dataset)),
+    size = 2, alpha = 1,
+    position = position_dodge(width = 0.9),
+  ) +
+  scale_fill_manual(values = host_tax_color_palette, labels = type_labels) +
+  scale_color_manual(values = host_tax_color_palette, labels = type_labels) +
+  scale_shape_manual(
+    values = c(
+      "Pre_lulu" = 16, "Pre_lulu_Rarefied" = 1,   # filled and open points
+      "Unfiltered" = 15,  "Unfiltered_Rarefied" = 0,  # filled and open squares
+      "Filtered" = 17, "Filtered_Rarefied" = 2),  # filled and open triangles
+    labels = c(
+      "Pre_lulu" = "Before lulu clustering",
+      "Pre_lulu_Rarefied" = "Before lulu clustering, rarefied",
+      "Unfiltered" = "After lulu, unfiltered", 
+      "Unfiltered_Rarefied" = "After lulu, unfiltered rarefied", 
+      "Filtered" = "After lulu, filtered", 
+      "Filtered_Rarefied" = "After lulu, filtered rarefied ")) +  
+  theme(
+    legend.position = "right",
+    legend.justification = c("bottom"),
+    legend.title = element_blank(),
+    axis.ticks = element_blank(), 
+    panel.grid   = element_blank(),
+    axis.line = element_line(color = "#5b5b5b"),  # make axis line visible 
+    axis.title   = element_blank(), 
+    plot.margin = margin(5, 5, 5, 5),
+    axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 1),   
+    strip.background.x = element_blank(),
+    strip.text = element_text(size = 10, margin = margin(t = 6, b = 4)),
+    strip.background.y = element_rect(fill = "white", color = "white"),   
+    strip.placement = "outside"
+  ) + 
+  facet_wrap(~Measure, scales = "free", ncol = 1,  strip.position = "left")  +  #split by measure 
+  theme(panel.spacing.y = unit(1, "lines"),
+        panel.background = element_rect(fill = "white", colour = "white", size = 1))
+
+
+rich_horizontal_combined_plt 
+
+ggsave(
+  plot = rich_horizontal_combined_plt, 
+  filename = 'plots/rich_horizontal_combined_plt.png',
+  width = 30, height = 20, units = c("cm"), dpi = 300, 
+  bg = "white")
+
+ggsave_clean(
+  plot = rich_horizontal_combined_plt, 
+  filename = 'plots/rich_horizontal_combined_plt.svg',
+  width = 30, height = 30, units = c("cm"), dpi = 300)
+```
+With statistics, show the difference between the groups 
+```{r}
+# Measures of interest
+measures <- c("FaithPD", "Shannon", "Simpson", "Chao1")
+pairs_to_compare <- list(
+  c("Pre_lulu", "Unfiltered"),
+  c("Unfiltered", "Filtered")
+)
+
+# Friedman test summary (paired)
+friedman_summary <- richness_combined_long %>%
+  filter(Measure %in% measures) %>%
+  group_by(Measure) %>%
+  friedman_test(Value ~ Dataset | SampleID) %>%
+  mutate(p.signif = case_when(
+    p <= 0.001 ~ "***",
+    p <= 0.01  ~ "**",
+    p <= 0.05  ~ "*",
+    TRUE       ~ "ns"
+  )) %>% 
+  select(Measure, statistic, df, p, p.signif) %>%
+  dplyr::rename(Friedman_stat = statistic, Friedman_df = df, Friedman_p = p, Friedman_sig = p.signif)
+
+# Pairwise Wilcoxon with FDR
+pw_summary <- richness_combined_long %>%
+  filter(Measure %in% measures) %>%
+  group_by(Measure) %>%
+  pairwise_wilcox_test(Value ~ Dataset, p.adjust.method = "fdr", paired = TRUE, comparisons = pairs_to_compare) %>%
+  select(Measure, group1, group2, p.adj, p.adj.signif) %>%  
+  dplyr::rename(Wilcox_p_adj = p.adj, Wilcox_p_sig = p.adj.signif)
+
+# Put together
+summary_table <- list(
+  Friedman_summary = friedman_summary,
+  Pairwise_Wilcoxon = pw_summary
+)
+
+summary_table
+```
+
+Test if rarefaction was significant
+```{r}
+# Define the specific pairs 
+pairs_to_compare <- list(
+  c("Pre_lulu", "Pre_lulu_Rarefied"),
+  c("Unfiltered", "Unfiltered_Rarefied"),
+  c("Filtered", "Filtered_Rarefied")
+)
+
+# Run Wilcoxon signed-rank (paired test, since same samples rarefied/unrarefied)
+wilcox_results <- richness_combined_long %>%
+  filter(Measure %in% c("Shannon", "Simpson", "FaithPD", "Chao1")) %>%
+  group_by(Measure) %>%
+  pairwise_wilcox_test(
+    Value ~ Dataset,
+    paired = TRUE,
+    comparisons = pairs_to_compare,
+    p.adjust.method = "fdr"
+  ) %>%
+  ungroup() %>%
+  select(Measure, group1, group2, p, p.adj, p.adj.signif)
+
+wilcox_results
+```
+
+Check what was the effect
+```{r}
+# Define the pairs for LULU/filtering comparison
+filtering_pairs <- list(
+  c("Pre_lulu", "Unfiltered"),   # effect of Unfiltered
+  c("Unfiltered", "Filtered"),   # effect of Filtered
+  c("Pre_lulu", "Pre_lulu_Rarefied"),
+  c("Unfiltered", "Unfiltered_Rarefied"),
+  c("Filtered", "Filtered_Rarefied")
+)
+
+# Function to compute median % change
+compute_percent_change <- function(df, dataset1, dataset2){
+  df %>%
+    filter(Dataset %in% c(dataset1, dataset2)) %>%
+    tidyr::pivot_wider(names_from = Dataset, values_from = Value) %>%
+    mutate(
+      perc_change = 100 * ((.data[[dataset2]] - .data[[dataset1]]) / .data[[dataset1]])
+    ) %>%
+    summarise(
+      median_change = median(perc_change, na.rm = TRUE),
+      mean_change = mean(perc_change, na.rm = TRUE),
+      IQR_change = IQR(perc_change, na.rm = TRUE)
+    )
+}
+
+# Apply for each measure and pair
+effect_sizes <- richness_combined_long %>%
+  filter(Measure %in% c("FaithPD", "Shannon", "Simpson", "Chao1")) %>%
+  group_by(Measure) %>%
+  group_modify(~{
+    map_df(filtering_pairs, function(p){
+      compute_percent_change(.x, p[1], p[2]) %>%
+        mutate(group1 = p[1], group2 = p[2])
+    })
+  }) %>%
+  ungroup()
+
+effect_sizes
+```
+
+Combine the stats in one giant table
+```{r}
+# Prepare a column for dataset comparison
+effect_sizes <- effect_sizes %>%
+  mutate(Dataset_comparison = paste(group1, "→", group2)) %>%
+  select(Measure, Dataset_comparison, median_change)
+
+# Prepare Wilcoxon results
+# Combine two sets filtering + rarefaction
+# Select only the relevant columns
+wilcox_summary <- bind_rows(
+  pw_summary %>% select(Measure, group1, group2, Wilcox_p_adj, Wilcox_p_sig),
+  wilcox_results %>% 
+    dplyr::rename(Wilcox_p_adj = p.adj, Wilcox_p_sig = p.adj.signif) %>%
+    select(Measure, group1, group2, Wilcox_p_adj, Wilcox_p_sig)
+) %>%
+  mutate(Dataset_comparison = paste(group1, "→", group2)) %>%
+  select(Measure, Dataset_comparison, Wilcox_p_adj, Wilcox_p_sig)
+
+# Join effect sizes and Wilcoxon
+summary_table <- effect_sizes %>%
+  left_join(wilcox_summary, by = c("Measure", "Dataset_comparison"))
+
+desired_order <- c(
+  "Pre_lulu → Unfiltered",
+  "Unfiltered → Filtered",
+  "Pre_lulu → Pre_lulu_Rarefied",
+  "Unfiltered → Unfiltered_Rarefied",
+  "Filtered → Filtered_Rarefied"
+)
+
+
+# Arrange 
+summary_table <- summary_table  %>%
+  dplyr::mutate(
+    Dataset_comparison = factor(Dataset_comparison, levels = desired_order)
+  ) %>%
+  dplyr::arrange(Measure, Dataset_comparison) %>%
+  dplyr::mutate(
+    Wilcox_p_adj = ifelse(
+      Wilcox_p_adj < 0.001,
+      format(Wilcox_p_adj, scientific = TRUE, digits = 2),
+      signif(Wilcox_p_adj, 3)
+    )
+  )%>%
+  dplyr::mutate(
+    median_change = ifelse(
+      abs(median_change) < 0.001,
+      format(median_change, scientific = TRUE, digits = 2),
+      signif(median_change, 3)
+    )
+  )
+
+# Write to CSV
+write.csv(summary_table, "./tables/supplement_alpha_diversity_summary.csv", row.names = FALSE)
+
+summary_table
+```
+
+
+```{r}
+# Define comparisons
+my_comparisons <- list(
+  c("Multicellular hosts", "Foraminifera"),
+  c("Multicellular hosts", "Environment"),
+  c("Foraminifera", "Environment")
+)
+
+# Function to compute KW + pairwise Wilcoxon for one dataset
+compute_host_diversity <- function(df, dataset_name, measures = c("FaithPD", "Shannon", "Chao1", "Simpson")) {
+  df_sub <- df %>% filter(Dataset == dataset_name, Measure %in% measures)
+  
+  map_df(measures, function(m) {
+    df_m <- df_sub %>% filter(Measure == m)
+    
+    # Kruskal-Wallis
+    kw <- kruskal_test(df_m, Value ~ host_type)
+    
+    # Pairwise Wilcoxon (FDR)
+    pw <- pairwise_wilcox_test(df_m, Value ~ host_type, p.adjust.method = "fdr", comparisons = my_comparisons) %>%
+      select(group1, group2, p.adj) %>%
+      mutate(p.adj = signif(p.adj, 3))  # round for readability
+    
+    # Combine KW with each pairwise comparison
+    pw %>%
+      mutate(
+        Measure = m,
+        Dataset = dataset_name,
+        KW_stat = kw$statistic,
+        KW_df = kw$df,
+        KW_p = signif(kw$p, 3)
+      ) %>%
+      select(Measure, Dataset, KW_stat, KW_df, KW_p, group1, group2, p.adj)
+  })
+}
+
+# Apply to all datasets
+datasets_to_test <- c("Pre_lulu", "Unfiltered", "Filtered")
+
+host_diversity_results <- map_df(datasets_to_test, ~compute_host_diversity(richness_combined_long, .x))
+
+# Optional: make a clean summary table
+summary_table <- host_diversity_results %>%
+  arrange(Measure, Dataset, group1, group2) %>%
+  mutate(
+    KW_sig = case_when(
+      KW_p <= 0.001 ~ "***",
+      KW_p <= 0.01  ~ "**",
+      KW_p <= 0.05  ~ "*",
+      TRUE          ~ "ns"
+    ),
+    Wilcox_sig = case_when(
+      p.adj <= 0.001 ~ "***",
+      p.adj <= 0.01  ~ "**",
+      p.adj <= 0.05  ~ "*",
+      TRUE           ~ "ns"
+    )
+  ) %>% 
+  dplyr::mutate(
+    p.adj = ifelse(
+      p.adj < 0.001,
+      format(p.adj, scientific = TRUE, digits = 2),
+      signif(p.adj, 3)
+    )) %>% dplyr::select(- KW_stat, -KW_df) %>% 
+  dplyr::mutate(
+    KW_p = ifelse(
+      KW_p < 0.001,
+      format(KW_p, scientific = TRUE, digits = 2),
+      signif(KW_p, 3)
+    ))
+
+# Write to CSV for supplement
+write.csv(summary_table, "./tables/host_diversity_summary.csv", row.names = FALSE)
+
+summary_table 
+summary_table %>% filter(Wilcox_sig == "ns")
+```
+
+## Plot total unique asvs per sample type and specific asvs
+```{r}
+# Melt the phyloseq object into a data frame
+phyloseq_symbio_melted_df <- psmelt(phyloseq_symbio_raw_with_tree)
+
+# Group by SampleType and count unique ASVs in each type
+asvs_by_type <- phyloseq_symbio_melted_df %>%
+  dplyr::filter(Abundance > 0) %>% 
+  group_by(host_tax) %>%
+  summarise(num_ASVs = n_distinct(OTU))
+
+unique_asv <- phyloseq_symbio_melted_df %>%
+  dplyr::filter(Abundance > 0) %>% 
+  dplyr::group_by(host_tax) %>%
+  distinct(host_tax, OTU)  %>%
+  dplyr::group_by(OTU) %>%
+  dplyr::filter(n() == 1) %>%    # ASVs seen in only one host_type
+  dplyr::group_by(host_tax) %>%
+  dplyr::summarise(unique_ASVs = n())
+
+asv_summary <- dplyr::left_join(asvs_by_type, unique_asv,  by = "host_tax") %>% 
+  dplyr::mutate(unique_ASVs = case_when(
+    is.na(unique_ASVs) ~ 0,
+        .default = unique_ASVs))
+
+asv_uniq_plt <- ggplot(asv_summary, aes(x = host_tax)) +
+  geom_col(aes(y = num_ASVs), fill = "grey70") +
+  geom_point(aes(y = unique_ASVs), color = "red", size = 3) +
+  geom_text(aes(y = num_ASVs, label = num_ASVs), vjust = -0.5) +
+  geom_text(aes(y = unique_ASVs, label = unique_ASVs), vjust = 1.5, color = "red") +
+  theme_minimal() +
+  ylab("Number of ASVs") + xlab("")
+asv_uniq_plt 
+```
+
+On aggregated samples, ger SR (= total unique ASVs) and check Faith's PD 
+This step is not needed if you don't need to check Faith's PD, but here is used to control that total ASVs calculation was correc and equal to SR; FaithPD was also inspected. 
+```{r}
+# Merge the samples
+phyloseq_type_mer = merge_samples(phyloseq_symbio_raw_with_tree, "host_tax")
+# repair variables that were damaged during merge (coerced to numeric)
+sample_data(phyloseq_type_mer)$host_tax <- factor(sample_names(phyloseq_type_mer))
+
+phyloseq_mer_PD_df <- biomeUtils::calculatePD(phyloseq_type_mer, justDF = TRUE)
+#$PD is Faith's phylogenetic diversity, and SR is species richness (total nimber of ASVs)
+
+
+#add to phyloseq object
+sample_data(phyloseq_type_mer)$FaithPD <- phyloseq_mer_PD_df$PD[match(
+  sample_names(phyloseq_type_mer),
+  rownames(phyloseq_mer_PD_df)
+)]
+
+sample_data(phyloseq_type_mer)$SR <- phyloseq_mer_PD_df$SR[match(
+  sample_names(phyloseq_type_mer ),
+  rownames(phyloseq_mer_PD_df)
+)]
+
+# check the data
+sample_data(phyloseq_type_mer)$FaithPD
+sample_data(phyloseq_type_mer)$SR
+
+richness_mer_df <- phyloseq::estimate_richness(
+  phyloseq_type_mer, 
+  measures = c("Shannon", "Simpson")
+)
+
+rownames(richness_mer_df) <- gsub("\\.", "-", rownames(richness_mer_df))
+
+# Add sample metadata 
+richness_mer_joined_df <- richness_mer_df %>%
+  mutate(SampleID = rownames(.)) %>%
+  left_join(as(sample_data(phyloseq_type_mer), "data.frame") %>%
+              mutate(SampleID = rownames(.)),
+            by = "SampleID")  %>% 
+  dplyr::mutate(host_type = case_when(
+        host_tax == "Algae" | host_tax == "Sediment" | host_tax == "Water" ~ "Environment",
+        host_tax == "Amphisorus" | host_tax == "Sorites"  ~ "Foraminifera",
+        .default = "Multicellular hosts"))%>% 
+  dplyr::mutate(host_type = factor(host_type, levels = host_type_order)) %>% 
+  dplyr::select(-Richness, -site, -env_or_host) %>%
+  left_join(asv_summary, by = "host_tax")%>% 
+  dplyr::mutate(host_tax=factor(host_tax, levels = host_tax_order))
+
+richness_mer_joined_df 
+```
+
+# Alpha unfiltered
+
+## Unfiltered alpha plot
+```{r}
+richness_PD_Shannon_Unfiltered <- richness_combined_long %>% 
+  dplyr::filter(Dataset=="Unfiltered")%>% 
+  dplyr::filter(Measure=="FaithPD" | Measure=="Shannon" |Measure=="Chao1")
+
+my_comparisons <- list(
+  c("Multicellular hosts", "Foraminifera"),
+  c("Multicellular hosts", "Environment"),
+  c("Foraminifera", "Environment")
+)
+
+# Visualisation
+unfiltered_richness_plt <- ggplot(richness_PD_Shannon_Unfiltered,  aes(x = host_type, y = Value, fill = host_tax)) +  
+  geom_boxplot(outlier.shape = NA, alpha = 0.4, color = "#5b5b5b", linewidth = 0.4, width = 0.7)+  
+  geom_jitter(size = 3, alpha = 0.8, aes(shape = site, color = host_tax, group = host_tax), position = position_jitterdodge(jitter.width = 0.8))+
+  scale_fill_manual(values = host_tax_color_palette) +
+  scale_color_manual(values = host_tax_color_palette) +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    legend.position = "none",
+    axis.ticks = element_blank(), 
+    panel.grid   = element_blank(),
+    axis.line = element_line(color = "#5b5b5b"),
+    axis.title   = element_blank(), 
+    plot.margin = margin(5, 5, 5, 5),
+    axis.text.x = element_blank(),
+    strip.text = element_text(size = 14, margin = margin(t = 6, b = 4)),
+    strip.background.y = element_rect(fill = "white", color = "white"),
+    strip.text.y.left = element_text(size = 14, angle = 90),
+    axis.text.y = element_text(size = 14, hjust = 0.5),
+    strip.placement = "outside", 
+    panel.spacing.y = unit(1, "lines")) +
+  facet_wrap(~Measure, scales = "free", ncol = 1, strip.position = "left") +
+  stat_compare_means(comparisons = my_comparisons, method = "wilcox.test", label = "p.signif")+ 
+  coord_cartesian(clip = "off") + labs(title= "Alpha diversity")
+
+unfiltered_richness_plt
+```
+
+
+# Plot gamma
+```{r}
+# Convert to long format for easy ggplotting
+richness_mer_long <- richness_mer_joined_df  %>%
+  pivot_longer(cols = c("Shannon","Simpson","FaithPD", "SR"),
+               names_to = "Measure", values_to = "Value")
+
+richness_mer_SR <- richness_mer_long %>% dplyr::filter(Measure=="SR")
+
+
+rich_mer_SR_plt <- ggplot(richness_mer_SR, aes(x = host_type, fill = host_tax)) +
+  geom_col(aes(y = Value), 
+           position = position_dodge(width = 0.8), 
+           width = 0.7,
+           alpha = 0.4, color = "#5b5b5b") +
+  geom_col(aes(y = unique_ASVs), 
+           position = position_dodge(width = 0.8), 
+           width = 0.7,
+           alpha = 0.6, color = "#5b5b5b") +
+  geom_text(aes(y = Value, label = Value), 
+            position = position_dodge(width = 0.8), 
+            vjust = -0.5, color = "#5b5b5b", size = 7) +
+  scale_fill_manual(values = host_tax_color_palette) +
+  #scale_color_manual(values = host_tax_color_palette) +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    legend.position = "none",
+    axis.ticks = element_blank(), 
+    panel.grid   = element_blank(),
+    axis.line = element_line(color = "#5b5b5b"),
+    axis.title.x  = element_blank(), 
+    axis.title.y = element_text(size = 14, hjust = 0.5),
+    plot.margin = margin(5, 5, 5, 5),
+    axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 1, size = 14),
+    axis.text.y = element_text(size = 14, hjust = 0.5)
+  ) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
+  labs(x = "", y = "Unique | Total ASVs", title = "Gamma diversity (unique and total ASVs per sample type)")
+rich_mer_SR_plt
+
+#ggsave(plot = rich_mer_SR_plt,   filename = 'plots/rich_mer_SR_plt.png',  width = 13, height = 10, units = c("cm"), dpi = 300,   bg = "white")
+```
+# ASV accumulation curves
+
+```{r}
+# Filtered 
+otu_mat_filt <- as(otu_table(phyloseq_symbio_with_tree), "matrix")
+if(taxa_are_rows(phyloseq_symbio_with_tree)) otu_mat_filt <- t(otu_mat_filt)
+host_type_filt <- sample_data(phyloseq_symbio_with_tree)$type
+otu_split_filt <- split(as.data.frame(otu_mat_filt), host_type_filt)
+spec_accum_filt <- lapply(otu_split_filt, specaccum)
+
+# Raw/unfiltered
+otu_mat_raw <- as(otu_table(phyloseq_symbio_raw_with_tree), "matrix")
+if(taxa_are_rows(phyloseq_symbio_raw_with_tree)) otu_mat_raw <- t(otu_mat_raw)
+host_type_raw <- sample_data(phyloseq_symbio_raw_with_tree)$type
+otu_split_raw <- split(as.data.frame(otu_mat_raw), host_type_raw)
+spec_accum_raw <- lapply(otu_split_raw, specaccum)
+
+# Save to png
+png("./plots/species_accumulation_curves_filtered_vs_raw.png", width = 2000, height = 2500, res = 300)
+par(xpd = TRUE)
+
+plot(NULL, 
+     xlim = c(1, max(sapply(spec_accum_filt, function(x) max(x$sites))) * 1.1),
+     ylim = c(0, max(sapply(spec_accum_filt, function(x) max(x$richness + x$sd)))),
+     xlab = "Number of samples", ylab = "Accumulated richness of ASVs",
+     main = "", bty = "n",
+     cex.axis = 0.9, cex.lab = 1 )
+
+# Add filtered curves (solid)
+for (type in names(spec_accum_filt)) {
+  curve <- spec_accum_filt[[type]]
+  col <- samples_color_palette[type]
+  plot(curve, add = TRUE, ci.type = "poly",
+       col = col, lwd = 2, ci.lty = 0,
+       ci.col = adjustcolor(col, 0.05))
+  text(x = max(curve$sites)+0.1, 
+       y = tail(curve$richness, 1), 
+       labels = type, col = col, font = 1, cex = 0.9, adj = 0)
+}
+
+# Add raw/unfiltered curves (dotted)
+for (type in names(spec_accum_raw)) {
+  curve <- spec_accum_raw[[type]]
+  col <- samples_color_palette[type]
+  lines(curve$sites, curve$richness, col = col, lwd = 1.5, lty = 2)  # dotted
+}
+
+dev.off()
+
+# Save to svg
+svg("./plots/species_accumulation_curves_filtered_vs_raw.svg", width = 8, height = 10)  # size in inches
+par(xpd = TRUE)
+
+plot(NULL, 
+     xlim = c(1, max(sapply(spec_accum_filt, function(x) max(x$sites))) * 1.1),
+     ylim = c(0, max(sapply(spec_accum_filt, function(x) max(x$richness + x$sd)))),
+     xlab = "Number of samples", ylab = "Accumulated richness of ASVs",
+     main = "", bty = "n",
+     cex.axis = 0.9, cex.lab = 1 )
+
+# Filtered curves (solid)
+for (type in names(spec_accum_filt)) {
+  curve <- spec_accum_filt[[type]]
+  col <- samples_color_palette[type]
+  plot(curve, add = TRUE, ci.type = "poly",
+       col = col, lwd = 2, ci.lty = 0,
+       ci.col = adjustcolor(col, 0.05))
+  text(x = max(curve$sites)+0.1, 
+       y = tail(curve$richness, 1), 
+       labels = type, col = col, font = 1, cex = 0.9, adj = 0)
+}
+
+# Raw/unfiltered curves (dotted)
+for (type in names(spec_accum_raw)) {
+  curve <- spec_accum_raw[[type]]
+  col <- samples_color_palette[type]
+  lines(curve$sites, curve$richness, col = col, lwd = 1.5, lty = 2)  # dotted
+}
+
+dev.off()
+
+
+# Remove text width restrictions
+clean_svg ("./plots/species_accumulation_curves_filtered_vs_raw.svg")
+```
+
+
+# PCoA with proportions 
+## Calculate proportions
+
+```{r}
+to_proportions <- function(counts) {
+      counts / sum(counts)
+}
+
+ps_rel <- transform_sample_counts(phyloseq_symbio_with_tree, to_proportions)
+
+phyloseq::sample_data(ps_rel)$site <- 
+  factor(phyloseq::sample_data(ps_rel)$site)
+```
+
+## Compute PCoA on wunifraq and plot 
+
+```{r}
+# ordinate
+ord_PCoA <- phyloseq::ordinate(
+  ps_rel,
+  method = "PCoA",
+  distance = "wunifrac"
+)
+
+# Plot
+ord_PCoA_plt <- phyloseq::plot_ordination(
+  ps_rel,
+  ord_PCoA,
+  color = "type",
+  shape = "site",
+  type = "samples"
+) +
+  ggplot2::geom_point(size = 5, alpha = 0.8) +
+  ggplot2::theme_minimal() +
+  ggplot2::scale_color_manual(values = samples_color_palette  ) +
+  ggplot2::labs(title = "") +
+  ggplot2::theme(
+    axis.ticks = element_blank(), 
+    panel.grid   = element_blank(), 
+    axis.text = element_blank())
+ord_PCoA_plt 
+# Save as PNG
+ggplot2::ggsave(  filename = "plots_test/PCoA_plot.png",  plot = ord_PCoA_plt,  width = 10, height = 8,  dpi = 300, bg = "white" )
+
+```
+
+Compute PCoA without Tridacna
+```{r}
+ps_rel_no_tri <- ps_rel %>%
+  phyloseq::subset_samples(!type %in% "Tridacna")
+
+
+# ordinate
+ord_PCoA_no_tri <- phyloseq::ordinate(
+  ps_rel_no_tri,
+  method = "PCoA",
+  distance = "wunifrac"
+)
+
+# Plot
+ord_PCoA_no_tri_plt <- phyloseq::plot_ordination(
+  ps_rel_no_tri,
+  ord_PCoA_no_tri,
+  color = "host_tax",
+  shape = "site",
+  type = "samples"
+) +
+  ggplot2::geom_point(size = 5, alpha = 0.8) +
+  ggplot2::theme_minimal() +
+  ggplot2::scale_color_manual(values = host_tax_color_palette) +
+  ggplot2::labs(title = "")  +
+  ggplot2::theme(
+    axis.ticks = element_blank(), 
+    panel.grid   = element_blank(), 
+    axis.text = element_blank())
+
+# Save as PNG
+ggplot2::ggsave(
+  filename = "plots_test/ord_PCoA_no_tri_plt.png",
+  plot = ord_PCoA_no_tri_plt,
+  width = 10, height = 8,
+  dpi = 300, bg = "white"
+)
+# Plot
+ord_PCoA_no_tri_plt 
+```
+
+## PCoA with encircle
+```{r}
+pcoa_df <- as.data.frame(ord_PCoA$vectors)
+pcoa_df$SampleID <- rownames(pcoa_df)
+
+# Attach sample metadata
+sample_df <- as(sample_data(ps_rel), "data.frame") %>%
+  mutate(SampleID = rownames(.))
+
+pcoa_df <- left_join(pcoa_df, sample_df, by = "SampleID") 
+
+# Rename sites
+pcoa_df <- pcoa_df %>%
+  mutate(site = factor(site, levels = c(1,2,3), labels = c("site 1", "site 2", "site 3")))%>% 
+  dplyr::mutate(host_tax = as.factor(host_tax)) %>%
+  dplyr::mutate(host_tax = factor(host_tax, levels = host_tax_order))
+
+# Extract percent variance explained
+eigvals <- ord_PCoA$values$Relative_eig * 100
+
+x_lab <- paste0("PCoA Axis 1 (", round(eigvals[1], 1), "%)")
+y_lab <- paste0("PCoA Axis 2 (", round(eigvals[2], 1), "%)")
+
+PCoA_encircle_plt <- ggplot(pcoa_df, aes(x = Axis.1, y = Axis.2))  +
+  geom_encircle(aes(group = host_tax, fill = host_tax),
+                alpha = 0.15, show.legend = FALSE, colour = NA) +
+  geom_point(aes(color = host_tax, shape = site), size = 3, alpha = 0.8)+
+  scale_color_manual(values = host_tax_color_palette, 
+                     labels =  type_labels) +
+  scale_fill_manual(values = host_tax_color_palette,
+                    labels =  type_labels) +
+  theme_minimal()+
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.ticks = element_blank(), 
+    panel.grid = element_blank(), 
+    axis.line = element_line(color = "#5b5b5b"),
+    #axis.text = element_blank(),
+    #legend.title = element_blank(), 
+    axis.title = element_text(size = 14),
+    #legend.position = "right",
+    #legend.justification = c("bottom"),
+    #legend.text = element_text(size = 14),
+    legend.position = "none", 
+  )+
+  scale_y_continuous(expand = expansion(mult = c(0.15, 0.15)))+
+   scale_x_continuous(expand = expansion(mult = c(0.15, 0.15)))+
+  labs(x = x_lab, y = y_lab, title = "Unconstrained ordination (PCoA, UniFrac)")+
+  coord_cartesian(clip = "off")
+
+# show in the document
+PCoA_encircle_plt
+
+# save as PNG
+ggplot2::ggsave(
+  filename = "plots_test/PCoA_encircle_plt.png",
+  plot = PCoA_encircle_plt,
+  width = 10, height = 8,
+  dpi = 300, bg = "white"
+)
+
+```
+
+
+
+
+Add Tridacna's PCoA, with Tridacna in color and the rest colored grey (if Tridana appears too far from the rest)
+```{r}
+pcoa_tri_df <- as.data.frame(ord_PCoA$vectors)
+pcoa_tri_df$SampleID <- rownames(pcoa_tri_df)
+
+# Attach sample metadata
+sample_df <- as(sample_data(ps_rel), "data.frame") %>%
+  mutate(SampleID = rownames(.))
+
+pcoa_tri_df <- left_join(pcoa_tri_df, sample_df, by = "SampleID") 
+
+# Extract percent variance explained
+tri_eigvals <- ord_PCoA$values$Relative_eig * 100
+
+x_tri_lab <- paste0("Axis 1 (", round(tri_eigvals[1], 1), "%)")
+y_tri_lab <- paste0("Axis 2 (", round(tri_eigvals[2], 1), "%)")
+
+PCoA_encircle_tri_plt <- ggplot(pcoa_tri_df, aes(x = Axis.1, y = Axis.2)) +
+  geom_point(aes(color = host_tax), size = 4, alpha = 0.8) +
+  geom_encircle(aes(group = host_tax, fill = host_tax),
+                alpha = 0.2, show.legend = FALSE, colour = NA) +
+  scale_color_manual(values = tridacna_color_palette, 
+                     labels = c(
+    "Tridacna" = expression(italic("Tridacna"))
+  )) +
+  scale_fill_manual(values = tridacna_color_palette) +
+  theme_minimal()+
+  theme(
+    axis.ticks = element_blank(), 
+    panel.grid = element_blank(), 
+    axis.line = element_line(color = "#5b5b5b"),
+    axis.text = element_blank(),
+    legend.title = element_blank(), 
+    axis.title = element_text(size = 14),
+    #axis.title = element_blank(),
+    legend.position = "right",
+    legend.text = element_text(size = 14), 
+    panel.background = element_rect(fill = "#f2f2f2", colour = "#f2f2f2", size = 1),
+    plot.margin = margin(30, 30, 30, 30)
+  )+
+  scale_y_continuous(expand = expansion(mult = c(0.15, 0.15)))+
+   scale_x_continuous(expand = expansion(mult = c(0.15, 0.15)))+
+  #labs(x = "", y = "")
+  labs(x = x_tri_lab, y = y_tri_lab)
+
+PCoA_encircle_tri_plt
+
+# Save as PNG
+# ggplot2::ggsave(  filename = "plots/PCoA_encircle_tri_plt.png",  plot = PCoA_encircle_tri_plt,  width = 10, height = 8,  dpi = 300, bg = "white")
+
+#ggplot2::ggsave(  filename = "plots/PCoA_encircle_tri_plt.svg",  plot =PCoA_encircle_tri_plt,  width = 10, height = 8,  dpi = 300, bg = "white")
+```
+
+# db-RDA
+Genus level
+```{r}
+ps_gen <- tax_glom(phyloseq_symbio_with_tree, taxrank = "Genus", NArm = TRUE)
+
+ps_gen_rel <- transform_sample_counts(ps_gen, to_proportions)
+
+# Use your OTU matrix directly
+otu_mat <- as(otu_table(ps_gen_rel), "matrix")
+if(taxa_are_rows(ps_gen_rel)) otu_mat <- t(otu_mat)
+# Replace rownames with genus names
+colnames(otu_mat) <- tax_table(ps_gen_rel)[, "Genus"]
+
+# Combine with metadata
+sample_df <- as(sample_data(ps_gen_rel), "data.frame")
+sample_df$SampleID <- rownames(sample_df)
+
+# db-RDA constrained by host_tax and site
+db_rda <- capscale(otu_mat ~ host_tax, data = sample_df, distance = "bray")
+
+# Sample scores
+sample_scores_df <- as.data.frame(scores(db_rda, display = "sites"))
+sample_scores_df$SampleID <- rownames(sample_scores_df)
+sample_scores_df <- left_join(sample_scores_df, sample_df, by = "SampleID") %>% 
+  dplyr::mutate(site = factor(site, levels = c(1,2,3), labels = c("site 1", "site 2", "site 3"))) %>% 
+  dplyr::mutate (host_tax = factor(host_tax, levels = host_tax_order )) 
+
+# Species (genus) scores
+species_scores <- scores(db_rda, display = "species")  
+species_scores_df <- as.data.frame(species_scores)
+species_scores_df$Genus <- rownames(species_scores_df)
+
+# Rank genera by vector length
+species_scores_df <- species_scores_df %>%
+  mutate(vec_length = sqrt(CAP1^2 + CAP2^2)) %>%
+  arrange(desc(vec_length)) %>%
+  dplyr::slice(1:6)
+
+# Add fixed offset in the arrow direction
+offset <- 0.1  # adjust as needed
+
+species_scores_df <- species_scores_df %>%
+  mutate(
+    label_x = CAP1 + offset*3 * sign(CAP1),
+    label_y = CAP2 + offset * sign(CAP2), 
+    Genus_italics = paste0("italic('", Genus, "')")
+  )
+
+RDA_genus_plt <- ggplot(sample_scores_df, aes(x = CAP1, y = CAP2))  +
+  geom_encircle(aes(group = host_tax, fill = host_tax),
+                alpha = 0.15, show.legend = FALSE, colour = NA) +
+  geom_point(aes(color = host_tax, shape = site), size = 3, alpha = 0.55)+
+  # Arrows for genera 
+  geom_segment(data = species_scores_df,
+               aes(x = 0, y = 0, xend = CAP1, yend = CAP2),
+               color = "black", alpha = 0.8,
+               arrow = arrow(length = unit(0.2,"cm")),
+               inherit.aes = FALSE,
+               show.legend = FALSE) +
+  geom_text(data = species_scores_df,
+            aes(x = label_x, y = label_y, label = Genus_italics),
+            color = "black", size = 3, check_overlap = TRUE, parse = TRUE) +
+  scale_color_manual(
+    values = host_tax_color_palette,
+    labels = type_labels, "Top genera driving separation", 
+    name = ""
+  ) +
+  scale_fill_manual(values = host_tax_color_palette) +
+  theme_minimal() +
+  labs(x = "db-RDA1", y = "db-RDA2", shape = NULL, color = NULL, title = "Genera driving separation between sample types (db-RDA, Bray–Curtis)") +
+  theme(
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "#5b5b5b"),
+    #legend.title = element_blank(),
+    axis.title = element_text(size = 14),
+    legend.position = "right",
+    legend.justification = c("bottom"),
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size = 14),
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.margin = margin(t=5, r=35, b=5, l=5)
+  ) +
+  scale_y_continuous(expand = expansion(mult = c(0.15, 0.15))) +
+  scale_x_continuous(expand = expansion(mult = c(0.15, 0.15))) +
+  coord_cartesian(clip = "off") 
+
+RDA_genus_plt
+
+ggsave(plot = RDA_genus_plt,   filename = 'plots/RDA_genus_plt.png',  width = 30, height = 30, units = c("cm"), dpi = 300,   bg = "white")
+```
+
+The same but at the ASV level 
+```{r}
+# Use raw ASV table (no genus aggregation)
+ps_rel <- transform_sample_counts(phyloseq_symbio_with_tree, to_proportions)
+
+tax_table(ps_rel) %>% head()
+
+otu_mat <- as(otu_table(ps_rel), "matrix")
+if(taxa_are_rows(ps_rel)) otu_mat <- t(otu_mat)
+
+sample_df <- as(sample_data(ps_rel), "data.frame")
+sample_df$SampleID <- rownames(sample_df)
+
+# db-RDA constrained by host_tax and site
+db_rda <- capscale(otu_mat ~ host_tax, data = sample_df, distance = "bray")
+
+# Sample scores
+sample_scores_df <- as.data.frame(scores(db_rda, display = "sites"))
+sample_scores_df$SampleID <- rownames(sample_scores_df)
+sample_scores_df <- left_join(sample_scores_df, sample_df, by = "SampleID")
+
+# Species (ASV) scores
+species_scores_df <- as.data.frame(scores(db_rda, display = "species"))
+species_scores_df$ASV <- rownames(species_scores_df)
+
+# Compute vector length for each ASV
+species_scores_df$length <- sqrt(species_scores_df$CAP1^2 + species_scores_df$CAP2^2)
+
+# Select top 10–15 ASVs by vector length
+top_ASVs <- species_scores_df %>% dplyr::top_n(10, length)
+# Extract tax table as data.frame
+tax_df <- as.data.frame(tax_table(ps_rel))
+
+# Make sure rownames match your ASVs
+species_scores_df$Label <- tax_df[match(species_scores_df$ASV, rownames(tax_df)), "Label_match"]
+species_scores_df$site <- tax_df[match(species_scores_df$ASV, rownames(tax_df)), "site"]
+
+
+# Now 'Label' will be used in the plot
+top_ASVs <- species_scores_df %>% dplyr::top_n(10, length)
+
+# Plot with arrows labeled by 'Label_match'
+ASV_arrows_plt <- ggplot(sample_scores_df, aes(x = CAP1, y = CAP2)) +
+  geom_point(aes(color = host_tax), size = 5, alpha = 0.8) +
+  geom_encircle(aes(group = host_tax, fill = host_tax),
+                alpha = 0.15, show.legend = FALSE, colour = NA) +
+  geom_segment(data = top_ASVs,
+               aes(x = 0, y = 0, xend = CAP1, yend = CAP2),
+               arrow = arrow(length = unit(0.2,"cm")), color = "black", alpha = 0.8) +
+  geom_text(data = top_ASVs,
+            aes(x = CAP1+0.1, y = CAP2+0.1, label = Label),
+            color = "black", size = 3, check_overlap = TRUE) +
+  scale_color_manual(values = host_tax_color_palette) +
+  scale_fill_manual(values = host_tax_color_palette) +
+  theme_minimal() +
+  labs(x = "db-RDA1", y = "db-RDA2")
+
+ASV_arrows_plt
+
+# save as PNG
+ggplot2::ggsave(
+  filename = "plots/ASV_arrows_plt.png",
+  plot = ASV_arrows_plt,
+  width = 15, height = 15,
+  dpi = 300, bg = "white"
+)
+```
+
+# Combine alpha, gamma, and ordination for Figure 2
+```{r}
+gamma_div<- (plot_spacer() | rich_mer_SR_plt) + 
+  plot_layout(widths = c(0, 1)) 
+
+alpah_div <- (plot_spacer() | unfiltered_richness_plt)+ 
+  plot_layout(widths = c(0, 1)) 
+
+diversity_plt <- (alpah_div / plot_spacer()/ gamma_div) + 
+  plot_layout(heights = c(2.98, 0.04, 0.98)) 
+diversity_plt 
+
+ggsave(plot = diversity_plt,   filename = 'plots_test/diversity_plt.png',  width = 16, height = 30, units = c("cm"), dpi = 300,   bg = "white")
+
+RDA_plt <- (RDA_genus_plt | plot_spacer()) +
+  plot_layout(widths = c(1, 0.1))&
+  guides(
+    color = guide_legend(order = 1),  # host_tax on top
+    shape = guide_legend(order = 2)   # site below
+  )
+
+# Make ordination part of the figure 
+Ordination_plt <- PCoA_encircle_plt / RDA_plt +
+  plot_layout(heights = c(1, 0.8)) 
+Ordination_plt
+
+diversity_ordination_plt <- (diversity_plt | plot_spacer()| Ordination_plt) +  
+  plot_annotation(tag_levels = 'A') +
+  plot_layout(widths = c(1, 0.08, 1)) &   # adjust width ratio if needed
+  theme(plot.margin = margin(5, 5, 5, 5), 
+        plot.tag = element_text(size = 20, face = "bold", family = "Arial"))
+
+diversity_ordination_plt 
+
+ggsave(plot = diversity_ordination_plt,   filename = 'plots/diversity_PCoA_inset_plt.png',  width = 40, height = 30, units = c("cm"), dpi = 300,   bg = "white")
+
+
+ggsave_clean(plot = diversity_ordination_plt,   filename = 'plots/diversity_PCoA_inset_plt.svg',  width = 40, height = 30, units = c("cm"), dpi = 300)
+```
+
+# PERMANOVA with wunifrac 
+## Sample type (adonis2) 
+```{r}
+
+ps_rel <- transform_sample_counts(phyloseq_symbio_with_tree, to_proportions)
+#ps_rel is phyloseq object with relative abundances 
+
+wunifrac_dist_rel <- phyloseq::distance(ps_rel, method = "wunifrac")
+sample_df <- data.frame(sample_data(ps_rel))
+
+set.seed(1)
+# Homogeneity of dispersion test
+beta <- betadisper(wunifrac_dist_rel, sample_df$type)
+permutest(beta)
+# if p > 0.05 - can proceed with PERMANOVA (adonis2) 
+
+plot(beta)
+
+TukeyHSD(beta)
+```
+
+```{r}
+ps_rel_no_tri <- ps_rel %>%
+  phyloseq::subset_samples(!type %in% "Tridacna")
+
+
+wunifrac_dist_no_tri <- phyloseq::distance(ps_rel_no_tri, method = "wunifrac")
+sample_df_no_tri <- data.frame(sample_data(ps_rel_no_tri))
+
+set.seed(1)
+# Homogeneity of dispersion test
+beta <- betadisper(wunifrac_dist_no_tri, sample_df_no_tri$type)
+permutest(beta)
+# if p > 0.05 - can proceed with PERMANOVA (adonis2) 
+
+# Adonis test
+vegan::adonis2(wunifrac_dist_no_tri ~ type, data = sample_df_no_tri) #significant
+# type explains R% of variation
+
+vegan::adonis2(wunifrac_dist_no_tri ~ site, data = sample_df_no_tri)
+```
+
+
+## Pairwise type comparisons (pairwise.adonis2)
+```{r}
+set.seed(1)
+# run the test 
+res <- pairwiseAdonis::pairwise.adonis2(wunifrac_dist_no_tri ~ type, data = sample_df_no_tri)
+
+# Remove the 'parent_call' component
+comparisons <- res[names(res) != "parent_call"]
+
+str(comparisons[[1]]) 
+
+# Extract stats
+adonis_summary_df <- data.frame(
+  Comparison = names(comparisons),
+  R2 = sapply(comparisons, function(x) x[1, "R2"]),
+  F = sapply(comparisons, function(x) x[1, "F"]),
+  p_value = sapply(comparisons, function(x) x[1, "Pr(>F)"])
+)
+
+# Add adjusted p-values
+adonis_summary_df$p_value_bonferroni <- p.adjust(adonis_summary_df$p_value, method = "bonferroni")
+adonis_summary_df$p_value_FDR <- p.adjust(adonis_summary_df$p_value, method = "fdr")
+
+# Function to assign significance codes
+get_sig_code <- function(p) {
+  if (is.na(p)) return(NA)
+  else if (p <= 0.001) return("***")
+  else if (p <= 0.01) return("**")
+  else if (p <= 0.05) return("*")
+  else if (p <= 0.1) return(".")
+  else return("-")
+}
+
+# Add significance code columns
+adonis_summary_df$p_value_sig <- sapply(adonis_summary_df$p_value, get_sig_code)
+adonis_summary_df$p_value_bonferroni_sig <- sapply(adonis_summary_df$p_value_bonferroni, get_sig_code)
+adonis_summary_df$sig <- sapply(adonis_summary_df$p_value_FDR, get_sig_code)
+
+# View table
+print(adonis_summary_df)
+
+adonis_final <- adonis_summary_df %>% 
+  dplyr::select(Comparison, F, R2, p_value, p_value_FDR, sig) %>% 
+  dplyr::mutate(
+    across(c(F, R2), round, 3),
+    across(c(p_value, p_value_FDR), ~ signif(., 3))
+  ) %>%
+  dplyr::rename(
+    `Comparison` = Comparison,
+    `R²` = R2,
+    `F` = F,
+    `p` = p_value,
+    `p (FDR)` = p_value_FDR,
+    `Sig (FDR)` = sig
+  )
+write.csv(adonis_final, "./tables/Table_pairwise_PERMANOVA.csv", row.names = FALSE)
+adonis_final
+```
+
+Test for the site in Water samples only and in all env samples
+```{r}
+# Subset to water samples
+ps_water <- subset_samples(ps_rel_no_tri, type == "Water")
+
+# Recalculate distance
+wunifrac_water <- phyloseq::distance(ps_water, method = "wunifrac")
+sample_df_water <- data.frame(sample_data(ps_water))
+
+# Homogeneity of dispersion
+beta_water <- betadisper(wunifrac_water, sample_df_water$site)
+permutest(beta_water)
+# dispersions are homogeneous, so PERMANOVA is valid
+
+set.seed(1)
+# PERMANOVA
+adonis2(wunifrac_water ~ site, data = sample_df_water)
+
+
+
+# All env samples
+ps_water <- subset_samples(ps_rel_no_tri, type == "Water"| type == "Algae" | type == "Sediment")
+
+# Recalculate distance
+wunifrac_water <- phyloseq::distance(ps_water, method = "wunifrac")
+sample_df_water <- data.frame(sample_data(ps_water))
+
+# Homogeneity of dispersion
+beta_water <- betadisper(wunifrac_water, sample_df_water$site)
+permutest(beta_water)
+# dispersions are homogeneous, so PERMANOVA is valid
+
+set.seed(1)
+# PERMANOVA
+adonis2(wunifrac_water ~ site, data = sample_df_water)
+```
+
+Test if macroalgal composition has any influence
+```{r}
+ps_algae <- subset_samples(ps_rel_no_tri, type == "Algae")
+
+alg_groups <- data.frame(
+  sample_name = c("Algae2-2", "Algae2-6", "Algae1-2", "Algae1-5",
+                  "Algae1-1", "Algae2-7", "Algae2-5", "Algae1-6"),
+  algal_type  = c("misc", "Padina", "misc", "misc",
+                  "Padina", "Padina", "misc", "misc"),
+  stringsAsFactors = FALSE
+)
+
+# make sure rownames match sample names
+rownames(alg_groups) <- alg_groups$sample_name
+
+# extract metadata from phyloseq object
+meta <- data.frame(sample_data(ps_algae))
+
+# add the algal_type column by matching sample names
+meta$algal_type <- alg_groups[rownames(meta), "algal_type"]
+
+# put updated metadata back into phyloseq object
+sample_data(ps_algae) <- meta
+
+# Recalculate distance
+wunifrac_a <- phyloseq::distance(ps_algae, method = "wunifrac")
+sample_df_a <- data.frame(sample_data(ps_algae))
+
+# Homogeneity of dispersion
+beta_a <- betadisper(wunifrac_a, sample_df_a$algal_type)
+permutest(beta_a)
+# dispersions are homogeneous, so PERMANOVA is valid
+
+set.seed(1)
+# PERMANOVA
+adonis2(wunifrac_a ~ algal_type, data = sample_df_a)
+
+```
+
+
+# Explore overlaps 
+UpSet plot
+```{r}
+phyloseq_type_mer = merge_samples(phyloseq_symbio_with_tree, "type")
+# repair variables that were damaged during merge (coerced to numeric)
+sample_data(phyloseq_type_mer)$type <- factor(sample_names(phyloseq_type_mer))
+ps_pa <- transform_sample_counts(phyloseq_type_mer, function(abund) ifelse(abund > 0, 1, 0)) %>%
+  phyloseq::subset_samples(type %in% c("Algae", "Water", "Sediment", "Amphisorus", "Sorites"))
+
+# Convert to data.frame
+asv_matrix <- as.data.frame(otu_table(ps_pa))
+
+
+# Each column = ASV, each row = type (Water, Sediment, etc.)
+asv_long <- asv_matrix %>%
+  t() %>% as.data.frame() %>%
+  tibble::rownames_to_column("ASV") %>%
+  pivot_longer(-ASV, names_to = "Type", values_to = "Presence") %>%
+  filter(Presence == 1)
+
+# Build list for upset
+asv_lists <- split(asv_long$ASV, asv_long$Type)
+
+# UpSet plot
+
+upset(fromList(asv_lists), nsets = 5, order.by = "freq")
+
+```
+Get only enviromental overlaps 
+```{r}
+asv_matrix_env <- asv_matrix[c("Algae", "Water", "Sediment"), ]
+
+# convert to list of ASVs present in each group
+asv_lists <- apply(asv_matrix_env, 1, function(x) names(which(x > 0)))
+venn_env <- ggVennDiagram(asv_lists) +
+  scale_fill_gradient(low = "white", high = "steelblue")
+venn_env
+```
+
+
+Same but aggregate by "host type": 
+```{r}
+phyloseq_host_type_mer = merge_samples(phyloseq_symbio_with_tree, "host_type")
+
+ps_host_pa <- transform_sample_counts(phyloseq_host_type_mer, function(abund) ifelse(abund > 0, 1, 0)) 
+# Convert to data.frame
+asv_host_type_matrix <- as.data.frame(otu_table(ps_host_pa))
+
+# convert to list of ASVs present in each group
+asv_host_type_lists <- apply(asv_host_type_matrix, 1, function(x) names(which(x > 0)))
+
+# Plot Venn diagram
+venn_host_type <- ggVennDiagram(asv_host_type_lists) +
+  scale_fill_gradient(low = "white", high = "steelblue")
+venn_host_type
+
+```
+
+Get overlaps tables
+```{r}
+get_unique_overlap_table <- function(asv_lists, tax_df) {
+  
+  groups <- names(asv_lists)
+  
+  # all combinations of 1 to n groups
+  combs <- unlist(lapply(1:length(groups), 
+                         function(k) combn(groups, k, simplify = FALSE)), 
+                  recursive = FALSE)
+  
+  # order combinations by size (largest first),
+  # so uniques get assigned to their smallest possible set
+  combs <- combs[order(lengths(combs), decreasing = TRUE)]
+  
+  used_asvs <- character()
+  overlap_tables <- list()
+  
+  for (grps in combs) {
+    # ASVs present in all groups in this combo
+    asvs <- Reduce(intersect, asv_lists[grps])
+    
+    # remove ASVs already assigned to a smaller set
+    asvs <- setdiff(asvs, used_asvs)
+    
+    if (length(asvs) > 0) {
+      tax_sub <- tax_df[asvs, , drop = FALSE]
+      tax_sub$ASV <- rownames(tax_sub)
+      tax_sub$Intersection <- paste(grps, collapse = "/")
+      overlap_tables[[paste(grps, collapse = "/")]] <- tax_sub
+      used_asvs <- c(used_asvs, asvs)
+    }
+  }
+  
+  bind_rows(overlap_tables)
+}
+
+unique_overlap_tax_table <- get_unique_overlap_table(
+  asv_host_type_lists, 
+  as.data.frame(tax_table(ps_host_pa))
+) %>% dplyr::select(-Phylum, -Class, -Order, -Family)
+
+# Preview
+head(unique_overlap_tax_table)
+
+# Count ASVs per region
+table(unique_overlap_tax_table$Intersection)
+
+# Save to file
+write.csv(unique_overlap_tax_table, "tables/ASV_unique_overlap_table.csv", row.names = FALSE)
+```
+
+Plot Venn diagram with number of overlapping ASVs per genus
+```{r}
+# Summarise overlaps by Genus per Intersection
+genus_overlap_summary <- unique_overlap_tax_table %>%
+  group_by(Intersection, Genus) %>%
+  summarise(ASV_count = n(), .groups = "drop") %>%
+  arrange(Intersection, desc(ASV_count))
+
+# Preview
+print(genus_overlap_summary)
+
+# Optional: save to file
+# write.csv(genus_overlap_summary, "genus_overlap_summary.csv", row.names = FALSE)
+
+genus_overlap_labels <- genus_overlap_summary %>%
+  group_by(Intersection) %>%
+  summarise(
+    label = paste0(Genus, " (", ASV_count, ")", collapse = "\n"),
+    .groups = "drop"
+  )
+
+# Plot base venn
+
+# Create venn data
+venn_data <- process_data(Venn(asv_host_type_lists))
+
+# Region counts (ASVs per intersection)
+region_df <- venn_region(venn_data)
+
+# Region label positions (has x and y!)
+label_df <- venn_regionlabel(venn_data)
+
+# Join genus overlap summaries onto labels
+region_labels <- label_df %>%
+  left_join(genus_overlap_labels, by = c("name" = "Intersection"))
+
+# Base venn plot
+venn_host_type <- ggVennDiagram(asv_host_type_lists, label = "none") +
+  scale_fill_gradient(low = "white", high = "steelblue")
+
+# Add genus labels
+venn_host_type_labeled <- venn_host_type + geom_text(
+  data = region_labels,
+  aes(x = X, y = Y, label = label),
+  inherit.aes = FALSE,
+  size = 9
+)+
+  theme(legend.position = "none")
+
+ggplot2::ggsave("./plots/venn_host_type_labeled.png", plot = venn_host_type_labeled,
+                width = 30, height = 20, dpi = 300,  bg = "white")
+ggsave_clean("./plots/venn_host_type_labeled.svg", plot = venn_host_type_labeled,
+                width = 30, height = 20, dpi = 300)
+```
+
+
+```{r}
+
+```
+
+
+

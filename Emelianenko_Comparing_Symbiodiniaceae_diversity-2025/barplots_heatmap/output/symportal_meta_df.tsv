@@ -1,0 +1,75 @@
+sample_name	type	site	env_or_host	host_type	host_tax
+Tridacna1	Tridacna	3	host	Multicellular hosts	Tridacna
+Tridacna2	Tridacna	3	host	Multicellular hosts	Tridacna
+Tridacna3	Tridacna	3	host	Multicellular hosts	Tridacna
+Tridacna4	Tridacna	3	host	Multicellular hosts	Tridacna
+Tridacna5	Tridacna	3	host	Multicellular hosts	Tridacna
+Tridacna6	Tridacna	3	host	Multicellular hosts	Tridacna
+Tridacna7	Tridacna	3	host	Multicellular hosts	Tridacna
+Tridacna8	Tridacna	3	host	Multicellular hosts	Tridacna
+Tridacna9	Tridacna	3	host	Multicellular hosts	Tridacna
+Goniastrea1-14	Goniastrea	1	host	Multicellular hosts	Anthozoa
+Goniastrea1-1	Goniastrea	1	host	Multicellular hosts	Anthozoa
+Goniastrea1-3	Goniastrea	1	host	Multicellular hosts	Anthozoa
+Goniastrea1-5	Goniastrea	1	host	Multicellular hosts	Anthozoa
+Goniastrea1-9	Goniastrea	1	host	Multicellular hosts	Anthozoa
+Goniastrea2-14	Goniastrea	2	host	Multicellular hosts	Anthozoa
+Goniastrea2-16	Goniastrea	2	host	Multicellular hosts	Anthozoa
+Goniastrea2-18	Goniastrea	2	host	Multicellular hosts	Anthozoa
+Goniastrea2-19	Goniastrea	2	host	Multicellular hosts	Anthozoa
+Goniastrea2-2	Goniastrea	2	host	Multicellular hosts	Anthozoa
+Porites1-12	Porites	1	host	Multicellular hosts	Anthozoa
+Porites1-6	Porites	1	host	Multicellular hosts	Anthozoa
+Porites2-1	Porites	2	host	Multicellular hosts	Anthozoa
+Porites2-3	Porites	2	host	Multicellular hosts	Anthozoa
+Porites2-7	Porites	2	host	Multicellular hosts	Anthozoa
+Porites2-9	Porites	2	host	Multicellular hosts	Anthozoa
+Montipora1-2	Montipora	1	host	Multicellular hosts	Anthozoa
+Montipora2-6	Montipora	2	host	Multicellular hosts	Anthozoa
+Stichodactyla1-1	Stichodactyla	1	host	Multicellular hosts	Anthozoa
+Stichodactyla1-2	Stichodactyla	1	host	Multicellular hosts	Anthozoa
+Amphisorus1-10	Amphisorus	1	host	Foraminifera	Amphisorus
+Amphisorus1-2	Amphisorus	1	host	Foraminifera	Amphisorus
+Amphisorus1-3	Amphisorus	1	host	Foraminifera	Amphisorus
+Amphisorus1-4	Amphisorus	1	host	Foraminifera	Amphisorus
+Amphisorus1-5	Amphisorus	1	host	Foraminifera	Amphisorus
+Amphisorus1-7	Amphisorus	1	host	Foraminifera	Amphisorus
+Amphisorus2-1	Amphisorus	2	host	Foraminifera	Amphisorus
+Amphisorus2-2	Amphisorus	2	host	Foraminifera	Amphisorus
+Amphisorus2-30	Amphisorus	2	host	Foraminifera	Amphisorus
+Amphisorus2-31	Amphisorus	2	host	Foraminifera	Amphisorus
+Amphisorus2-3	Amphisorus	2	host	Foraminifera	Amphisorus
+Amphisorus2-4	Amphisorus	2	host	Foraminifera	Amphisorus
+Amphisorus2-5	Amphisorus	2	host	Foraminifera	Amphisorus
+Amphisorus2-6	Amphisorus	2	host	Foraminifera	Amphisorus
+Sorites1-12	Sorites	1	host	Foraminifera	Sorites
+Sorites1-13	Sorites	1	host	Foraminifera	Sorites
+Sorites1-14	Sorites	1	host	Foraminifera	Sorites
+Sorites1-9	Sorites	1	host	Foraminifera	Sorites
+Sorites2-21	Sorites	2	host	Foraminifera	Sorites
+Sorites2-22	Sorites	2	host	Foraminifera	Sorites
+Sorites2-29	Sorites	2	host	Foraminifera	Sorites
+Algae1-1	Algae	1	env	Environment	Algae
+Algae1-2	Algae	1	env	Environment	Algae
+Algae1-5	Algae	1	env	Environment	Algae
+Algae1-6	Algae	1	env	Environment	Algae
+Algae2-2	Algae	2	env	Environment	Algae
+Algae2-5	Algae	2	env	Environment	Algae
+Algae2-6	Algae	2	env	Environment	Algae
+Algae2-7	Algae	2	env	Environment	Algae
+Sediment1-5	Sediment	1	env	Environment	Sediment
+Sediment1-6	Sediment	1	env	Environment	Sediment
+Sediment1-7	Sediment	1	env	Environment	Sediment
+Sediment1-8	Sediment	1	env	Environment	Sediment
+Sediment2-4	Sediment	2	env	Environment	Sediment
+Sediment2-5	Sediment	2	env	Environment	Sediment
+Sediment2-6	Sediment	2	env	Environment	Sediment
+Sediment2-9	Sediment	2	env	Environment	Sediment
+Water1-1	Water	1	env	Environment	Water
+Water1-2	Water	1	env	Environment	Water
+Water1-3	Water	1	env	Environment	Water
+Water1-4	Water	1	env	Environment	Water
+Water2-5	Water	2	env	Environment	Water
+Water2-6	Water	2	env	Environment	Water
+Water2-7	Water	2	env	Environment	Water
+Water2-8	Water	2	env	Environment	Water

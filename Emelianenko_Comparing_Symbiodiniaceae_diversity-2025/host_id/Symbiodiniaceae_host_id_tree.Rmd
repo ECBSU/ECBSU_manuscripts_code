@@ -1,0 +1,382 @@
+---
+title: "Symbiodiniaceae host id tree"
+author: "Vera Emelianenko"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+This is the R code for generating phylogenetic tree of Amphisorus and Sorites, labeled with their symbiont composition.  
+
+Tree visualisation with ggtree package was assisted by ChatGPT (GPT-5, OpenAI).
+
+```{r setup, include=FALSE}
+# function to load the packages and install if not installed
+load_packages <- function(package_name)
+  {
+    if (!require(package_name, character.only = TRUE)) 
+    {
+      install.packages(package_name)
+      library(package_name, character.only = TRUE)
+    }
+    else
+    {
+      library(package_name, character.only = TRUE)
+    }
+        
+  }
+
+# change the name of required packages
+Packages = c(
+  "magrittr",      # to use %>%
+  "data.table",    # to read tables 
+  "tidyverse",     # dplyr, tidyr, stringr, forcats, ggplot2
+  "seqinr",        # for read.alignment()
+  "phyloseq",      # handling microbiome data objects
+  "microbiome",    # transformations like Hellinger
+  "DECIPHER",      # sequence alignment (AlignSeqs)
+  "Biostrings",    # DNAStringSet operations
+  "ape",           # phylogenetics: dist.alignment, write.tree
+  "phangorn",      # phylogenetics: UPGMA trees, making combined 28S tree
+  "ggtree",         # visualise phylogenetic trees
+  "treeio",         # for trees as well
+  "reshape2",      # melt, acast
+  "kmer",          # k-mer distances
+  "dendextend",    # compare trees with tanglegram
+  "patchwork"     # combine plots
+)
+
+
+invisible(lapply(Packages, load_packages))
+
+# Setup knitr defaults with standard formatting changes
+knitr::opts_chunk$set(echo=T, message=F, eval=T, fig.show="markup", include=T, warning=F, results="markup", tidy=T)
+
+options(scipen=999) # disable scientific notation when displaying numbers
+#sysfonts::font_add("DejaVuSans", "./fonts/DejaVuSans.ttf") 
+#  Empty workspace
+ rm(list=ls())
+```
+
+```
+../../../scripts/iqtree-2.4.0-Linux-intel/bin/iqtree2 -m MFP -s ./Foraminifera_COI_aln.fasta -pre COI_foram_iqt2_bb10K_al10K  -bb 10000 -alrt 10000 -nt AUTO -redo
+Akaike Information Criterion:           GTR+F+I+R2
+Corrected Akaike Information Criterion: GTR+F+G4
+Bayesian Information Criterion:         TVM+F+G4
+Best-fit model: TVM+F+G4 chosen according to BIC
+
+../../../scripts/iqtree-2.4.0-Linux-intel/bin/iqtree2 -m MFP -s ./Foraminifera_18S_aln.fasta -pre 18S_foram_iqt2_bb10K_al10K  -bb 10000 -alrt 10000 -nt AUTO -redo
+Akaike Information Criterion:           GTR+F+I+R2
+Corrected Akaike Information Criterion: TVM+F+I+R2
+Bayesian Information Criterion:         K3Pu+F+I+R2
+Best-fit model: K3Pu+F+I+R2 chosen according to BIC
+```
+
+```{r}
+outgroup_18S = c("FM877702_Borelis_schlumbergeri", "AJ404294_Alveolinella_quoi")
+
+outgroup_COI = c(
+  "ON352803_Planostegina_operculinoides",
+  "ON352795_Baculogypsina_sphaerulata",
+  "ON352796_Operculina_heterosteginoides",
+  "ON352794_Neorotalia_calcar",
+  "ON352791_Heterostegina_cf_depressa",
+  "ON352786_Calcarina_hispida",
+  "ON352781_Amphistegina_lobifera")
+
+Symbiodiniaceae_genera_labels <- c(
+  "Symbiodinium"    = expression(italic("Symbiodinium")),
+  "Cladocopium"     = expression(italic("Cladocopium")),
+  "Durusdinium"     = expression(italic("Durusdinium")),
+  "Freudenthalidium"= expression(italic("Freudenthalidium")),
+  "Fugacium"        = expression(italic("Fugacium")),
+  "Miliolidium"     = expression(italic("Miliolidium")),
+  "Halluxium"       = expression(italic("Halluxium")),
+  "clade_I"         = "clade_I",
+  "clade_J"         = "clade_J",
+  "clade_Fr4" = "clade_Fr4"
+)
+source("../shared_settings.R") # Define color palettes, order of samples, theme
+```
+
+```{r}
+tree_COI <- read.iqtree("COI_foram_iqt2_bb10K_al10K.treefile")
+tree_COI_phy <- tree_COI %>%  as.phylo()
+
+tree_18S <- read.iqtree("18S_foram_iqt2_bb10K_al10K.treefile") %>%  as.phylo()
+tree_18S_phy <- tree_18S %>%  as.phylo()
+
+# Midpoint root
+tree_COI_mid <- midpoint(tree_COI_phy)
+tree_18S_mid <- midpoint(tree_18S_phy)
+
+# Convert back to treedata for ggtree plotting
+tree_COI_mid_treedata <- as.treedata(tree_COI_mid)
+tree_18S_mid_treedata <- as.treedata(tree_18S_mid)
+```
+
+```{r}
+# Extract node table
+tree_tbl <- as_tibble(tree_18S_mid_treedata)
+
+# Add isTip column: tips have a non-NA label, internal nodes may also have labels
+tree_tbl <- tree_tbl %>%
+  mutate(
+    isTip = node <= length(tree_18S_mid_treedata@phylo$tip.label),
+    bb = ifelse(!is.na(label), as.numeric(str_split(label, "/", simplify = TRUE)[,1]), NA),
+    show_point = ifelse(!isTip & !is.na(bb) & bb >= 90, TRUE, FALSE),
+    point_size = ifelse(show_point, 2 + (bb - 90)/10 * (5-2), NA)  # manual scaling
+  )
+
+# Add x_mid to treedata for points
+tree_18S_mid_treedata <- tree_18S_mid_treedata %>%
+  mutate(
+    bb = as.numeric(stringr::str_split(label, "/", simplify = TRUE)[,1]),
+    show_point = !isTip & !is.na(bb) & bb >= 90,
+    point_size = ifelse(show_point, 2 + (bb - 90)/10 * (7-2), NA)
+  )
+
+# Extract ggplot coordinates
+tree_coords <- fortify(tree_18S_mid_treedata)
+
+# Merge midpoint coordinates for internal nodes
+tree_coords <- tree_coords %>%
+  left_join(
+    tree_coords %>% select(node, parent_x = x, parent_y = y),
+    by = c("parent" = "node")
+  ) %>%
+  mutate(
+    x_mid = (x + parent_x)/2,
+    y_mid = (y + parent_y)/2
+  )
+
+# Compute a larger x-axis limit
+max_x_kmer <- max(ggtree::ggtree(tree_18S_mid_treedata)$data$x)  # current tree tip x positions
+extra_space_kmer <- 0.6 * max_x_kmer 
+
+# Plot with points at branch midpoints
+plt_18S <- ggtree(tree_18S_mid_treedata, branch.length = "branch.length") +
+  geom_tiplab(size = 4) +
+  geom_point(
+    data = filter(tree_coords, show_point),
+    aes(x = x_mid, y = y, size = bb),
+    color = "grey"
+  ) +
+  # control sizes so they match your previous manual scaling
+  scale_size_continuous(
+    name = "Ultra-fast bootstrap (%)",
+    range = c(2, 7),   # same min/max as before
+    breaks = seq(90, 100, by = 2),
+    labels = seq(90, 100, by = 2), 
+    limits = c(90, 100)
+  ) +
+  ggplot2::xlim(0, max_x_kmer + extra_space_kmer)  # extend x-axis for long labels
+
+plt_18S
+ggplot2::ggsave("./plt_18S.png", plot = plt_18S,
+                width = 10, height = 10, dpi = 300)
+
+```
+
+```{r}
+symportal_meta_df <- data.table::fread('./input/symportal_meta_df.tsv') %>%
+  dplyr::select (sample_name, type, site) %>% 
+  dplyr::mutate(type = as.factor(type)) 
+
+# get counts table
+ASVs_counts_rel_df <-  
+  data.table::fread('./input/ASV_counts_Symbiodiniaceae_filtered_t.tsv') %>% 
+  rowwise() %>%
+  mutate(total = sum(c_across(-sample_name))) %>%
+  mutate(across(-sample_name & -total, ~ .x / total)) %>%
+  ungroup()
+
+# get taxonomy for each ASV
+ASVs_tax_Sym_df  <- data.table::fread('./input/ASV_tax_Symbiodiniaceae_filtered.tsv') %>% dplyr::select(-Phylum, -Class, -Order, -Family)
+
+# transform the counts table to long
+ASVs_counts_Symb_long_df <- left_join(
+  ASVs_counts_rel_df, symportal_meta_df, 
+  by=join_by(sample_name == sample_name)) %>% 
+  dplyr::filter(type == "Amphisorus" | type == "Sorites") %>% 
+  dplyr::select(-total) %>% 
+  tidyr::pivot_longer(!c("sample_name", "type", "site"), names_to = "ASV", values_to = "rel_abund")%>%
+  left_join(
+  ., ASVs_tax_Sym_df, 
+  by=join_by(ASV == ASV)) %>% 
+  dplyr::mutate(Genus = factor(Genus, levels = Symbiodiniaceae_genera_order)) %>% 
+  dplyr::select(sample_name, rel_abund, Genus) %>%
+  # aggregate by genus
+  group_by(sample_name, Genus) %>%
+  summarise(rel_abund = sum(rel_abund), .groups = "drop") %>%
+  filter(rel_abund > 0) %>% 
+  dplyr::filter(rel_abund>0)
+
+# tip y positions
+tip_coords <- fortify(tree_18S_mid_treedata) %>% filter(isTip) %>% select(label, y)
+
+# Merge y into your data
+ASVs_counts_Symb_long_df <- ASVs_counts_Symb_long_df %>%
+  left_join(tip_coords, by = c("sample_name" = "label"))
+
+# Horizontal bar parameters
+bar_total_width <- 0.12  # total width of bar along x-axis
+bar_total_height <- 0.4  # vertical thickness
+
+# Merge tip x positions
+tip_coords <- fortify(tree_18S_mid_treedata) %>% 
+  filter(isTip) %>% 
+  select(label, x, y)
+
+ASVs_counts_Symb_long_df <- ASVs_counts_Symb_long_df %>%
+  group_by(sample_name, Genus) %>%
+  summarise(rel_abund = sum(rel_abund), .groups = "drop") %>%
+  group_by(sample_name) %>%
+  # normalize so bar fills total width
+  mutate(
+    rel_abund_scaled = rel_abund / sum(rel_abund) * bar_total_width,
+    tip_x = tip_coords$x[match(sample_name, tip_coords$label)],
+    tip_y = tip_coords$y[match(sample_name, tip_coords$label)]
+  ) %>%
+  arrange(factor(Genus, levels = Symbiodiniaceae_genera_order)) %>%
+  mutate(
+    xmin = tip_x + 0.095+ cumsum(rel_abund_scaled) - rel_abund_scaled,
+    xmax = tip_x + 0.095 + cumsum(rel_abund_scaled),
+    ymin = tip_y - bar_total_height/2,
+    ymax = tip_y + bar_total_height/2
+  ) %>%
+  ungroup()
+
+plt_18S_colored <- plt_18S +
+  geom_rect(
+    data = ASVs_counts_Symb_long_df,
+    aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, fill = Genus),
+    color = NA,
+    inherit.aes = FALSE
+  ) +
+  scale_fill_manual(values = Symbiodiniaceae_color_palette, labels = Symbiodiniaceae_genera_labels,
+    name = "Symbiont")
+
+ggplot2::ggsave("./plt_18S_colored.png", plot = plt_18S_colored ,
+                width = 10, height = 10, dpi = 300)
+```
+
+COI with bootstraps
+```{r}
+tree_COI_tbl <- as_tibble(tree_COI_mid_treedata)
+
+tree_COI_tbl <- tree_COI_tbl %>%
+  mutate(
+    isTip = node <= length(tree_COI_mid_treedata@phylo$tip.label),
+    bb = ifelse(!is.na(label), as.numeric(str_split(label, "/", simplify = TRUE)[,1]), NA),
+    show_point = ifelse(!isTip & !is.na(bb) & bb >= 90, TRUE, FALSE),
+    point_size = ifelse(show_point, 2 + (bb - 90)/10 * (5-2), NA)
+  )
+
+tree_COI_mid_treedata <- tree_COI_mid_treedata %>%
+  mutate(
+    bb = as.numeric(stringr::str_split(label, "/", simplify = TRUE)[,1]),
+    show_point = !isTip & !is.na(bb) & bb >= 90,
+    point_size = ifelse(show_point, 2 + (bb - 90)/10 * (7-2), NA)
+  )
+
+tree_COI_coords <- fortify(tree_COI_mid_treedata)
+tree_COI_coords <- tree_COI_coords %>%
+  left_join(
+    tree_COI_coords %>% select(node, parent_x = x, parent_y = y),
+    by = c("parent" = "node")
+  ) %>%
+  mutate(
+    x_mid = (x + parent_x)/2,
+    y_mid = (y + parent_y)/2
+  )
+
+max_x_COI <- max(ggtree::ggtree(tree_COI_mid_treedata)$data$x)
+extra_space_COI <- 0.6 * max_x_COI
+
+plt_COI <- ggtree(tree_COI_mid_treedata, branch.length = "branch.length") +
+  geom_tiplab(size = 4) +
+  geom_point(
+    data = filter(tree_COI_coords, show_point),
+    aes(x = x_mid, y = y, size = bb),
+    color = "grey", 
+    show.legend = FALSE
+  ) +
+  # control sizes so they match your previous manual scaling
+  scale_size_continuous(
+    name = "Ultra-fast bootstrap (%)",
+    range = c(2, 7),   # same min/max as before
+    breaks = seq(90, 100, by = 2),
+    labels = seq(90, 100, by = 2)
+  )
+  #scale_size_identity()+
+  
+  ggplot2::xlim(0, max_x_COI + extra_space_COI)
+
+# --- COI horizontal bar for symbionts ---
+tip_coords_COI <- fortify(tree_COI_mid_treedata) %>% filter(isTip) %>% select(label, x, y)
+
+ASVs_counts_Symb_long_COI <- ASVs_counts_Symb_long_df %>%
+  filter(sample_name %in% tip_coords_COI$label) %>%
+  group_by(sample_name, Genus) %>%
+  summarise(rel_abund = sum(rel_abund), .groups = "drop") %>%
+  group_by(sample_name) %>%
+  mutate(
+    rel_abund_scaled = rel_abund / sum(rel_abund) * bar_total_width,
+    tip_x = tip_coords_COI$x[match(sample_name, tip_coords_COI$label)],
+    tip_y = tip_coords_COI$y[match(sample_name, tip_coords_COI$label)]
+  ) %>%
+  arrange(factor(Genus, levels = Symbiodiniaceae_genera_order)) %>%
+  mutate(
+    xmin = tip_x + 0.088 + cumsum(rel_abund_scaled) - rel_abund_scaled,
+    xmax = tip_x + 0.088 + cumsum(rel_abund_scaled),
+    ymin = tip_y - bar_total_height/2,
+    ymax = tip_y + bar_total_height/2
+  ) %>%
+  ungroup()
+
+plt_COI_colored <- plt_COI +
+  geom_rect(
+    data = ASVs_counts_Symb_long_COI,
+    aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, fill = Genus),
+    color = NA,
+    inherit.aes = FALSE
+  )  +
+  scale_fill_manual(values = Symbiodiniaceae_color_palette, labels = Symbiodiniaceae_genera_labels,
+    name = "Symbiont")
+
+ggplot2::ggsave("./plt_COI_colored.png", plot = plt_COI_colored,
+                width = 10, height = 10, dpi = 300)
+
+```
+
+Combine plots
+```{r}
+plt_18S_colored_sc <- plt_18S_colored +
+  geom_treescale(x = 0, y = -1, linesize = 0.5, fontsize = 3) + labs(title = "18S")
+  
+plt_COI_colored_sc <- plt_COI_colored +
+  geom_treescale(x = 0, y = -1, linesize = 0.5, fontsize = 3) + labs(title = "COI")
+
+combined_plot <- plt_18S_colored_sc + plt_COI_colored_sc +
+  plot_annotation(tag_levels = 'A') +
+  plot_layout(ncol = 2, guides = "collect") &
+  guides(fill = guide_legend(nrow = 1), 
+         size = guide_legend(nrow = 1), 
+        )&
+  theme(legend.position = "bottom", 
+        legend.direction = "horizontal", 
+         plot.tag = element_text(size = 20, face = "bold", family = "Arial"))
+
+combined_plot
+
+ggsave("./combined_18S_COI.png", plot = combined_plot,
+       width = 20, height = 10, dpi = 300)
+
+ggsave("./combined_18S_COI.svg", plot = combined_plot,
+       width = 20, height = 10, dpi = 300)
+```
+
+```{r}
+
+```
+

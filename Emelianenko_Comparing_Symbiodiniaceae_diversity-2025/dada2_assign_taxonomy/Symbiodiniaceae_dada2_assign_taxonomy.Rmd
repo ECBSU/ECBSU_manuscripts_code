@@ -1,0 +1,1279 @@
+---
+title: "Symbiodiniaceae dada2 assign taxonomy"
+author: "Vera Emelianenko"
+date: "`r Sys.Date()`"
+output: html_document
+---
+This is the R portion of the code for assigning taxonomy with dada2 assignTaxonomy() function and checking the taxonomy. It also produces filtered and unfiltered tables of DIVs and ASVs. Some input data were generated using different tools (blastn, seqkit in the command line). 
+
+```{r setup, include=FALSE}
+# function to load the packages and install if not installed
+load_packages <- function(package_name)
+  {
+    if (!require(package_name, character.only = TRUE))
+    {
+      install.packages(package_name)
+      library(package_name, character.only = TRUE)
+    }
+    else
+    {
+      library(package_name, character.only = TRUE)
+    }
+        
+  }
+
+# change the name of required packages
+Packages = c(
+  'magrittr',
+  'dada2', 
+  "dplyr", 
+  "tidyr", 
+  "tidyverse",
+  "data.table",
+  "vegan"
+  ) 
+
+invisible(lapply(Packages, load_packages))
+
+
+# Uncomment if need to install
+# if (!requireNamespace("BiocManager", quietly = TRUE))
+     # install.packages("BiocManager")
+# BiocManager::install("dada2", version = "3.21")
+
+
+# Setup knitr defaults with standard formatting changes
+knitr::opts_chunk$set(echo=T, message=F, eval=T, fig.show="markup", include=T, warning=F, results="markup", tidy=T)
+
+options(scipen=999) # disable scientific notation when displaying numbers
+
+## Empty workspace ##
+rm(list=ls())
+```
+
+Copy input files
+```{r}
+files_to_copy <- c(
+  "../lulu/output/ASVs_counts_curated.txt",
+  "../lulu/output/ASVs_curated.fasta",
+  "../db_remake/output/ITS2db_SymPortaldb_full.fasta", 
+  "../symportal_output_tables/all_20250805T070924.seqs.absolute.abund_and_meta.txt", 
+  '../symportal_output_tables/20250805T070924.seqs.fasta', 
+  "../stats/concat_stats.txt",    
+  "../lulu/output/ASV_counts_renamed.txt", 
+  "../lulu/ASVs_run1-2-3_minlen250.fasta", 
+  "../lulu/output/ASV_counts_renamed_unmerged.txt", 
+  "../stats/run1_filtered_stats.txt", 
+  "../stats/run2_filtered_stats.txt",
+  "../stats/run3_filtered_stats.txt"
+)
+
+# define the destination folder (current folder = "./")
+dest_folder <- "./input"
+
+# copy files
+success <- file.copy(from = files_to_copy, to = dest_folder, overwrite = TRUE)
+
+# check which files copied successfully
+data.frame(
+  file = basename(files_to_copy),
+  copied = success
+)
+```
+
+Check that dada2 works 
+
+```{r}
+packageVersion("dada2")
+```
+The code for assigning taxonomy was modified from https://benjjneb.github.io/dada2/assign.html
+The database has the following header format for Symbiodiniaceae:
+`Eukaryota;Dinoflagellata;Dinophyceae;Suessiales;Symbiodiniaceae;Fugacium;F5_AF180130`, where "Kingdom" = Eukaryota, "Phylum" = Dinoflagellata, "Class" = Dinophyceae, "Order" = Suessiales,  "Family" = Symbiodiniaceae, "Genus" = Fugacium, "Species" = F5_AF180130.
+So, every sequence variant is treated as "species". However, the "Species" column is never used in the downstream analysis (barplots, phyloseq, etc). 
+
+From https://benjjneb.github.io/dada2/assign.html:
+> assignTaxonomy(...) implements the RDP naive Bayesian classifier method described in Wang et al. 2007. In short, the kmer profile of the sequences to be classified are compared against the kmer profiles of all sequences in a training set of sequences with assigned taxonomies. The reference sequence with the most similar profile is used to assign taxonomy to the query sequence, and then a bootstrapping approach is used to assess the confidence assignment at each taxonomic level.
+
+
+Read the files with data and database 
+```{r}
+ASV_curated_seqs <- getSequences("./input/ASVs_curated.fasta")
+ITS2_db <- "input/ITS2db_SymPortaldb_full.fasta"
+```
+
+
+# Assign taxonomy 
+```{r}
+# uncomment if want to run; it takes some time, around ~5-10 mins
+
+#taxa_genera <- assignTaxonomy(ASV_curated_seqs, ITS2_db, minBoot = 50, outputBootstraps = FALSE, taxLevels = c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"), multithread = TRUE,tryRC = TRUE,verbose = TRUE)
+#write.table(taxa_genera, './output/dada2_taxa_genera.txt', sep="\t", quote=F) 
+```
+
+
+
+Get tax table for the raw counts table (pre-lulu)
+```{r}
+ASV_seqs_prelulu <- getSequences("./input/ASVs_run1-2-3_minlen250.fasta")
+ITS2_db <- "input/ITS2db_SymPortaldb_full.fasta"
+```
+
+
+# Assign taxonomy pre lulu
+
+```{r}
+# uncomment if want to run; it takes some time, around ~5-10 mins
+set.seed(123)
+#taxa_genera_prelulu <- assignTaxonomy(ASV_seqs_prelulu, ITS2_db, minBoot = 50, outputBootstraps = FALSE, taxLevels = c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"), multithread = TRUE,tryRC = TRUE,verbose = TRUE)
+#write.table(taxa_genera_prelulu, './output/dada2_taxa_genera_pre_lulu.txt', sep="\t", quote=F) 
+```
+
+# Explore the table with taxonomic annotations
+
+To rename the file using ASV headers, get the table of each sequence corresponding id
+
+```
+> seqkit fx2tab input/ASVs_curated.fasta > ASVs_curated_seq_to_id.txt
+> seqkit fx2tab input/ASVs_run1-2-3_minlen250.fasta > ASVs_run1-2-3_seq_to_id.txt 
+```
+
+```{r}
+# load ASV name corresponding to sequence
+ASV_id_df <-  
+  data.table::fread('./ASVs_curated_seq_to_id.txt') %>% 
+  dplyr::rename(ASV = V1, asv_seqence = V2)
+
+#load table that presents taxonomy for each  of the sequences
+dada2_tax <- data.table::fread('./output/dada2_taxa_genera.txt')%>% 
+  dplyr::rename(asv_seqence = V1)
+
+ASV_tax <- left_join(ASV_id_df, dada2_tax, by=join_by(asv_seqence == asv_seqence)) %>% 
+  select (-asv_seqence, -V3)
+
+# How many Symbiodiniaceae sequences?
+ASV_tax %>% nrow()
+ASV_tax %>% filter (Family == "Symbiodiniaceae") %>% nrow()
+ASV_tax %>% filter (Family == "Symbiodiniaceae") %>% .$Genus %>% unique()
+ASV_tax %>% filter (Family == "Symbiodiniaceae" & is.na(Genus)) %>% nrow()
+ASV_tax %>% filter (Genus == "Symbiodinium") %>% nrow()
+ASV_tax %>% filter (Genus == "Cladocopium") %>% nrow()
+ASV_tax %>% filter (Genus == "Durusdinium") %>% nrow()
+ASV_tax %>% filter (Genus == "Fugacium") %>% nrow()
+ASV_tax %>% filter (Genus == "Freudenthalidium") %>% nrow()
+ASV_tax %>% filter (Genus == "clade_I") %>% nrow()
+ASV_tax %>% filter (Genus == "clade_J") %>% nrow()
+ASV_tax %>% filter (Genus == "Miliolidium") %>% nrow()
+ASV_tax %>% filter (Genus == "Halluxium") %>% nrow() 
+ASV_tax %>% filter (Genus == "clade_Fr4") %>% nrow() 
+```
+No *Breviolum, Gerakladium, Effrenium*, clade_Fr2 was found.
+
+Compare with SymPortal's unique DIVs:
+```
+cat 20250805T070924.seqs.fasta | seqkit stat   
+file  format  type  num_seqs  sum_len  min_len  avg_len  max_len
+-     FASTA   DNA        721  184,760      218    256.3      287
+```
+721 unique DIV was identified by SymPortal not including clade J and Miliolidium, which is much more than in dada2.
+
+
+Same for pre-lulu
+```{r}
+# load ASV name corresponding to sequence
+ASV_id_df_prelulu <-  
+  data.table::fread('./ASVs_run1-2-3_seq_to_id.txt ') %>% 
+  dplyr::rename(ASV = V1, asv_seqence = V2)
+
+#load table that presents taxonomy for each  of the sequences
+dada2_tax_prelulu <- data.table::fread('./output/dada2_taxa_genera_pre_lulu.txt')%>% 
+  dplyr::rename(asv_seqence = V1)
+
+ASV_tax_prelulu <- left_join(ASV_id_df_prelulu, dada2_tax_prelulu, by=join_by(asv_seqence == asv_seqence)) %>% 
+  select (-asv_seqence, -V3)
+
+# How many Symbiodiniaceae sequences?
+ASV_tax_prelulu %>% nrow()
+ASV_tax_prelulu %>% filter (Family == "Symbiodiniaceae") %>% nrow() # 456
+ASV_tax_prelulu %>% filter (Family == "Symbiodiniaceae") %>% .$Genus %>% unique()
+ASV_tax_prelulu %>% filter (Family == "Symbiodiniaceae" & is.na(Genus)) %>% nrow()
+ASV_tax_prelulu %>% filter (Genus == "Symbiodinium") %>% nrow()
+ASV_tax_prelulu %>% filter (Genus == "Cladocopium") %>% nrow()  # 205! so lulu removed lots of Cladocopium
+ASV_tax_prelulu %>% filter (Genus == "Durusdinium") %>% nrow() 
+ASV_tax_prelulu%>% filter (Genus == "Fugacium") %>% nrow()
+ASV_tax_prelulu %>% filter (Genus == "Freudenthalidium") %>% nrow()
+ASV_tax_prelulu %>% filter (Genus == "clade_I") %>% nrow()
+ASV_tax_prelulu %>% filter (Genus == "clade_J") %>% nrow()
+ASV_tax_prelulu %>% filter (Genus == "Miliolidium") %>% nrow()
+ASV_tax_prelulu %>% filter (Genus == "Halluxium") %>% nrow() 
+ASV_tax_prelulu %>% filter (Genus == "clade_Fr4") %>% nrow() 
+
+# write the table down 
+ASV_tax_Symbiodiniaceae_prelulu <- ASV_tax_prelulu %>% dplyr::filter(Family=="Symbiodiniaceae")
+write.table(ASV_tax_Symbiodiniaceae_prelulu, 'output/ASV_tax_Symbiodiniaceae_prelulu.tsv', sep="\t", quote=F, row.names = F)
+
+ASVs_counts_prelulu <- data.table::fread('./input/ASV_counts_renamed.txt')
+any(is.na(ASVs_counts_prelulu))
+
+ASV_counts_Sym_prelulu <- left_join(ASV_tax_Symbiodiniaceae_prelulu, ASVs_counts_prelulu, by=join_by(ASV == ASV)) %>% 
+  dplyr::select(-Kingdom, -Phylum, -Class, -Order, -Family, -Genus, -Species)
+any(is.na(ASV_counts_Sym_prelulu ))
+
+write.table(ASV_counts_Sym_prelulu, './output/ASVs_counts_Sym_prelulu.tsv', sep="\t", quote=F, row.names = F)
+write.table(ASV_tax_Symbiodiniaceae_prelulu %>% select(ASV), './ASVs_Symbiodiniaceae_prelulu_ids.tsv', sep="\t", quote=F, row.names = F)
+# for phyloseq
+# seqkit grep -f ASVs_Symbiodiniaceae_prelulu_ids.tsv ./input/ASVs_run1-2-3.fasta -o output/ASV_Symbiodiniaceae_prelulu.fasta
+
+```
+
+
+# Compare main (filtered) assignment with blastn results for sanity.
+```
+# blastn: 2.12.0+
+> makeblastdb -in ./input/ITS2db_SymPortaldb_full.fasta -dbtype 'nucl'  # make blast database
+
+> blastn -num_threads 6 -task blastn -db ./input/ITS2db_SymPortaldb_full.fasta -query ./input/ASVs_curated.fasta -out ./ASVs_curated_against_ITS2db_SymPortaldb_full_allhits.out -outfmt 6 -max_hsps 1   # no filters on identity - collect all matches, but only the best alignment for match (max_hsps)
+```
+Filter blastn results to get best hits: 
+
+```{r}
+# read the BLAST output
+blast_all_df <- read_tsv("./ASVs_curated_against_ITS2db_SymPortaldb_full_allhits.out", col_names = c(
+  "ASV", "match", "pident", "length", "mismatch", "gapopen",
+  "qstart", "qend", "sstart", "send", "evalue", "bitscore"
+))
+
+# keep top 3 hits per ASV by bitscore
+blastn_top_hits <- blast_all_df %>%
+  group_by(ASV) %>%
+  arrange(desc(bitscore), .by_group = TRUE) %>%
+  slice_head(n = 3) %>%
+  ungroup()
+
+# save to file
+write_tsv(blastn_top_hits, "./ASVs_curated_against_ITS2db_SymPortaldb_full.out")
+```
+
+
+
+Compare to the blastn results:
+```{r}
+# load blastn results
+ASV_blastn_df <-  
+  data.table::fread('./ASVs_curated_against_ITS2db_SymPortaldb_full.out')  %>% 
+  dplyr::mutate(evalue = formatC(evalue, format = "e", digits = 2)) 
+
+# join with ASV dada2 tax assignment results
+ASV_tax_blastn_df <- left_join(ASV_blastn_df, ASV_tax, by=join_by(ASV == ASV)) %>% 
+  dplyr::select(-Kingdom) %>% 
+  dplyr::filter(Class =="Dinophyceae")
+
+write.table(ASV_tax_blastn_df, 'ASV_tax_blastn_df.txt', sep="\t", quote=F, row.names = F) 
+
+# all blastn results 971
+ASV_blastn_df %>% .$ASV %>% unique() %>% length()
+
+# only dinoflagellates 726
+ASV_tax_blastn_df  %>% .$ASV %>% unique() %>% length()
+```
+# Check dinoflaggelates and Suessiales
+Get non-dioflagellate reads
+```{r}
+non_dino_df <- left_join(ASV_blastn_df, ASV_tax, by=join_by(ASV == ASV)) %>% 
+  dplyr::select(-Kingdom) %>% 
+  dplyr::filter(Class!="Dinophyceae"| is.na (Phylum) | is.na(Class))
+
+# total number of non-dinoflagellates
+non_dino_df %>% .$ASV %>% unique() %>% length()
+```
+Are the reads that have class other than Dinophyceae really a different class? What are they?
+```{r}
+# ASVs identified as other classes (8 ASVs)
+non_dino_class_df <- non_dino_df %>% 
+  dplyr::filter(!is.na(Class)) 
+
+# get non-dinoflagellates that were annotated 
+#ASV_tax  %>%   dplyr::filter(!is.na(Class) & Class!="Dinophyceae") 
+
+# look at their blastn matches
+left_join(ASV_blastn_df, ASV_tax, by=join_by(ASV == ASV)) %>% dplyr::select(-Kingdom) %>% 
+  dplyr::filter(!is.na(Class) & Class!="Dinophyceae") 
+```
+For *Porites*, the blast hits are also mostly *Porites* or other corals (which makes sense given it was one of the sample types). Remaining three also have corresponding matches.
+
+
+Are there any ASVs with good blastn matches that have NA Phylum or class?
+```{r}
+non_dino_classNAdf <-  non_dino_df  %>% dplyr::filter(is.na (Phylum) | is.na(Class))
+non_dino_classNAdf  %>% dplyr::filter(length>100)
+# ASV_660 blasts to Karlodinium
+```
+
+
+Are there cases when dada2 thinks it's not Symbiodiniaceae but it matches to Symbiodiniaceae?
+
+```{r}
+nonsym_dinos_df <- ASV_tax_blastn_df %>% 
+  dplyr::filter(Class == "Dinophyceae" ) %>%  
+  dplyr::filter(Family != "Symbiodiniaceae"|is.na(Family) )
+
+nonsym_dinos_df 
+write.table(nonsym_dinos_df, 'nonsym_dinos_df.txt', sep="\t", quote=F, row.names = F) 
+```
+
+```
+> cat nonsym_dinos_df.txt | grep "Symbio"            
+ASV_1082        Eukaryota;Dinoflagellata;Dinophyceae;Suessiales;Symbiodiniaceae;Gerakladium;G4_AM748601_G4_G4a_97.5    77.895   95      16      4       1       93      1       92      4.35e-11        64.4    Dinoflagellata  Dinophyceae    NA       NA      NA      NA
+ASV_405 Eukaryota;Dinoflagellata;Dinophyceae;Suessiales;Symbiodiniaceae;Gerakladium;G4_AM748601_G4_G4a_97.5     79.487 78       13      2       1       78      1       75      1.51e-10        63.5    Dinoflagellata  Dinophyceae     NA     NA       NA      NA
+ASV_587 Eukaryota;Dinoflagellata;Dinophyceae;Suessiales;Symbiodiniaceae;Gerakladium;G4_AM748601_G4_G4a_97.5     77.895 95       16      4       1       93      1       92      4.35e-11        64.4    Dinoflagellata  Dinophyceae     NA     NA       NA      NA
+ASV_911 Eukaryota;Dinoflagellata;Dinophyceae;Suessiales;Symbiodiniaceae;Gerakladium;G4_AM748601_G4_G4a_97.5     79.487 78       13      2       1       78      1       75      1.51e-10        63.5    Dinoflagellata  Dinophyceae     NA     NA       NA      NA
+```
+There are some matches to Gerakladium but very short (less than 100 bp) and with identity less than 85%, so not conclusive enough.
+
+
+Are there cases when dada2 thinks it's non-Symbiodiniaceae Suessiales but it matches some other order?
+```{r}
+nonsym_suessiales_df <- ASV_tax_blastn_df %>% 
+  dplyr::filter(Class == "Dinophyceae" ) %>% 
+  dplyr::filter(Order == "Suessiales")  %>% 
+  dplyr::filter(Family != "Symbiodiniaceae" | is.na(Family))
+
+write.table(nonsym_suessiales_df, 'nonsym_suessiales_df.txt', sep="\t", quote=F, row.names = F) 
+```
+```
+> cat nonsym_suessiales_df.txt | cut -f 2 | cut -d ";" -f 4 | sort | uniq
+Suessiales
+match
+```
+Only Suessiales matches! All the ASVs classified as non-Symbiodiniaceae Suessiales have blastn matches to Suessiales and we do not have evidence to reject them from this order.
+
+
+Are there cases when there are only Suessiales matches, but the ASVs were not classified as Suessiales? 
+```{r}
+non_suessiales_df <- ASV_tax_blastn_df %>% 
+  dplyr::filter(Class == "Dinophyceae" ) %>% 
+  dplyr::filter(Order != "Suessiales" | is.na(Order)) %>% 
+  dplyr::filter(length>100) %>% 
+  dplyr::filter(grepl("Suessiales", match))
+
+non_suessiales_df
+
+#write.table(non_suessiales_df, 'non_suessiales_df.txt', sep="\t", quote=F, row.names = F) 
+```
+
+Several ASVs (ASV_19, ASV_482, ASV_1022, ASV_62, ASV_139, ASV_48; depends on the exact run since they are "borderline cases"). They have only Suessiales matches but not very long and with low identity (except ASV_1022). They might (and probably do) represent divergent Suessiales, but since Suessiales are not the focus of the study, there are few sequences, and they are not the top abundance, we do not edit the sequence table.
+
+# Explore Symbiodiniaceae ASVs
+
+Are there any ASVs that dada2 assigned as Symbiodiniaceae, but they are in fact non-Symbiodiniaceae? 
+```{r}
+ASV_blastn_Sym_df <- ASV_tax_blastn_df  %>% 
+  dplyr::filter(Family == "Symbiodiniaceae")
+
+ASV_blastn_Sym_df %>% .$ASV %>% unique() %>% length()
+ASV_blastn_Sym_minlen150_df <- ASV_blastn_Sym_df %>% dplyr::filter(length>150) 
+
+write.table(ASV_blastn_Sym_df, 'ASV_blastn_Sym_df.txt', sep="\t", quote=F, row.names = F)
+write.table(ASV_blastn_Sym_minlen150_df, 'ASV_blastn_Sym_minlen150_df.txt', sep="\t", quote=F, row.names = F)
+# 132
+```
+```
+# family blastn matches
+> cat ASV_blastn_Sym_df.txt | cut -f 2 | cut -d ";" -f 5| sort | uniq
+Symbiodiniaceae
+match
+
+> cat ASV_blastn_Sym_df.txt | cut -f 1 | sort | uniq > ASV_blastn_Sym_ids.txt
+> cat ASV_blastn_Sym_minlen150_df.txt | cut -f 1 | sort | uniq > ASV_blastn_Sym_minlen150_ids.txt
+> grep -F -x -v -f ASV_blastn_Sym_minlen150_ids.txt ASV_blastn_Sym_ids.txt
+# nothing
+```
+
+```{r}
+ASV_blastn_Sym_filt_df <- ASV_tax_blastn_df  %>% 
+  dplyr::filter(Family == "Symbiodiniaceae")
+
+
+ASV_blastn_Sym_filt_df %>% .$ASV %>% unique() %>% length() 
+```
+
+Check genus assignment.
+
+NA Symbiodiniaceae
+
+```{r}
+Symb_NA_df <- ASV_blastn_Sym_filt_df %>%  dplyr::filter(is.na(Genus))
+write.table(Symb_NA_df, 'Symb_NA_df.txt', sep="\t", quote=F, row.names = F)
+Symb_NA_df
+```
+Only two ASVs, both match clade F but with very low identity. 
+
+```{r}
+ASV_tax_blastn_genus_fixed_df <- ASV_tax_blastn_df  %>% 
+  dplyr::mutate(Genus = case_when(
+                              ASV=="ASV_1358"| ASV=="ASV_1440" ~ "Freudenthalidium",
+                              .default = Genus))
+ASV_blastn_Sym_genus_fixed_df <- ASV_tax_blastn_genus_fixed_df %>% 
+  dplyr::filter(Family == "Symbiodiniaceae")
+```
+
+Check if there are any mismatches between the genus and blastn results
+```{r}
+ASV_blastn_Sym_genus_fixed_df %>% .$Genus %>% unique()
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="Cladocopium") %>% 
+  dplyr::filter(!grepl("Cladocopium", match)) %>% .$ASV %>% unique() %>% length()
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="Durusdinium") %>% 
+  dplyr::filter(!grepl("Durusdinium", match)) %>% .$ASV %>% unique() %>% length()
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="Fugacium") %>% 
+  dplyr::filter(!grepl("Fugacium", match)) %>% .$ASV %>% unique() %>% length()
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="Freudenthalidium") %>% 
+  dplyr::filter(!grepl("Freudenthalidium", match)) %>% .$ASV %>% unique() %>% length()
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="Symbiodinium") %>% 
+  dplyr::filter(!grepl("Symbiodinium", match)) %>% .$ASV %>% unique() %>% length()
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="Miliolidium") %>% 
+  dplyr::filter(!grepl("Miliolidium", match)) %>% .$ASV %>% unique() %>% length()
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="clade_I") %>% 
+  dplyr::filter(!grepl("clade_I", match)) %>% .$ASV %>% unique() %>% length()
+
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="clade_J") %>% 
+  dplyr::filter(!grepl("clade_J", match)) %>% .$ASV %>% unique() %>% length()
+
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="Halluxium") %>% 
+  dplyr::filter(!grepl("Halluxium", match)) %>% .$ASV %>% unique() %>% length()
+```
+```{r}
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="clade_I") %>% 
+  dplyr::filter(!grepl("clade_I", match))
+```
+
+Suspicious ASV_1319, but low abundance (inferred from the ASV number) - leave as is.
+
+
+Check how many species NAs are in each genus 
+```{r}
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(is.na(Species)) %>% .$ASV %>% unique() %>% length()
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="Cladocopium") %>% 
+  dplyr::filter(is.na(Species)) %>% .$ASV %>% unique() %>% length()
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="Durusdinium") %>% 
+  dplyr::filter(is.na(Species)) %>% .$ASV %>% unique() %>% length()
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="Fugacium") %>% 
+  dplyr::filter(is.na(Species)) %>% .$ASV %>% unique() %>% length()
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="Freudenthalidium") %>% 
+  dplyr::filter(is.na(Species)) %>% .$ASV %>% unique() %>% length()
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="Symbiodinium") %>% 
+  dplyr::filter(is.na(Species)) %>% .$ASV %>% unique() %>% length()
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="Miliolidium") %>% 
+  dplyr::filter(is.na(Species)) %>% .$ASV %>% unique() %>% length()
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="clade_I") %>% 
+  dplyr::filter(is.na(Species)) %>% .$ASV %>% unique() %>% length()
+
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="clade_J") %>% 
+  dplyr::filter(is.na(Species)) %>% .$ASV %>% unique() %>% length()
+
+ASV_blastn_Sym_genus_fixed_df %>% 
+  dplyr::filter(Genus=="Halluxium") %>% 
+  dplyr::filter(is.na(Species)) %>% .$ASV %>% unique() %>% length()
+
+# Total
+ASV_blastn_Sym_genus_fixed_df %>% .$ASV %>% unique() %>% length()
+```
+
+Write down a table with ASVs currently annotated as Symbiodiniaceae
+```{r}
+ASV_blastn_Sym_genus_fixed_df %>% dplyr::filter(Family=="Symbiodiniaceae") %>% dplyr::select(ASV) %>% unique() %>%  as.data.frame() %>% write.table(., './Symbiodiniaceae_for_vsearch_ids.txt', sep="\t", quote=F, row.names = F, col.names=FALSE)
+```
+
+```
+seqkit grep -f Symbiodiniaceae_for_vsearch_ids.txt ./input/ASVs_curated.fasta -o ./Symbiodiniaceae_for_vsearch_ids.fasta
+```
+
+
+Many ASVs were assigned genus, but not species. 
+# Get the closest vsearch match to approximate species from anmed SymPortal variants + Miliolidium + Clade J
+
+```
+> cat ../db_remake/db_used/clade_J_add_ref_seq.fasta ../db_remake/db_used/Miliolidium_add_ref_seq.fasta ../db_remake/db_used/SymPortal_named.fasta > ./SymPortal_MJ_db.fasta
+> sed -i 's/Eukaryota;Dinoflagellata;Dinophyceae;Suessiales;Symbiodiniaceae;Miliolidium;//g' SymPortal_MJ_db.fasta
+> sed -i 's/Eukaryota;Dinoflagellata;Dinophyceae;Suessiales;Symbiodiniaceae;Clade_J;//g' SymPortal_MJ_db.fasta
+> sed -i 's/_clone_2//g' SymPortal_MJ_db.fasta
+> sed -i 's/JN558082_//g' SymPortal_MJ_db.fasta
+> sed -i 's/_17OKTs7-09//g' SymPortal_MJ_db.fasta
+> sed -i 's/_PSP1-05//g' SymPortal_MJ_db.fasta
+```
+
+Use vsearch to get the closest hit
+```
+#vsearch v2.14.1_linux_x86_64
+vsearch --usearch_global ./Symbiodiniaceae_for_vsearch_ids.fasta --db ./SymPortal_MJ_db.fasta  --id 0.5 --blast6out vsearch_hits.tsv --maxaccepts 0  --maxrejects 0  --top_hits_only  --strand both --threads 6
+```
+"--maxaccepts 0  --maxrejects 0" makes the program search the whole database and not stop after the first N hits. Identity threshold is also very low to allow all the sequences, eve very divergent ones, to have hits. 
+
+Create species labels representing best vsearch hits + ASV name
+This chunk of code was written with assistance from ChatGPT
+```{r}
+# paste species as ASV number + identity + best hit
+# columns are as in the blastn output
+vsearch_hits_df <- data.table::fread('./vsearch_hits.tsv') %>% 
+  dplyr::rename(ASV = V1, 
+                match = V2, 
+                pident = V3, 
+                length = V4, 
+                mismatch = V5, 
+                gapopen = V6, 
+                qstart = V7, 
+                qend = V8, 
+                sstart = V9, 
+                send = V10, 
+                evalue = V11, 
+                bitscore = V12) %>% 
+  dplyr::mutate(evalue = formatC(evalue, format = "e", digits = 2)) 
+
+# get best hits, several if a tie
+best_hits_df <- vsearch_hits_df %>%
+  group_by(ASV) %>%
+  filter(pident == max(pident)) %>%
+  summarise(
+    Best_match = if (unique(max(pident)) == 100) {
+      paste(match, collapse = "_")
+    } else {
+      paste0(
+        round(unique(max(pident)), 1), "_",
+        paste(match, collapse = "_")
+      )
+    },
+    .groups = "drop"
+  ) %>%
+  mutate(Label_match = paste(ASV, Best_match, sep = "_"))
+```
+
+# Tax table for Dinoflagellates
+```{r}
+# get the ASV tax table without the blastn results 
+ASV_tax_fixed <- ASV_tax_blastn_genus_fixed_df %>%
+  dplyr::select(-match, -pident, -length, -mismatch, -gapopen, -qstart, -qend, -sstart, -send, -evalue, -bitscore) %>% 
+  unique()
+
+ASV_tax_Dinoflagellata <- left_join(
+  ASV_tax_fixed, 
+  best_hits_df, 
+  by=join_by(ASV == ASV))
+
+ASVs_counts <- data.table::fread('./input/ASVs_counts_curated.txt') %>% 
+  dplyr::rename(ASV=V1)
+# replace dot to dash
+# dots were generated in lulu because it doesn't like the dashes 
+colnames(ASVs_counts) <- gsub("\\.", "-",  colnames(ASVs_counts))
+# head(colnames(ASVs_counts)) # check
+
+ASV_counts_Dino_df <- left_join(ASV_tax_Dinoflagellata, ASVs_counts, by=join_by(ASV == ASV)) %>% 
+  dplyr::select(-Phylum, -Class, -Order, -Family, -Genus, -Species, -Best_match, -Label_match)
+
+# Write tax and counts tables
+write.table(ASV_counts_Dino_df, './output/ASVs_counts_Dinoflagellata.tsv', sep="\t", quote=F, row.names = F)
+write.table(ASV_tax_Dinoflagellata, 'output/ASV_tax_Dinoflagellata.tsv', sep="\t", quote=F, row.names = F)
+```
+
+# Filter Symbiodiniaceae
+Get Symbiodiniaceae ASVs only and filter at minimum abundance and minimum count in at least one sample.
+
+Write down the tables that are unfiltered
+The "write_transposed_table"  was wrapped as a function with the assistance by ChatGPT
+```{r}
+ASV_tax_Symbiodiniaceae_df <- ASV_tax_Dinoflagellata %>% 
+    dplyr::filter(Family=="Symbiodiniaceae")
+
+ASV_counts_Symbiodiniaceae_df <- left_join(ASV_tax_Symbiodiniaceae_df, ASVs_counts, by=join_by(ASV == ASV)) %>% 
+  dplyr::select(-Phylum, -Class, -Order, -Family, -Genus, -Species, -Best_match, -Label_match)
+
+write.table(ASV_counts_Symbiodiniaceae_df, './output/ASV_counts_Symbiodiniaceae_unfiltered.tsv', sep="\t", quote=F, row.names = F)
+
+write.table(ASV_tax_Symbiodiniaceae_df, 'output/ASV_tax_Symbiodiniaceae_unfiltered.tsv', sep="\t", quote=F, row.names = F)
+
+write_transposed_table <- function(df, outfile = NULL) {
+  row.names(df) <- df$ASV # Make sure ASV column is rownames
+  df <- dplyr::select(df, -ASV)   # drop the ASV column
+  df_t <- data.table::transpose(df)   # Transpose dataframe
+  rownames(df_t) <- colnames(df)   # Redefine row and column names
+  colnames(df_t) <- rownames(df)   # Add sample_name column in front
+  df_t$sample_name <- rownames(df_t)
+  df_t <- dplyr::relocate(df_t, sample_name)
+  if (!is.null(outfile)) {       # Write to file only if outfile is provided
+    write.table(df_t, outfile, sep = "\t", quote = FALSE, row.names = FALSE)
+  }
+  return(df_t) # return transposed table always
+}
+
+
+# Symbiodiniaceae NOT filtered
+ASV_counts_Symbiodiniaceae_unfiltered_df_t <- write_transposed_table(
+  ASV_counts_Symbiodiniaceae_df,
+  "./output/ASV_counts_Symbiodiniaceae_unfiltered_t.tsv"
+)
+
+
+# Original code
+#row.names(ASV_counts_Dino_df) <- ASV_counts_Dino_df$ASV
+#ASV_counts_Dino_df %<>% select(-ASV)
+# transpose dataframe
+#ASV_counts_Dino_df_t <- data.table::transpose(ASV_counts_Dino_df)
+#redefine row and column names
+#rownames(ASV_counts_Dino_df_t) <- colnames(ASV_counts_Dino_df)
+#colnames(ASV_counts_Dino_df_t) <- rownames(ASV_counts_Dino_df)
+#ASV_counts_Dino_df_t$sample_name <- rownames(ASV_counts_Dino_df_t) 
+#ASV_counts_Dino_df_t  %<>% dplyr::relocate(sample_name)
+#write.table(ASV_counts_Dino_df_t, './outputs/ASV_counts_Dino_t.tsv', sep="\t", quote=F, row.names = F)
+```
+
+Get and transpose the counts table from unfiltered unmerged samples (to compare different aliquots / subsamples from Algae and Sediment sample types)
+```{r}
+ASV_counts_unmerged <- data.table::fread("./input/ASV_counts_renamed_unmerged.txt") %>% select(ASV, starts_with("Algae"), starts_with("Sediment"))
+
+ASV_counts_Symbiodiniaceae_df_unmerged <- left_join(ASV_tax_Symbiodiniaceae_df, ASV_counts_unmerged, by=join_by(ASV == ASV)) %>%
+  dplyr::select(-Phylum, -Class, -Order, -Family, -Genus, -Species, -Best_match, -Label_match)
+
+write.table(ASV_counts_Symbiodiniaceae_df, './output/ASV_counts_Symbiodiniaceae_aliquotes.tsv', sep="\t", quote=F, row.names = F)
+
+# Symbiodiniaceae NOT filtered and with different aliquotes
+ASV_counts_unmerged_t <- write_transposed_table(
+  ASV_counts_Symbiodiniaceae_df_unmerged,
+  "./output/ASV_counts_Symbiodiniaceae_aliquotes_t.tsv"
+)
+```
+
+# Set filter parameters
+```{r}
+# filtering parameters
+rel_abundance_threshold <- 0.0001 #0.01% - very liberal, to allow for rare variants in the environment
+counts_threshold <- 10 
+```
+
+Filtering tables was assisted by ChatGPT
+```{r}
+# make a vector of asv names 
+asv_names <- ASV_counts_Symbiodiniaceae_df$ASV
+# name the rows according to the ASV 
+row.names(ASV_counts_Symbiodiniaceae_df) <- ASV_counts_Symbiodiniaceae_df$ASV
+
+
+counts_matrix <- ASV_counts_Symbiodiniaceae_df %>%
+  dplyr::select(-ASV)
+
+# Calculate relative abundances per sample
+# For each sample, divide by column total
+relative_abundances_df <- counts_matrix %>% 
+  dplyr::mutate_all(function(x) x / sum(x))
+
+# sanity check - should be all 1
+colSums(relative_abundances_df) %>% as.data.frame()
+
+asvs_high_rel <- relative_abundances_df %>%
+  dplyr::mutate(max_rel = apply(., 1, max)) %>%  # max per row, 1 for MARGIN means “apply to each row”
+  dplyr::filter(max_rel > rel_abundance_threshold) %>%            # keep only ASVs > threshold in any sample
+  rownames(.)                     # get rownames as vector
+
+# identify ASVs that exceed 10 reads in any sample
+asvs_high_counts <- counts_matrix %>%
+  dplyr::mutate(max_count = apply(., 1, max)) %>%  # max per row, 1 for MARGIN means “apply to each row”
+  dplyr::filter(max_count > counts_threshold) %>%
+  rownames(.)
+
+asvs_to_keep <- intersect(asvs_high_rel, asvs_high_counts)
+
+print(paste(
+  "Symbiodiniaceae ASVs total: ", length(asv_names),
+  " ;Symbiodiniaceae ASVs passed relative abundance threshold of", rel_abundance_threshold, ": ", length(asvs_high_rel),
+  " ;Symbiodiniaceae ASVs passed counts threshold of", counts_threshold, ": ", length(asvs_high_counts),
+  " ;Symbiodiniaceae ASVs passed both thresholds: ", length(asvs_to_keep)
+  ))
+
+# print the names of the removed ASVs
+
+ASV_counts_Symbiodiniaceae_filtered_df <- ASV_counts_Symbiodiniaceae_df %>%
+  dplyr::filter(ASV %in% asvs_to_keep)
+
+# explore removed ASVs
+ASV_counts_Symbiodiniaceae_df %>%
+  dplyr::filter(!ASV %in% asvs_to_keep)
+
+
+ASV_tax_Symbiodiniaceae_filtered_df <- left_join(ASV_counts_Symbiodiniaceae_filtered_df %>% dplyr::select(ASV), ASV_tax_Symbiodiniaceae_df, by=join_by(ASV == ASV)) 
+
+# explore tax composition of the filtered data
+#ASV_tax_Symbiodiniaceae_filtered_df %>% .$Genus %>% unique()
+```
+
+
+
+
+Introduce per-sample filtering: 
+```{r}
+ASV_counts_Symbiodiniaceae_filtered_long_df <- ASV_counts_Symbiodiniaceae_filtered_df %>%
+  tidyr::pivot_longer(-ASV, names_to = "sample", values_to = "count") %>%
+  dplyr::group_by(sample) %>%
+  # calculate relative abundance per sample
+  dplyr::mutate(rel_abundance = count / sum(count)) %>%
+  # apply filtering rules per sample
+  dplyr::mutate(
+    count_cleaned = case_when(
+      count <= counts_threshold | rel_abundance <= rel_abundance_threshold ~ 0,
+      TRUE ~ count
+    )
+  ) %>%
+  ungroup()
+
+ASV_counts_Symbiodiniaceae_cleaned_df <- ASV_counts_Symbiodiniaceae_filtered_long_df %>%
+  dplyr::select(ASV, sample, count_cleaned) %>%
+  tidyr::pivot_wider(names_from = sample, values_from = count_cleaned) %>% 
+  as.data.frame()
+```
+
+
+Write down filtered tables
+```{r}
+write.table(ASV_counts_Symbiodiniaceae_cleaned_df, './output/ASV_counts_Symbiodiniaceae_filtered.tsv', sep="\t", quote=F, row.names = F)
+
+
+ASV_tax_Symbiodiniaceae_cleaned_df <- left_join(ASV_counts_Symbiodiniaceae_cleaned_df %>% dplyr::select(ASV), ASV_tax_Symbiodiniaceae_df, by=join_by(ASV == ASV)) 
+
+
+write.table(ASV_tax_Symbiodiniaceae_cleaned_df, 'output/ASV_tax_Symbiodiniaceae_filtered.tsv', sep="\t", quote=F, row.names = F)
+```
+
+
+Transpose the counts tables
+```{r}
+# all dinoflagellates
+ASV_counts_Dino_df_t <- write_transposed_table(
+  ASV_counts_Dino_df,
+  "./output/ASV_counts_Dino_t.tsv"
+)
+
+# Symbiodiniaceae filtered
+ASV_counts_Symbiodiniaceae_filtered_df_t <- write_transposed_table(
+  ASV_counts_Symbiodiniaceae_cleaned_df,
+  "./output/ASV_counts_Symbiodiniaceae_filtered_t.tsv"
+)
+
+```
+
+
+# Write Symbiodiniaceae fastas
+Get the ids for the fasta files with Symbiodiniaceae ASVs 
+```{r}
+ASV_Symbiodiniaceae_names_old_to_new <- ASV_tax_Symbiodiniaceae_cleaned_df %>% 
+  dplyr::select(ASV, Label_match)
+
+write.table(ASV_Symbiodiniaceae_names_old_to_new, 'ASV_Symbiodiniaceae_names_old_to_new.txt', sep="\t", quote=F, row.names = F, col.names = F)
+
+write.table(ASV_Symbiodiniaceae_names_old_to_new %>% dplyr::select(ASV), 'ASV_Symbiodiniaceae_ids.txt', sep="\t", quote = F, row.names = F,  col.names = F)
+
+write.table(ASV_tax_Symbiodiniaceae_df %>% dplyr::select(ASV), 'ASV_Symbiodiniaceae_unfiltered_ids.txt', sep="\t", quote = F, row.names = F,  col.names = F)
+```
+
+```
+# for phyloseq - filtered 
+> seqkit grep -f ASV_Symbiodiniaceae_ids.txt ./input/ASVs_curated.fasta -o output/ASV_Symbiodiniaceae_filtered.fasta
+
+# for phyloseq - unfiltered 
+>seqkit grep -f ASV_Symbiodiniaceae_unfiltered_ids.txt ./input/ASVs_curated.fasta -o output/ASV_Symbiodiniaceae_unfiltered.fasta
+
+# for convinience, manual alignments etc
+> seqkit replace -p '^(.+)$' -r '{kv}' -k ASV_Symbiodiniaceae_names_old_to_new.txt --keep-key output/ASV_Symbiodiniaceae_filtered.fasta > output/ASV_Symbiodiniaceae_new_names_filtered.fasta
+```
+
+# Filter SymPortal
+Prepare and filter SymPortal results table in the same manner as dada2 results 
+
+```{r}
+DIVs_df <- data.table::fread('./input/all_20250805T070924.seqs.absolute.abund_and_meta.txt')%>% 
+  dplyr::filter(!is.na(data_set_uid))%>%  # get rid of the last row 
+  dplyr::select(-fastq_fwd_file_name:-collection_depth, -sample_uid) # select only DIVs and sample_name 
+```
+
+Write down unfiltered tables
+```{r}
+# Reorient DIVs_df to match ASV table shape
+DIVs_long <- DIVs_df %>%
+  pivot_longer(-sample_name, names_to = "DIV", values_to = "count")
+
+DIVs_wide <- DIVs_long %>%
+  pivot_wider(names_from = sample_name, values_from = count) %>% as.data.frame()
+
+write.table(DIVs_df, './output/DIV_counts_unfiltered_t.txt', sep ="\t", quote=F, row.names = T, col.names = T)
+
+write.table(DIVs_wide, './output/DIV_counts_unfiltered.txt', sep ="\t", quote = F, row.names = T,  col.names = T)
+
+# Make artificial tax table
+DIV_tax_unfilt_df <- DIVs_wide %>% 
+  dplyr::select(DIV) %>% 
+  dplyr::mutate (Phylum ='Dinoflagellata', 
+          Class = 'Dinophyceae', 
+          Order ='Suessiales', 
+          Family='Symbiodiniaceae') %>% 
+  dplyr::mutate(Genus = case_when(
+    grepl("^[A]|A$", DIV) ~ "clade A",
+    grepl("^[C]|C$", DIV) ~ "clade C",
+    grepl("^[B]|B$", DIV) ~ "clade B",
+    grepl("^[D]|D$", DIV) ~ "clade D",
+    grepl("^[F]|F$", DIV) ~ "clade F",
+    grepl("^[H]|H$", DIV) ~ "clade H",
+    grepl("^[I]|I$", DIV) ~ "clade I",
+                .default = "other")) %>% 
+  dplyr::mutate(Species=DIV)
+
+#Should be 0
+DIV_tax_unfilt_df %>% dplyr::filter(Genus == "other")
+
+write.table(DIV_tax_unfilt_df, 'output/DIV_tax_unfiltered.tsv', sep="\t", quote=F, row.names = F)
+
+```
+Filter DIVs
+```{r}
+# set rownames = DIVs
+row.names(DIVs_wide) <- DIVs_wide$DIV
+counts_matrix <- DIVs_wide %>% select(-DIV)
+#Check
+#row.names(counts_matrix)
+
+# relative abundances
+relative_abundances_df <- counts_matrix %>% 
+  dplyr::mutate_all(function(x) x / sum(x))
+
+# filter by relative abundance
+DIVs_high_rel <- relative_abundances_df %>%
+  mutate(max_rel = apply(., 1, max)) %>%
+  filter(max_rel > rel_abundance_threshold) %>%
+  rownames(.)
+
+# filter by raw counts
+DIVs_high_counts <- counts_matrix %>%
+  mutate(max_count = apply(., 1, max)) %>%
+  filter(max_count > counts_threshold) %>%
+  rownames(.)
+
+# keep only those passing both thresholds
+DIVs_to_keep <- intersect(DIVs_high_rel, DIVs_high_counts)
+
+# filter the original table
+DIVs_filtered_df <- DIVs_df %>%
+  select(sample_name, all_of(DIVs_to_keep))
+
+
+# Per sample filtering
+
+DIVs_filtered_long <- DIVs_filtered_df %>%
+  pivot_longer(-sample_name, names_to = "DIV", values_to = "count") %>%
+  group_by(sample_name) %>%
+  mutate(rel_abundance = count / sum(count)) %>%
+  mutate(
+    count_cleaned = case_when(
+      count <= counts_threshold | rel_abundance <= rel_abundance_threshold ~ 0,
+      TRUE ~ count
+    )
+  ) %>%
+  ungroup()
+
+DIVs_cleaned_df_t <- DIVs_filtered_long %>%
+  select(sample_name, DIV, count_cleaned) %>%
+  pivot_wider(names_from = DIV, values_from = count_cleaned) %>%
+  as.data.frame()
+
+DIVs_cleaned_df <- DIVs_filtered_long %>%
+  select(sample_name, DIV, count_cleaned) %>%
+  pivot_wider(names_from = sample_name, values_from = count_cleaned) %>%
+  as.data.frame()
+
+
+print(paste(
+  "DIVs total: ", ncol(DIVs_df)-1,
+  " ; DIVs passed rel_abundance threshold: ", length(DIVs_high_rel),
+  " ; DIVs passed counts threshold: ", length(DIVs_high_counts),
+  " ; DIVs passed both thresholds: ", length(DIVs_to_keep)
+))
+
+write.table(DIVs_cleaned_df, './output/DIV_counts_filtered.tsv', sep="\t", quote=F, row.names = F)
+write.table(DIVs_cleaned_df_t, './output/DIV_counts_filtered_t.tsv', sep="\t", quote=F, row.names = F)
+```
+```{r}
+DIV_tax_df <- DIVs_cleaned_df %>% 
+  dplyr::select(DIV) %>% 
+  dplyr::mutate (Phylum ='Dinoflagellata', 
+          Class = 'Dinophyceae', 
+          Order ='Suessiales', 
+          Family='Symbiodiniaceae') %>% 
+  dplyr::mutate(Genus = case_when(
+    grepl("^[A]|A$", DIV) ~ "clade A",
+    grepl("^[C]|C$", DIV) ~ "clade C",
+    grepl("^[B]|B$", DIV) ~ "clade B",
+    grepl("^[D]|D$", DIV) ~ "clade D",
+    grepl("^[F]|F$", DIV) ~ "clade F",
+    grepl("^[H]|H$", DIV) ~ "clade H",
+    grepl("^[I]|I$", DIV) ~ "clade I",
+                .default = "other")) %>% 
+  dplyr::mutate(Species=DIV)
+
+DIV_tax_df %>% dplyr::filter(Genus == "other")
+
+write.table(DIV_tax_df, 'output/DIV_tax_filtered.tsv', sep="\t", quote=F, row.names = F)
+
+write.table(DIV_tax_df %>% dplyr::select(DIV), 'DIV_filtered_ids.txt', sep="\t", quote = F, row.names = F,  col.names = F)
+```
+Use seqkit to get only clean SymPortal sequences 
+
+```
+> seqkit grep -f DIV_filtered_ids.txt ./input/20250805T070924.seqs.fasta -o output/DIV_filtered.fasta
+```
+
+
+# Compare SymPortal vs DADA2 sequences 
+```
+> vsearch --usearch_global output/DIV_filtered.fasta --db ./output/ASV_Symbiodiniaceae_filtered.fasta --id 0.5 \
+  --blast6out DIVs_vs_ASVs.tsv --maxaccepts 0 --maxrejects 0 --top_hits_only --strand both --threads 6
+> 
+vsearch --usearch_global ./output/ASV_Symbiodiniaceae_filtered.fasta --db output/DIV_filtered.fasta --id 0.5 \
+  --blast6out ASVs_vs_DIVs.tsv --maxaccepts 0 --maxrejects 0 --top_hits_only --strand both --threads 6
+  
+```
+
+```{r}
+# column names like before
+blastn_colnames <- c("query","target","pident","length","mismatch","gapopen",             "qstart","qend","sstart","send","evalue","bitscore")
+
+ASVs_vs_DIVs <- data.table::fread("ASVs_vs_DIVs.tsv", col.names = blastn_colnames)
+DIVs_vs_ASVs <- data.table::fread("DIVs_vs_ASVs.tsv", col.names = blastn_colnames)
+
+# best %id per query
+ASVs_best <- ASVs_vs_DIVs %>%
+  group_by(query) %>%
+  summarise(max_pident = max(pident), .groups="drop")
+
+DIVs_best <- DIVs_vs_ASVs %>%
+  group_by(query) %>%
+  summarise(max_pident = max(pident), .groups="drop")
+
+# set threshold for filtering manually 
+# 97% 
+ASVs_total <- ASVs_best %>% nrow()
+ASVs_good_match <- ASVs_best %>% dplyr::filter(max_pident>=97) %>% nrow()
+ASVs_good_percent <- ASVs_good_match/ASVs_total*100
+
+DIVs_total <- DIVs_best %>% nrow()
+DIVs_good_match <- DIVs_best %>% dplyr::filter(max_pident>=97) %>% nrow()
+DIVs_good_percent <- DIVs_good_match/DIVs_total*100
+
+
+cat(sprintf("%.1f%% of SymPortal DIVs had matches >=97%% identity in dada2 ASVs\n", DIVs_good_percent))
+cat(sprintf("%.1f%% of dada2 ASVs had matches >=97%% identity in SymPortal DIVs\n", ASVs_good_percent))
+
+# different ID percent 
+# 95% - LULU clustering cut off
+ASVs_total <- ASVs_best %>% nrow()
+ASVs_good_match <- ASVs_best %>% dplyr::filter(max_pident>=95) %>% nrow()
+ASVs_good_90id_percent <- ASVs_good_match/ASVs_total*100
+
+DIVs_total <- DIVs_best %>% nrow()
+DIVs_good_match <- DIVs_best %>% dplyr::filter(max_pident>=95) %>% nrow()
+DIVs_good_90id_percent <- DIVs_good_match/DIVs_total*100
+
+cat(sprintf("%.1f%% of SymPortal DIVs had matches >=95%% identity in dada2 ASVs\n", DIVs_good_90id_percent))
+cat(sprintf("%.1f%% of dada2 ASVs had matches >=95%% identity in SymPortal DIVs\n", ASVs_good_90id_percent))
+```
+
+# Calculate statistics table 
+Summarize statistics for SymPortal and dada2 runs for Supplementary Table 1.
+
+```{r}
+# get Raw reads; Post QC (SymPortal); Absolute Symbiod. (SymPortal); Absolute post-MED DIVs counts(SymPortal)
+
+DIVs_stat_df <- data.table::fread('./input/all_20250805T070924.seqs.absolute.abund_and_meta.txt')%>% 
+  dplyr::filter(!is.na(data_set_uid))%>%  # get rid of the last row 
+  dplyr::select(sample_name, raw_contigs, post_qc_absolute_seqs, post_med_absolute) 
+
+
+all_samples_row_stats <- DIVs_stat_df %>%
+  summarise(
+    sample_name = "All_samples",
+    raw_contigs = sum(raw_contigs, na.rm = TRUE),
+    post_qc_absolute_seqs = sum(post_qc_absolute_seqs, na.rm = TRUE),
+    post_med_absolute = sum(post_med_absolute, na.rm = TRUE)
+  )
+
+DIVs_stat_df_with_all <- bind_rows(DIVs_stat_df, all_samples_row_stats)
+
+DIV_clean_stats_df <- DIVs_cleaned_df_t %>%
+  rowwise() %>%
+  mutate(
+    unique_DIVs_filtered = sum(c_across(-sample_name) > 0) ,
+    clean_DIVs_count = sum(c_across(-sample_name))         # total reads per sample
+         # number of unique DIVs per sample
+  ) %>%
+  ungroup() %>%
+  select(sample_name, clean_DIVs_count, unique_DIVs_filtered)
+
+all_samples_row <- tibble(
+  sample_name = "All_samples",
+  clean_DIVs_count = sum(DIV_clean_stats_df$clean_DIVs_count),
+  unique_DIVs_filtered = sum(colSums(DIVs_cleaned_df_t[,-1]) > 0)   # count of DIVs with >0 across all samples
+)
+
+DIV_clean_stats_with_all_df <- bind_rows(DIV_clean_stats_df, all_samples_row)
+
+# Get unfiltered number of unique DIVs
+
+SymPortal_unfiltered_stats_df <- DIVs_df %>%
+  rowwise() %>%
+  mutate(unique_DIVs_unfilt = sum(c_across(-sample_name) > 0)  ) %>%
+  ungroup() %>%
+  select(sample_name, unique_DIVs_unfilt)
+
+all_samples_unfilt_row <- tibble(
+  sample_name = "All_samples",
+  unique_DIVs_unfilt = sum(colSums(DIVs_df[,-1]) > 0)   # count of DIVs with >0 across all samples
+)
+
+SymPortal_unfiltered_with_all_df <- bind_rows(SymPortal_unfiltered_stats_df, all_samples_unfilt_row)
+
+DIV_unfilt_filt_stats_df <- left_join(SymPortal_unfiltered_with_all_df,DIV_clean_stats_with_all_df, by=join_by(sample_name == sample_name))
+
+SymPortal_stats_df <- left_join(DIVs_stat_df_with_all, DIV_unfilt_filt_stats_df, by=join_by(sample_name == sample_name))
+```
+
+Absolute  count (dada2)
+Absolute Symbiod. counts final (DADA2)
+Final unique Symbiod. ASVs (DADA2)
+```{r}
+ASVs_counts <- data.table::fread('./input/ASVs_counts_curated.txt') %>% 
+  dplyr::rename(ASV=V1)
+# replace dot to dash; dots were generated in lulu because it doesn't like the dashes for some reason
+colnames(ASVs_counts) <- gsub("\\.", "-",  colnames(ASVs_counts))
+
+# Symbiodiniaceae filtered
+ASVs_counts_stats_df <- write_transposed_table(ASVs_counts) %>% 
+  rowwise() %>%
+  mutate(
+    ASVs_count = sum(c_across(-sample_name))) %>%
+  ungroup() %>%
+  select(sample_name, ASVs_count)
+
+ASVs_Symbiodiniaceae_stats <- ASV_counts_Symbiodiniaceae_filtered_df_t  %>%
+  rowwise() %>%
+  mutate(
+    Symbio_unique_ASVs = sum(c_across(-sample_name) > 0),
+    Symbio_ASV_count = sum(c_across(-sample_name))         
+  ) %>%
+  ungroup() %>%
+  select(sample_name, Symbio_ASV_count, Symbio_unique_ASVs)
+
+ASVs_stats_df <- left_join(ASVs_counts_stats_df, ASVs_Symbiodiniaceae_stats, by=join_by(sample_name == sample_name))
+
+all_samples_ASV_row <- tibble(
+  sample_name = "All_samples",
+  ASVs_count = sum(ASVs_counts_stats_df$ASVs_count),
+  Symbio_ASV_count = sum(ASVs_Symbiodiniaceae_stats$Symbio_ASV_count),
+  Symbio_unique_ASVs = sum(colSums(ASV_counts_Symbiodiniaceae_filtered_df_t[,-1]) > 0)   # count of DIVs with >0 across all samples
+)
+
+
+ASVs_stats_with_all_df <- bind_rows(ASVs_stats_df, all_samples_ASV_row)
+
+
+# Get stats from uncleaned data 
+
+ASVs_Symbiodiniaceae_unfilt_stats <- ASV_counts_Symbiodiniaceae_unfiltered_df_t  %>%
+  rowwise() %>%
+  mutate(
+    Symbio_unique_ASVs_unfilt = sum(c_across(-sample_name) > 0),
+    Symbio_ASV_count_unfilt = sum(c_across(-sample_name))         
+  ) %>%
+  ungroup() %>%
+  select(sample_name, Symbio_ASV_count_unfilt, Symbio_unique_ASVs_unfilt)
+
+all_samples_ASV_unfilt_row <- tibble(
+  sample_name = "All_samples",
+  Symbio_ASV_count_unfilt = sum(ASVs_Symbiodiniaceae_stats$Symbio_ASV_count),
+  Symbio_unique_ASVs_unfilt = sum(colSums(ASV_counts_Symbiodiniaceae_unfiltered_df_t[,-1]) > 0)   # count of DIVs with >0 across all samples
+)
+
+
+ASVs_Symbiodiniaceae_unfilt_stats_with_all_df <- bind_rows(ASVs_Symbiodiniaceae_unfilt_stats, all_samples_ASV_unfilt_row)
+
+ASVs_stats_with_all_df
+ASVs_Symbiodiniaceae_unfilt_stats_with_all_df
+
+dada2_stats_no_QC_df <- left_join(
+  ASVs_stats_with_all_df, 
+  ASVs_Symbiodiniaceae_unfilt_stats_with_all_df, 
+  by=join_by(sample_name == sample_name)) %>%
+  relocate(Symbio_ASV_count, Symbio_unique_ASVs, .after = last_col())
+```
+## Get the stats from dada2 filtered files (to compare how many reads were dropped after QC)
+```{r}
+dada_qc_stat_df1 <- data.table::fread("./input/run1_filtered_stats.txt") 
+dada_qc_stat_df2 <- data.table::fread("./input/run2_filtered_stats.txt") 
+dada_qc_stat_df3 <- data.table::fread("./input/run3_filtered_stats.txt")
+
+dada_qc_stat_df <- bind_rows(dada_qc_stat_df1, dada_qc_stat_df2, dada_qc_stat_df3) %>% 
+  dplyr::select(file, num_seqs) %>%
+  dplyr::mutate (file = gsub("_R1_001.fastq.gz", "", file)) %>% 
+  dplyr::filter(!grepl(".fastq.gz", file))
+dada_qc_df <- dada_qc_stat_df  %>%
+      pivot_wider(names_from = file, values_from = num_seqs) %>% 
+  dplyr::mutate(
+    `Algae1-1` = `A1_1a1_ITS2_S179` + `A1_1a2_ITS2_S180`+ `A1-1a1-ITS2_S179_L001` + `A1-1a2-ITS2_S180_L001`, 
+    `Algae1-2` = `A1_2a1_ITS2_S181` + `A1_2a2_ITS2_S182` + `A1-2a1-ITS2_S181_L001` + `A1-2a2-ITS2_S182_L001`, 
+    `Algae1-5` = `A1_5a1_ITS2_S183` + `A1_5a2_ITS2_S184` + `A1-5a1-ITS2_S183_L001` + `A1-5a2-ITS2_S184_L001`,
+    `Algae1-6` = `A1_6a1_ITS2_S185` + `A1_6a2_ITS2_S186` + `A1-6a1-ITS2_S185_L001` + `A1-6a2-ITS2_S186_L001`,
+    `Algae2-2` = `A2_2a5_ITS2_S191` + `A2_2a6_ITS2_S192` + `A2-2a5-ITS2_S191_L001` + `A2-2a6-ITS2_S192_L001`,
+    `Algae2-5` = `A2_5a3_ITS2_S187` + `A2_5a4_ITS2_S188` + `A2-5a3-ITS2_S187_L001` + `A2-5a4-ITS2_S188_L001`,
+    `Algae2-6` = `A2_6a3_ITS2_S189` + `A2_6a4_ITS2_S190` + `A2-6a3-ITS2_S189_L001` + `A2-6a4-ITS2_S190_L001`,
+    `Algae2-7` = `A2_7a3_ITS2_S193` + `A2_7a4_ITS2_S194` + `A2-7a3-ITS2_S193_L001` + `A2-7a4-ITS2_S194_L001`)%>%   dplyr::mutate(
+      `Stichodactyla1-1` = `An1_ITS2_S125` + `An1-ITS2_S125_L001`, 
+      `Stichodactyla1-2` = `An2_ITS2_S126` +  `An2-ITS2_S126_L001`) %>% 
+  dplyr::mutate (
+    `Porites1-12` = `C1_12_corr_ITS2_S112` + `C1-12-corr-ITS2_S112_L001` + `C1-1_S71_L001`,
+    `Goniastrea1-14` = `C1_14_ITS2_S111` + `C1-14-ITS2_S111_L001`,
+    `Goniastrea1-1` = `C1_1_ITS2_S107` + `C1-1-ITS2_S107_L001`,
+    `Montipora1-2` = `C1_2_corr_ITS2_S114` + `C1-2-corr-ITS2_S114_L001`,
+    `Goniastrea1-3` = `C1_3_ITS2_S108` + `C1-3-ITS2_S108_L001`,
+    `Goniastrea1-5` = `C1_5_ITS2_S109` + `C1-5-ITS2_S109_L001`,
+    `Porites1-6` = `C1_6_ITS2_S113` + `C1-6-ITS2_S113_L001`,
+    `Goniastrea1-9` = `C1_9_ITS2_S110` + `C1-9-ITS2_S110_L001`,
+    `Goniastrea2-14` = `C2_14b_ITS2_S121` + `C2-14b-ITS2_S121_L001`,
+    `Goniastrea2-16` = `C2_16_ITS2_S122` + `C2-16-ITS2_S122_L001`,
+    `Goniastrea2-18` = `C2_18_ITS2_S123` + `C2-18-ITS2_S123_L001`,
+    `Goniastrea2-19` = `C2_19_ITS2_S124` + `C2-19-ITS2_S124_L001`,
+    `Porites2-1` = `C2_1_ITS2_S115` + `C2-1-ITS2_S115_L001`,
+    `Goniastrea2-2` = `C2_2_ITS2_S120` + `C2-2-ITS2_S120_L001`,
+    `Porites2-3` = `C2_3_ITS2_S116` + `C2-3-ITS2_S116_L001`,
+    `Montipora2-6` = `C2_6_ITS2_S117` + `C2-6-ITS2_S117_L001`,
+    `Porites2-7` = `C2_7_ITS2_S118` + `C2-7-ITS2_S118_L001`,
+    `Porites2-9` = `C2_9_ITS2_S119` + `C2-9-ITS2_S119_L001`) %>% 
+  dplyr::mutate(
+    `Amphisorus1-10` = `F1_10_ITS2_S141` + `F1-10-ITS2_S141_L001`,
+    `Sorites1-12` = `F1_12_ITS2_S149` + `F1-12-ITS2_S149_L001`,
+    `Sorites1-13` = `F1_13_ITS2_S150` + `F1-13-ITS2_S150_L001`,
+    `Sorites1-14` = `F1_14_ITS2_S151` + `F1-14-ITS2_S151_L001`,
+    `Amphisorus1-2` = `F1_2_ITS2_S136` + `F1-2-ITS2_S136_L001`,
+    `Amphisorus1-3` = `F1_3_ITS2_S137` + `F1-3-ITS2_S137_L001`,
+    `Amphisorus1-4` = `F1_4_ITS2_S138` + `F1-4-ITS2_S138_L001`,
+    `Amphisorus1-5` = `F1_5_ITS2_S139` + `F1-5-ITS2_S139_L001`,
+    `Amphisorus1-7` = `F1_7_ITS2_S140` + `F1-7-ITS2_S140_L001`,
+    `Sorites1-9` = `F1_9_ITS2_S148` + `F1-9-ITS2_S148_L001`,
+    `Amphisorus2-1` = `F2_1_ITS2_S142` + `F2-1-ITS2_S142_L001`,
+    `Sorites2-21` = `F2_21_ITS2_S152` + `F2-21-ITS2_S152_L001`,
+    `Sorites2-22` = `F2_22_ITS2_S153` + `F2-22-ITS2_S153_L001`,
+    `Sorites2-29` = `F2_29_ITS2_S154` + `F2-29-ITS2_S154_L001`,
+    `Amphisorus2-2` = `F2_2_ITS2_S143` + `F2-2-ITS2_S143_L001`,
+    `Amphisorus2-30` = `F2_30_ITS2_S146` + `F2-30-ITS2_S146_L001`,
+    `Amphisorus2-31` = `F2_31_ITS2_S147` + `F2-31-ITS2_S147_L001`,
+    `Amphisorus2-3` = `F2_3_ITS2_S144` + `F2-3-ITS2_S144_L001`,
+    `Amphisorus2-4` = `F2_4_ITS2_S145` + `F2-4-ITS2_S145_L001`, 
+    `Amphisorus2-5` = `F2-5_S72_L001`, 
+    `Amphisorus2-6` = `F2-6_S73_L001`) %>% 
+  dplyr::mutate(
+    `Sediment1-5` = `S1_5a1_ITS2_S155` + `S1_5a2_ITS2_S156` + `S1-5a1-ITS2_S155_L001` + `S1-5a2-ITS2_S156_L001`,
+    `Sediment1-6` = `S1_6a1_ITS2_S157` + `S1_6a2_ITS2_S158` + `S1-6a1-ITS2_S157_L001` + `S1-6a2-ITS2_S158_L001`,
+    `Sediment1-7` = `S1_7a1_ITS2_S159` + `S1_7a2_ITS2_S160` + `S1-7a1-ITS2_S159_L001` + `S1-7a2-ITS2_S160_L001`,
+    `Sediment1-8` = `S1_8a3_ITS2_S161` + `S1_8a4_ITS2_S162` + `S1-8a3-ITS2_S161_L001` + `S1-8a4-ITS2_S162_L001`,
+    `Sediment2-4` = `S2_4a3_ITS2_S163` + `S2_4a4_ITS2_S164` + `S2-4a3-ITS2_S163_L001` + `S2-4a4-ITS2_S164_L001`,
+    `Sediment2-5` = `S2_5a1_ITS2_S165` + `S2_5a2_ITS2_S166` + `S2-5a1-ITS2_S165_L001` + `S2-5a2-ITS2_S166_L001`,
+    `Sediment2-6` = `S2_6a1_ITS2_S167` + `S2_6a2_ITS2_S168` + `S2-6a1-ITS2_S167_L001` + `S2-6a2-ITS2_S168_L001`,
+    `Sediment2-9` = `S2_9a1_ITS2_S169` + `S2_9a2_ITS2_S170` + `S2-9a1-ITS2_S169_L001` + `S2-9a2-ITS2_S170_L001`) %>% 
+  dplyr::mutate(
+    `Water1-1` = `W1_1_ITS2_S171` + `W1-1-ITS2_S171_L001`,
+    `Water1-2` = `W1_2_ITS2_S172` + `W1-2-ITS2_S172_L001`,
+    `Water1-3` = `W1_3_ITS2_S173` + `W1-3-ITS2_S173_L001`,
+    `Water1-4` = `W1_4_ITS2_S174` + `W1-4-ITS2_S174_L001`,
+    `Water2-5` = `W2_5_ITS2_S175` + `W2-5-ITS2_S175_L001`,
+    `Water2-6` = `W2_6_ITS2_S176` + `W2-6-ITS2_S176_L001`,
+    `Water2-7` = `W2_7_ITS2_S177` + `W2-7-ITS2_S177_L001`,
+    `Water2-8` = `W2_8_ITS2_S178` + `W2-8-ITS2_S178_L001`) %>% 
+  dplyr::mutate(
+    `Tridacna1` = `TN1a_ITS2_S127` + `TN1a-ITS2_S127_L001`,
+  `Tridacna2` = `TN2a_ITS2_S128` + `TN2a-ITS2_S128_L001`,
+  `Tridacna3` = `TN3a_ITS2_S129` + `TN3a-ITS2_S129_L001`,
+  `Tridacna4` = `TN4a_ITS2_S130` + `TN4a-ITS2_S130_L001`,
+  `Tridacna5` = `TN5a_ITS2_S131` + `TN5a-ITS2_S131_L001`,
+  `Tridacna6` = `TN6a_ITS2_S132` + `TN6a-ITS2_S132_L001`,
+  `Tridacna7` = `TN7a_ITS2_S133` + `TN7a-ITS2_S133_L001`,
+  `Tridacna8` = `TN8a_ITS2_S134` + `TN8a-ITS2_S134_L001`,
+  `Tridacna9` = `TN9a_ITS2_S135` + `TN9a-ITS2_S135_L001`) %>% 
+  dplyr::select(`Algae1-1`:`Tridacna9`) %>% 
+  dplyr::mutate(All_samples = sum(c_across(everything()))) %>% 
+  pivot_longer(
+    cols = everything(),
+    names_to = "sample_name",      # Name of the new column for variable names
+    values_to = "dada2_post_QC")        # Name of the new column for values)
+
+dada_qc_df
+
+dada2_stats_df <- left_join(
+  dada_qc_df,
+  dada2_stats_no_QC_df, 
+  by=join_by(sample_name == sample_name)) 
+```
+
+## Reorder samples same as barplots 
+```{r}
+source("../shared_settings.R") # Define color palettes, order of samples, theme
+
+full_stats <- left_join(SymPortal_stats_df, dada2_stats_df, by=join_by(sample_name == sample_name)) %>% 
+  dplyr::mutate(sample_name = factor(sample_name, levels = Symbiodiniaceae_sample_order)) %>% 
+  arrange(sample_name) 
+
+write.table(
+  full_stats, 
+  "./output/full_stats.csv", 
+  sep=",", quote=F, row.names = F) 
+```
+
+```{r}
+counts_df <- data.table::fread("./output/ASV_counts_Symbiodiniaceae_unfiltered.tsv")
+tax_df <- data.table::fread("./output/ASV_tax_Symbiodiniaceae_unfiltered.tsv")
+
+tax_counts_J_df <- left_join(counts_df, tax_df, by = "ASV") %>% 
+  filter(Genus == "clade_J") %>% 
+  select(where(~!all(. == 0))) %>% 
+  select(-Phylum:-Genus) %>% 
+  arrange(Species)
+```
+
+```{r}
+
+```
+
