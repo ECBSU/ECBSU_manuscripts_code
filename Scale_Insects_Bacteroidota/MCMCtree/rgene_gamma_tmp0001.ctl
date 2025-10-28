@@ -1,0 +1,11 @@
+seqfile = tmp0001.txt
+treefile = tmp0001.trees
+outfile = tmp0001.out
+noisy = 3
+seqtype = 2
+model = 0
+aaRatefile = 
+Small_Diff = 0.1e-6
+getSE = 0
+method = 1
+clock = 1

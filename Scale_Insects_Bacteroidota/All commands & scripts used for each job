@@ -1,0 +1,273 @@
+# FastQC v0.11.9
+fastqc /path/to/*.fastq.gz -o /path/to/output
+
+# Fastp v0.21
+/apps/unit/HusnikU/fastp/0.21/fastp \
+-i /path/to/read1.fastq.gz -o /path/to/read1_trimmed.fastq.gz \
+-I /path/to/read2.fastq.gz -O /path/to/read2_trimmed.fastq.gz
+
+# Phyloflash v3.4
+phyloFlash.pl -read1 /path/to/read1.fastq.gz -read2 /path/to/read2.fastq.gz \
+-CPUs 96 -lib <Sample_CODE> -almosteverything -zip -dbhome /path/to/138.1 -readlength 150
+
+## Symbiont phylogeny
+
+# Barrnap v3
+/apps/unit/HusnikU/barrnap/bin/barrnap \
+--incseq /path/to/metagenome_assembly/scaffolds.fasta --outseq /path/to/output
+
+# Mafft v7
+mafft --auto /path/to/*.fasta > /path/to/output
+
+# Trimal v1.4
+trimal -in /path/to/*.fasta -out /path/to/output.fasta -htmlout /path/to/output.html -automated1
+
+# Orthofinder v2.5.4
+/apps/unit/HusnikU/OrthoFinder/orthofinder -f /path/to/input_dir -M msa -T iqtree
+
+# BUSCO v5.1.3
+busco --force --in /path/to/*.fasta --lineage_dataset bacteroidetes_odb10 --out /path/to/output --mode genome --cpu 64
+
+# BuscoPro2Phylo
+Rscript /home/j/jinyeong-choi/sbatch_buscoProt2Phylo/buscoProt2Phylo_pipeline.R /home/j/jinyeong-choi/sbatch_buscoProt2Phylo/buscoProt2Phylo_main.R /home/j/jinyeong-choi/sbatch_buscoProt2Phylo/buscoProt2Phylo_conf_Bacteroidota_symbionts.R
+
+buscoProt2Phylo_conf.R
+buscoProt2Phylo_main.R
+buscoProt2Phylo_pipeline.R
+buscoProt2Phylo.sh
+
+*Original scripts
+https://github.com/CongLiu37/Notes/blob/main/pipelines/buscoProt2Phylo_conf.R
+https://github.com/CongLiu37/Notes/blob/main/pipelines/buscoProt2Phylo_main.R
+https://github.com/CongLiu37/Notes/blob/main/pipelines/buscoProt2Phylo_pipeline.R
+
+
+### Symbiont genome assembly and annotation
+
+## Spades v3.15
+#for symbiont genome assembly (different parameter combinations used)
+/home/ecbsu/programs/SPAdes-3.15.4-long-K/bin/spades.py	-o	/data1/Scale_insect_set_3/ASSP/ASSP_Spades_245	-1	/data1/Scale_insect_set_3/ASSP/ASSP_S1_R1_001_trimmed.fastq.gz	-2	/data1/Scale_insect_set_3/ASSP/ASSP_S1_R2_001_trimmed.fastq.gz	-k	21,49,77,105,133,161,189,217,245	--careful	-t	32	-m	400	
+/apps/unit/HusnikU/SPAdes-3.15.4-long-K/bin/spades.py	-o	/flash/HusnikU/Jinyeong/Spades/AUIS_pear_untrusted_PUIS	-1	/bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Diaspididae/AUIS/SRR18768945_1.fastq.gz	-2	/bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Diaspididae/AUIS/SRR18768945_2.fastq.gz	-k	27,53,71,87,99,111,119,127,149	--careful	-t	96	-m	400	--untrusted-contigs	/flash/HusnikU/Jinyeong/Spades/PSIS_pear/scaffolds_Bacteroidetes.fasta	--merged	/flash/HusnikU/Jinyeong/Pear/AUIS_pear.assembled.fastq	
+/apps/unit/HusnikU/SPAdes-3.15.4-long-K/bin/spades.py	-o	/flash/HusnikU/Jinyeong/Spades/AUIS_untrusted	-1	/bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Diaspididae/AUIS/SRR18768945_1.fastq.gz	-2	/bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Diaspididae/AUIS/SRR18768945_2.fastq.gz	-k	27,53,71,87,99,111,119,127,149	--careful	-t	96	-m	400	--untrusted-contigs	/flash/HusnikU/Jinyeong/Spades/Uzinura_Genome_sequence.fasta
+/apps/unit/HusnikU/SPAdes-3.15.4-long-K/bin/spades.py	-o	/flash/HusnikU/Jinyeong/Spades/COCH	-1	/bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Conchaspididae/SRR18768943_1.fastq.gz	-2	/bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Conchaspididae/SRR18768943_2.fastq.gz	-k	27,53,71,87,99,111,119,127,149	--careful	-t	96	-m	400	--merged	/flash/HusnikU/Jinyeong/Pear/COCH_pear.assembled.fastq
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py	-o	/flash/HusnikU/Choi/spades_multi_k/DRCO	-1	/bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set2/2-2_HusnikU_ID305/DRCO_S3_L002_R1_001.fastq.gz	-2	/bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set2/2-2_HusnikU_ID305/DRCO_S3_L002_R2_001.fastq.gz	-k	21,33,55,77,99,111,119,127	--careful	-t	32	-m	350	
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py	-o	/flash/HusnikU/Choi/spades_multi_k/DRPI	-1	/bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set2/2-2_HusnikU_ID305/DRPI_S4_L002_R1_001.fastq.gz	-2	/bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set2/2-2_HusnikU_ID305/DRPI_S4_L002_R2_001.fastq.gz	-k	21,33,55,77,99,111,119,127	--careful	-t	32	-m	350
+/apps/unit/HusnikU/SPAdes-3.15.4-long-K/bin/spades.py	-o	/flash/HusnikU/Jinyeong/Spades/EUSC	-1	/bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Xenococcidae/SRR5809303_1.fastq.gz	-2	/bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Xenococcidae/SRR5809303_2.fastq.gz	-k	27,53,71,87,99,111,119,127,149	--careful	-t	96	-m	400	--merged	/flash/HusnikU/Jinyeong/Pear/EUSC_pear.assembled.fastq	
+/apps/unit/HusnikU/SPAdes-3.15.3-Linux/bin/spades.py	-1	/flash/HusnikU/Pradeep/Scale_insect/sradownloads/Xenococcidae/SRR5809303_trimmed_1.fastq.gz	-2	/flash/HusnikU/Pradeep/Scale_insect/sradownloads/Xenococcidae/SRR5809303_trimmed_2.fastq.gz	-o	/flash/HusnikU/Pradeep/Scale_insect/sradownloads/Xenococcidae/EUCO_Spades	-k	27,53,71,87,99,111,119,127	-t	96	-m	200	--careful	
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py	-o	/flash/HusnikU/Jinyeong/spades_scale_insect_set3/ICPU_trimmed_multi_k	-1	/flash/HusnikU/Jinyeong/scale_insect_set3/ICPU_S6_R1_001_trimmed.fastq.gz	-2	/flash/HusnikU/Jinyeong/scale_insect_set3/ICPU_S6_R2_001_trimmed.fastq.gz	-k	27,53,71,87,99,111,119,127	--careful	-t	32	-m	400	
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py	-o	/flash/HusnikU/Jinyeong/spades_scale_insect_set3/ICSE_trimmed_multi_k	-1	/flash/HusnikU/Jinyeong/scale_insect_set3/ICSE_S7_R1_001_trimmed.fastq.gz	-2	/flash/HusnikU/Jinyeong/scale_insect_set3/ICSE_S7_R2_001_trimmed.fastq.gz	-k	27,53,71,87,99,111,119,127	--careful	-t	32	-m	400	
+/home/ecbsu/programs/SPAdes-3.15.4-long-K/bin/spades.py	-o	/data1/Pradeep_data1/Scale_insect_set_3/ORHA_untrusted/ORHA_untrusted_Spades_245	-1	/data1/Pradeep_data1/Scale_insect_set_3/ORHA_trusted/Oi_S1_L001_R1_001_trimmed.fastq.gz	-2	/data1/Pradeep_data1/Scale_insect_set_3/ORHA_trusted/Oi_S1_L001_R2_001_trimmed.fastq.gz	--untrusted-contigs	/data1/Pradeep_data1/Scale_insect_set_3/ORHA_trusted/Bacteroidetes_ORCO_PEAR_extracted_sequences.fasta	-k	21,49,77,105,133,161,189,217,245	--careful	-t	32	-m	400	
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py	-o	/flash/HusnikU/Choi/spades_multi_k/ININ_H	-1	/bucket/HusnikU/Unit_Members/Jinyeong/Scale_insect_old_set/ININ_Hawaii/Oi_trimmed_S1_L001_R1_001.fastq.gz	-2	/bucket/HusnikU/Unit_Members/Jinyeong/Scale_insect_old_set/ININ_Hawaii/Oi_trimmed_S1_L001_R2_001.fastq.gz	-k	21,33,45,55,65,77,89,99,109,119,127	--careful	-t	32	-m	400	
+/home/ecbsu/programs/SPAdes-3.15.0-Linux/bin/spades.py	-o	/home/ecbsu/Desktop/Mono1_default	-1	/home/ecbsu/Desktop/Monophlebidae/Mono-1A_S4_L001_R1_001.fastq.gz	-2	/home/ecbsu/Desktop/Monophlebidae/Mono-1A_S4_L001_R2_001.fastq.gz	-k 21,33,55,77,99,127
+/home/ecbsu/programs/SPAdes-3.15.0-Linux/bin/spades.py	-o	/home/ecbsu/Desktop/Mono2_default	-1	/home/ecbsu/Desktop/Monophlebidae/Mono-2A_S5_L001_R1_001.fastq.gz	-2	/home/ecbsu/Desktop/Monophlebidae/Mono-2A_S5_L001_R2_001.fastq.gz	-k 21,33,55,77,99,127
+/home/ecbsu/programs/SPAdes-3.15.4-long-K/bin/spades.py	-o	/data1/Ortheziidae/Orthezia_urticae_CZK/ORUR_Spades_245	-1	/data1/Ortheziidae/Orthezia_urticae_CZK/Ou_S2_L001_R1_001_trimmed.fastq.gz	-2	/data1/Ortheziidae/Orthezia_urticae_CZK/Ou_S2_L001_R2_001_trimmed.fastq.gz	-k	21,49,77,105,133,161,189,217,245	--careful	-t	32	-m	400	
+/apps/unit/HusnikU/SPAdes-3.15.4-long-K/bin/spades.py	-o	/flash/HusnikU/Jinyeong/Spades/PSIS_pear	-1	/bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Diaspididae/PUIS/SRR18768946_1.fastq.gz	-2	/bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Diaspididae/PUIS/SRR18768946_2.fastq.gz	-k	27,53,71,87,99,111,119,127,149	--merged	/flash/HusnikU/Jinyeong/Pear/PUIS_pear.assembled.fastq	--careful	-t	96	-m	400
+
+#for host phylogeny (different parameter combinations used)
+/home/ecbsu/programs/SPAdes-3.15.0-Linux/bin/spades.py    -o      /home/ecbsu/Desktop/Mono1_default       -1      /home/ecbsu/Desktop/Monophlebidae/Mono-1A_S4_L001_R1_001.fastq.gz       -2      /home/ecbsu/Desktop/Monophlebidae/Mono-1A_S4_L001_R2_001.fastq.gz       
+/home/ecbsu/programs/SPAdes-3.15.0-Linux/bin/spades.py    -o      /home/ecbsu/Desktop/Mono2_default       -1      /home/ecbsu/Desktop/Monophlebidae/Mono-2A_S5_L001_R1_001.fastq.gz       -2      /home/ecbsu/Desktop/Monophlebidae/Mono-2A_S5_L001_R2_001.fastq.gz
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Jinyeong/spades_scale_insect_set3/ICSE_trimmed_multi_k   -1      /flash/HusnikU/Jinyeong/scale_insect_set3/ICSE_S7_R1_001_trimmed.fastq.gz       -2      /flash/HusnikU/Jinyeong/scale_insect_set3/ICSE_S7_R2_001_trimmed.fastq.gz       -k      27,53,71,87,99,111,119,127 --careful       -t      32      -m      400
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Jinyeong/spades_scale_insect_set3/ICPU_trimmed_multi_k   -1      /flash/HusnikU/Jinyeong/scale_insect_set3/ICPU_S6_R1_001_trimmed.fastq.gz       -2      /flash/HusnikU/Jinyeong/scale_insect_set3/ICPU_S6_R2_001_trimmed.fastq.gz       -k      27,53,71,87,99,111,119,127 --careful       -t      32      -m      400
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Choi/spades_multi_k/DRCO -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set2/2-2_HusnikU_ID305/DRCO_S3_L002_R1_001.fastq.gz     -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set2/2-2_HusnikU_ID305/DRCO_S3_L002_R2_001.fastq.gz     -k      21,33,55,77,99,111,119,127      --careful       -t      32      -m      350 
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Choi/spades_multi_k/DRPI -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set2/2-2_HusnikU_ID305/DRPI_S4_L002_R1_001.fastq.gz     -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set2/2-2_HusnikU_ID305/DRPI_S4_L002_R2_001.fastq.gz     -k      21,33,55,77,99,111,119,127      --careful       -t      32      -m      350
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Choi/spades_multi_k/RIMA -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set1/RIMA_S11_L001_R1_001.fastq.gz      -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set1/RIMA_S11_L001_R2_001.fastq.gz      -k      21,33,55,77,99,111,119,127      --careful       -t      32      -m      350
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Choi/spades_multi_k/RHAM -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set2/2-2_HusnikU_ID305/RHAM_S17_L002_R1_001.fastq.gz    -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set2/2-2_HusnikU_ID305/RHAM_S17_L002_R2_001.fastq.gz    -k      21,33,55,77,99,111,119,127      --careful       -t      32      -m      350 
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Choi/spades_multi_k/ININ_H       -1      /bucket/HusnikU/Unit_Members/Jinyeong/Scale_insect_old_set/ININ_Hawaii/Oi_trimmed_S1_L001_R1_001.fastq.gz       -2      /bucket/HusnikU/Unit_Members/Jinyeong/Scale_insect_old_set/ININ_Hawaii/Oi_trimmed_S1_L001_R2_001.fastq.gz -k      21,33,45,55,65,77,89,99,109,119,127     --careful       -t      32      -m      400 
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Jinyeong/spades_scale_insect_set3/ASSP_trimmed_multi_k   -1      /flash/HusnikU/Jinyeong/scale_insect_set3/ASSP_S1_R1_001_trimmed.fastq.gz       -2      /flash/HusnikU/Jinyeong/scale_insect_set3/ASSP_S1_R2_001_trimmed.fastq.gz       -k      27,53,71,87,99,111,119,127 --careful       -t      32      -m      400
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Choi/spades_multi_k/RASP -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set2/2-2_HusnikU_ID305/RASP_S15_L002_R1_001.fastq.gz    -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set2/2-2_HusnikU_ID305/RASP_S15_L002_R2_001.fastq.gz    -k      21,33,55,77,99,111,119,127      --careful       -t      32      -m      400  
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Choi/spades_multi_k/RAIS -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set1/RAIS_S2_L001_R1_001.fastq.gz       -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set1/RAIS_S2_L001_R2_001.fastq.gz       -k      21,33,55,77,99,111,119,127      --careful       -t      32      -m      350 
+/apps/unit/HusnikU/SPAdes-3.15.4-long-K/bin/spades.py     -o      /flash/HusnikU/Jinyeong/Spades_multiK77/ORUR    -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Ortheziidae/Orthezia_urticae/Ou_S2_L001_R1_001.fastq.gz      -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Ortheziidae/Orthezia_urticae/Ou_S2_L001_R2_001.fastq.gz -k      21,33,55,77     --careful       -t      96      -m      400  
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Choi/spades_multi_k/RISP -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set1/RISP_S3_L001_R1_001.fastq.gz       -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set1/RISP_S3_L001_R2_001.fastq.gz       -k      21,33,55,77,99,111,119,127      --careful       -t      32      -m      400 
+/apps/unit/HusnikU/SPAdes-3.15.4-long-K/bin/spades.py     -o      /flash/HusnikU/Jinyeong/Spades_multiK127/PUIS   -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Diaspididae/PUIS/SRR18768946_1.fastq.gz -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Diaspididae/PUIS/SRR18768946_2.fastq.gz -k      21,33,55,77,99,111,119,127      --careful       -t      96  -m      400  
+/apps/unit/HusnikU/SPAdes-3.15.4-long-K/bin/spades.py     -o      /flash/HusnikU/Jinyeong/Spades/COCH     -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Conchaspididae/SRR18768943_1.fastq.gz   -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Conchaspididae/SRR18768943_2.fastq.gz   -k      27,53,71,87,99,111,119,127,149  --careful       -t      96      -m 400     --merged        /flash/HusnikU/Jinyeong/Pear/COCH_pear.assembled.fastq 
+/apps/unit/HusnikU/SPAdes-3.15.4-long-K/bin/spades.py     -o      /flash/HusnikU/Jinyeong/Spades/COCH_multi_k_127 -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Conchaspididae/COCH/SRR18768943_1.fastq.gz      -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Conchaspididae/COCH/SRR18768943_2.fastq.gz      -k      21,33,55,77,99,111,119,127      --careful       -t      96      -m      400 
+/apps/unit/HusnikU/SPAdes-3.15.3-Linux/bin/spades.py      -1      /flash/HusnikU/Pradeep/Scale_insect/sradownloads/Xenococcidae/SRR5809303_trimmed_1.fastq.gz     -2      /flash/HusnikU/Pradeep/Scale_insect/sradownloads/Xenococcidae/SRR5809303_trimmed_2.fastq.gz     -o      /flash/HusnikU/Pradeep/Scale_insect/sradownloads/Xenococcidae/EUCO_Spades       -k      27,53,71,87,99,111,119,127      -t      96      -m      200     --careful 
+/home/ecbsu/programs/SPAdes-3.15.4-Linux/bin/spades.py    -o      /data1/Pradeep_data1/File_zilla/COCA/COCA_Spades        -1      /data1/Pradeep_data1/File_zilla/COCA/SRR26067561_1.fastq.gz     -2      /data1/Pradeep_data1/File_zilla/COCA/SRR26067561_2.fastq.gz     -k      27,53,71,87,99,111,119,127 
+/apps/unit/HusnikU/SPAdes-3.15.4-long-K/bin/spades.py     -o      /flash/HusnikU/Jinyeong/Spades/ACLA_multi_k_127 -1 /bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Eriococcidae/ACLA/SRR18768944_1.fastq.gz        -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/sradownloads/Eriococcidae/ACLA/SRR18768944_2.fastq.gz        -k      21,33,55,77,99,111,119,127      --careful       -t      96      -m      400 
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Jinyeong/spades_scale_insect_set3/ASKA_trimmed_multi_k   -1      /flash/HusnikU/Jinyeong/scale_insect_set3/ASKA_S2_R1_001_trimmed.fastq.gz       -2      /flash/HusnikU/Jinyeong/scale_insect_set3/ASKA_S2_R2_001_trimmed.fastq.gz       -k      27,53,71,87,99,111,119,127      --careful       -t      32 -m      400     
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Jinyeong/spades_scale_insect_set3/PSMU_trimmed_multi_k   -1      /flash/HusnikU/Jinyeong/scale_insect_set3/PSMU_S5_R1_001_trimmed.fastq.gz       -2      /flash/HusnikU/Jinyeong/scale_insect_set3/PSMU_S5_R2_001_trimmed.fastq.gz       -k      27,53,71,87,99,111,119,127      --careful       -t      32 -m      400
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Jinyeong/spades_scale_insect_set3/KUSP_trimmed_multi_k   -1      /flash/HusnikU/Jinyeong/scale_insect_set3/KUSP_S4_R1_001_trimmed.fastq.gz       -2      /flash/HusnikU/Jinyeong/scale_insect_set3/KUSP_S4_R2_001_trimmed.fastq.gz       -k      27,53,71,87,99,111,119,127      --careful       -t      32  -m      400
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Jinyeong/spades_scale_insect_set3/MAMA_trimmed_multi_k   -1      /flash/HusnikU/Jinyeong/scale_insect_set3/MAMA_S8_R1_001_trimmed.fastq.gz       -2      /flash/HusnikU/Jinyeong/scale_insect_set3/MAMA_S8_R2_001_trimmed.fastq.gz       -k      27,53,71,87,99,111,119,127      --careful       -t      32
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Jinyeong/spades_scale_insect_set3/PUBA_trimmed_multi_k   -1      /flash/HusnikU/Jinyeong/scale_insect_set3/PUBA_S9_R1_001_trimmed.fastq.gz       -2      /flash/HusnikU/Jinyeong/scale_insect_set3/PUBA_S9_R2_001_trimmed.fastq.gz       -k      27,53,71,87,99,111,119,127      --careful       -t      32 -m      400
+/apps/unit/HusnikU/SPAdes-3.15.4-long-K/bin/spades.py     -o      /flash/HusnikU/Jinyeong/Spades/ACAB_multi_k_127 -1 /bucket/HusnikU/Sequencing_data/47_NovaSeq_211208_A00457_0216_AHN5F3DRXY_Jinyeong/Data/Intensities/BaseCalls/2-2_HusnikU_ID305/ACAB_S5_L002_R1_001.fastq.gz     -2      /bucket/HusnikU/Sequencing_data/47_NovaSeq_211208_A00457_0216_AHN5F3DRXY_Jinyeong/Data/Intensities/BaseCalls/2-2_HusnikU_ID305/ACAB_S5_L002_R2_001.fastq.gz     -k      21,33,55,77,99,111,119,127      --careful       -t 96      -m      400 
+/home/ecbsu/programs/SPAdes-3.15.0-Linux/bin/spades.py    -o      /home/ecbsu/Desktop/Scale_insect_set2/2-2_HusnikU_ID305/KUPA_Spades     -1      /home/ecbsu/Desktop/Scale_insect_set2/2-2_HusnikU_ID305/KUPA_S6_L002_R1_001.fastq.gz    -2      /home/ecbsu/Desktop/Scale_insect_set2/2-2_HusnikU_ID305/KUPA_S6_L002_R2_001.fastq.gz
+/home/ecbsu/programs/SPAdes-3.15.0-Linux/bin/spades.py    -o      /home/ecbsu/Desktop/Scale_insect_set2/2-2_HusnikU_ID305/NIBI_Spades     -1      /home/ecbsu/Desktop/Scale_insect_set2/2-2_HusnikU_ID305/NIBI_S1_L002_R1_001.fastq.gz    -2      /home/ecbsu/Desktop/Scale_insect_set2/2-2_HusnikU_ID305/NIBI_S1_L002_R2_001.fastq.gz
+/home/ecbsu/programs/SPAdes-3.15.0-Linux/bin/spades.py    -o      /home/ecbsu/Desktop/Scale_insect_set2/2-2_HusnikU_ID305/KEVA_Spades     -1      /home/ecbsu/Desktop/Scale_insect_set2/2-2_HusnikU_ID305/KEVA_S2_L002_R1_001.fastq.gz    -2      /home/ecbsu/Desktop/Scale_insect_set2/2-2_HusnikU_ID305/KEVA_S2_L002_R2_001.fastq.gz
+/home/ecbsu/programs/SPAdes-3.15.4-Linux/bin/spades.py    -o      /home/ecbsu/Desktop/Scale_insect_set2/Pradeep/PUTO_spades_127kmer       -1      /home/ecbsu/Desktop/Scale_insect_set2/Pradeep/PUTO_trimmed_S1_L001_R1_001.fastq.gz      -2      /home/ecbsu/Desktop/Scale_insect_set2/Pradeep/PUTO_trimmed_S1_L001_R2_001.fastq.gz      -k      27,53,71,87,99,111,119,127      --careful -t      32      -m      400
+/apps/unit/HusnikU/SPAdes-3.15.4-long-K/bin/spades.py     -o      /flash/HusnikU/Jinyeong/Spades_multiK77/PRPR_2  -1 /bucket/HusnikU/Sequencing_data/Coccoidea_external/Ortheziidae/Praelongorthezia_praelonga/026A_S3_L001_R1_001.fastq.gz  -2 /bucket/HusnikU/Sequencing_data/Coccoidea_external/Ortheziidae/Praelongorthezia_praelonga/026A_S3_L001_R2_001.fastq.gz  -k 21,33,55,77     --careful       -t      96      -m      400
+/apps/unit/HusnikU/SPAdes-3.15.2-Linux/bin/spades.py      -o      /flash/HusnikU/Pradeep/Scale_insect/Spades/PANA_combined/PANA_combined_Spades   --pe-1  1       /flash/HusnikU/Pradeep/Scale_insect/Spades/PANA_combined/PANA_S1_L001_R1_001.fastq.gz   --pe-1  2       /flash/HusnikU/Pradeep/Scale_insect/Spades/PANA_combined/PANA_S4_L001_R1_001.fastq.gz   --pe-2  1       /flash/HusnikU/Pradeep/Scale_insect/Spades/PANA_combined/PANA_S1_L001_R2_001.fastq.gz   --pe-2  2       /flash/HusnikU/Pradeep/Scale_insect/Spades/PANA_combined/PANA_S4_L001_R2_001.fastq.gz   -t      32      -m      500
+/apps/unit/HusnikU/SPAdes-3.15.2-Linux/bin/spades.py      -o      /flash/HusnikU/Pradeep/Scale_insect/Spades/SACE_combined/SACE_combined_Spades   --pe-1  1       /flash/HusnikU/Pradeep/Scale_insect/Spades/SACE_combined/SACE_S3_L001_R1_001.fastq.gz   --pe-1  2       /flash/HusnikU/Pradeep/Scale_insect/Spades/SACE_combined/SACE_S6_L001_R1_001.fastq.gz   --pe-2  1       /flash/HusnikU/Pradeep/Scale_insect/Spades/SACE_combined/SACE_S3_L001_R2_001.fastq.gz   --pe-2  2       /flash/HusnikU/Pradeep/Scale_insect/Spades/SACE_combined/SACE_S6_L001_R2_001.fastq.gz   -t      32      -m      500 
+/home/ecbsu/programs/SPAdes-3.15.0-Linux/bin/spades.py    -o      /home/ecbsu/Desktop/Scale_insect_set2/1-1_HusnikU_ID305/CECE_Spades     -1      /home/ecbsu/Desktop/Scale_insect_set2/1-1_HusnikU_ID305/CECE_S18_L001_R1_001.fastq.gz   -2      /home/ecbsu/Desktop/Scale_insect_set2/1-1_HusnikU_ID305/CECE_S18_L001_R2_001.fastq.gz
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Choi/spades_multi_k/PHAS -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set1/PHAS_S1_L001_R1_001.fastq.gz       -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set1/PHAS_S1_L001_R2_001.fastq.gz       -k      21,33,55,77,99,111,119,127      --careful -t      32      -m      400
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Choi/spades_multi_k/COIA -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set1/COIA_S13_L001_R1_001.fastq.gz      -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set1/COIA_S13_L001_R2_001.fastq.gz      -k      21,33,55,77,99,111,119,127      --careful -t      32      -m      400
+/apps/unit/HusnikU/SPAdes-3.15.4-long-K/bin/spades.py     -o      /flash/HusnikU/Jinyeong/DASP_multi_k_149        -1 /bucket/HusnikU/Sequencing_data/Coccoidea_external/Dactylopiidae/DASP_S6_R1_001.fastq.gz        -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Dactylopiidae/DASP_S6_R2_001.fastq.gz        -k      21,33,55,77,99,119,129,139,149  --careful       -t      96      -m      400 
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Choi/spades_multi_k/RAME -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set1/RAME_S12_L001_R1_001.fastq.gz      -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set1/RAME_S12_L001_R2_001.fastq.gz      -k      21,33,55,77,99,111,119,127      --careful -t      32      -m      350
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Choi/spades_multi_k/RATR -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set2/2-2_HusnikU_ID305/RATR_S16_L002_R1_001.fastq.gz    -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set2/2-2_HusnikU_ID305/RATR_S16_L002_R2_001.fastq.gz    -k      21,33,55,77,99,111,119,127      --careful       -t      32      -m      350
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Choi/spades_multi_k/ANCR -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set2/2-2_HusnikU_ID305/ANCR_S12_L002_R1_001.fastq.gz    -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set2/2-2_HusnikU_ID305/ANCR_S12_L002_R2_001.fastq.gz    -k      21,33,55,77,99,111,119,127      --careful       -t      32      -m      400
+/apps/unit/HusnikU/SPAdes-3.15.4_recompiled/spades.py     -o      /flash/HusnikU/Choi/spades_multi_k/NIVS -1      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set1/NIVS_S16_L001_R1_001.fastq.gz      -2      /bucket/HusnikU/Sequencing_data/Coccoidea_external/Scale_insect_set1/NIVS_S16_L001_R2_001.fastq.gz      -k      21,33,55,77,99,111,119,127      --careful -t      32      -m      400 
+
+# Flye v2.9
+/apps/unit/HusnikU/Flye/bin/flye --pacbio-raw /bucket/HusnikU/Sequencing_data/Coccoidea_external/SRR17283552_PacBioSequel.fastq --out-dir /flash/HusnikU/Jinyeong/Flye/ACLA --meta --scaffold --threads 128
+/apps/unit/HusnikU/Flye/bin/flye --pacbio-raw /bucket/HusnikU/Sequencing_data/Coccoidea_external/SRR26067558_PacBioHiFi.fastq --out-dir /flash/HusnikU/Jinyeong/Flye/COCA --meta --scaffold --threads 128
+
+# Pear v0.9.11
+/apps/unit/HusnikU/PEAR/pear-0.9.11-linux-x86_64/bin/pear -f /path/to/read1.fastq.gz -r /path/to/read2.fastq.gz -o /path/to/output
+
+# Blastn
+/apps/unit/HusnikU/ncbi-blast-2.11.0+/bin/blastn -task megablast -db /bucket/HusnikU/Databases/nt/nt -query /path/to/metagenome_assembly/scaffolds.fasta -outfmt '6 qseqid staxids bitscore std sscinames ssk-ingdoms stitle' -culling_limit 5 -evalue 1e-25 -num_threads 16 -out /path/to/output/scaffolds_vs_nt.blast
+
+# Blobtools v1.1.1
+for Spades assembly
+/apps/unit/HusnikU/blobtools/blobtools create -i /path/to/metagenome_assembly/scaffolds.fasta -y sapdes -t /path/to/blastn/scaffolds_vs_nt.blast -o /path/to/output
+
+for Flye assembly
+/apps/unit/HusnikU/blobtools/blobtools create -i /path/to/metagenome_assembly/scaffolds.fasta -cov /path/to/contigs_stats.txt -t /path/to/blastn/scaffolds_vs_nt.blast -o /path/to/output
+
+/apps/unit/HusnikU/blobtools/blobtools plot -i /path/to/blobtools.blobDB.json -r superkingdom -o /path/to/output
+/apps/unit/HusnikU/blobtools/blobtools plot -i /path/to/blobtools.blobDB.json -r phylum -o /path/to/output
+/apps/unit/HusnikU/blobtools/blobtools plot -i /path/to/blobtools.blobDB.json -r order -o /path/to/output
+
+/apps/unit/HusnikU/blobtools/blobtools view -i /path/to/blobtools.blobDB.json -o /path/to/output
+
+# Metabat2 v2.12.1
+metabat2 -i /path/to/metagenome_assembly/scaffolds.fasta -a /path/to/scaffolds_depth.txt -o /path/to/output
+
+# Dastool v1.1.6
+for converting fasta to tsv files
+Fasta_to_Contig2Bin.sh -e /path/to/assembly_metabat.fasta > /path/to/my_contigs2bin.tsv
+
+for running Dastool
+DAS_Tool -i /path/to/my_contigs2bin.tsv -c /path/to/assembly_metabat.fasta -o /path/to/output -l metabat --write_bin_evals --write_bins
+
+# Pilon v1.24
+for Illumina assembly
+java -jar /apps/unit/HusnikU/pilon-1.24.jar --genome /path/to/assembly.fasta --frags /path/to/sorted_bam_file --output output_prefix --outdir /path/to/output
+
+for Pacbio assembly - polished by short-reads
+java -jar /apps/unit/HusnikU/pilon-1.24.jar --genome /path/to/assembly.fasta --pacbio /path/to/sorted_bam_file --output output_prefix --outdir /path/to/output
+
+# Prokka
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/NewBacter/ACLA_genome_draft/assembly_Bacteroidetes.fasta -o /Users/jinyeongchoi/Desktop/NewBacter/ACLA_genome_draft/Prokka_assembly_Bacteroidetes --compliant --rfam --evalue 1e-05 --addgenes --prefix ACLA --locustag ACLA
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/Aspidiotus_nerii_published/Genome_sequence_Uzinura.fasta -outdir /Users/jinyeongchoi/Desktop/Aspidiotus_nerii_published/Uzinura_prokka --compliant --rfam --evalue 1e-05
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/ASSP/scaffolds_Bacteroidetes.fasta --outdir /Users/jinyeongchoi/Desktop/ASSP/PROKKA_Bacteroidetes_ASSP --compliant --rfam --evalue 1e-05 --addgenes --prefix ASSP --locustag ASSP
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/NewBacter/AUIS_pear_untrust-contigs_PUIS/scaffolds_Bacteroidetes_pilon.fasta -o /Users/jinyeongchoi/Desktop/NewBacter/AUIS_pear_untrust-contigs_PUIS/Prokka_scaffolds_Bacteroidetes_pilon --compliant --rfam --evalue 1e-05 --addgenes --prefix AUIS --locustag AUIS
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/NewBacter/COCA_genome_draft/assembly_Bacteroidetes_pilon.fasta -o /Users/jinyeongchoi/Desktop/NewBacter/COCA_genome_draft/Prokka_assembly_Bacteroidetes_pilon --compliant --rfam --evalue 1e-05 --addgenes --prefix COCA --locustag COCA
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/NewBacter/COCH_genome_draft/scaffolds_Bacteroidetes_pilon.fasta -o /Users/jinyeongchoi/Desktop/NewBacter/COCH_genome_draft/Prokka_scaffolds_Bacteroidetes_pilon --compliant --rfam --evalue 1e-05 --addgenes --prefix COCH --locustag COCH
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/analysing/DRCO_genome_draft/Bacteroidetes_DRCO_pilon_ordered.fasta --compliant --rfam --outdir /Users/jinyeongchoi/Desktop/analysing/DRCO_genome_draft/PROKKA_Bacteroidetes_DRCO_pilon_ordered --addgenes --prefix DRCO --locustag DRCO 
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/analysing/DRPI_genome_draft/Bacteroidetes_DRPI_pilon_ordered_gltx.fasta --compliant --rfam --outdir /Users/jinyeongchoi/Desktop/analysing/DRPI_genome_draft/PROKKA_Bacteroidetes_DRPI_pilon_ordered_gltx --addgenes --prefix DRPI --locustag DRPI
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/NewBacter/EUCO_pear_multi_k149/scaffolds_Bacteroidetes_pilon.fasta -o /Users/jinyeongchoi/Desktop/NewBacter/EUCO_pear_multi_k149/Prokka_scaffolds_Bacteroidetes_pilon --compliant --rfam --evalue 1e-05 --addgenes --prefix EUCO --locustag EUCO
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/analysing/ICPU_genome_draft/Bacteroidetes_ICPU_pilon_ordered.fasta --outdir /Users/jinyeongchoi/Desktop/analysing/ICPU_genome_draft/ICPU_prokka_pilon_ordered --compliant --rfam --evalue 1e-05 --addgenes --prefix ICPU --locustag ICPU
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/analysing/ICSE_genome_draft/Bacteroidetes_ICSE_pilon_ordered.fasta --outdir /Users/jinyeongchoi/Desktop/analysing/ICSE_genome_draft/ICSE_prokka_pilon_ordered --compliant --rfam --evalue 1e-05 --addgenes --prefix ICSE --locustag ICSE
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/ININ_H/scaffolds_Bacteroidetes_chromosome.fasta --outdir /Users/jinyeongchoi/Desktop/ININ_H/PROKKA_Bacteroidetes_ININ_H_chromosome --compliant --rfam --evalue 1e-05 --addgenes --prefix ININ_H --locustag ININ_H
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/analysing/Llaveia_axin_published/Genome_sequence_Walczuchella_ordered.fasta --compliant --rfam --outdir /Users/jinyeongchoi/Desktop/analysing/Llaveia_axin_published/Walczuchella_prokka_ordered --addgenes --prefix LLAX --locustag LLAX
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/analysing/Mono1_genome_draft/Bacteroidetes_Mono1_pilon_ordered.fasta --compliant --rfam --outdir /Users/jinyeongchoi/Desktop/analysing/Mono1_genome_draft/PROKKA_Bacteroidetes_Mono1_pilon_ordered --addgenes --prefix Mono1 --locustag Mono1
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/analysing/Mono2_genome_draft/Bacteroidetes_Mono2_pilon_ordered.fasta --compliant --rfam --outdir /Users/jinyeongchoi/Desktop/analysing/Mono2_genome_draft/PROKKA_Bacteroidetes_Mono2_pilon_ordered --addgenes --prefix Mono2 --locustag Mono2
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/analysing/ORUR_genome_draft_2/Metabat.2_Bacteroidetes_pilon.fasta --outdir /Users/jinyeongchoi/Desktop/analysing/ORUR_genome_draft_2/Prokka_Metabat.2_Bacteroidetes_pilon --compliant --rfam --evalue 1e-05 --addgenes --prefix ORUR --locustag ORUR
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/NewBacter/PUIS_genome_draft/scaffolds_Bacteroidetes_pilon.fasta -o /Users/jinyeongchoi/Desktop/NewBacter/PUIS_genome_draft/Prokka_scaffolds_Bacteroidetes_pilon --compliant --rfam --evalue 1e-05 --addgenes --prefix PUIS --locustag PUIS
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/analysing/RAIS_genome_draft/Bacteroidetes_RAIS_pilon_1contig_combined_hyp4_pilon.fasta --outdir /Users/jinyeongchoi/Desktop/analysing/RAIS_genome_draft/Prokka_Bacteroidetes_RAIS_pilon_1contig_hyp4_gcode4 --gcode 4 --centre X --compliant --cdsrnaolap --rfam --evalue 1e-05 --addgenes --prefix RAIS --locustag RAIS
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/analysing/RAIS_genome_draft_2/Bacteroidetes_RAIS_pilon_1contig_combined_hyp4_pilon.fasta --outdir /Users/jinyeongchoi/Desktop/analysing/RAIS_genome_draft_2/Prokka_Bacteroidetes_RAIS_pilon_1contig_hyp4_gcode11 --gcode 11 --centre X --compliant --cdsrnaolap --rfam --evalue 1e-05 --addgenes --prefix RAIS --locustag RAIS
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/RAIS/scaffolds_Gammaproteobacteria.fasta --outdir /Users/jinyeongchoi/Desktop/RAIS/Prokka_Gammaproteobacteria --compliant --rfam --evalue 1e-05
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/analysing/RASP_genome_draft/Bacteroidetes_RASP_ordered.fasta --compliant --rfam --outdir /Users/jinyeongchoi/Desktop/analysing/RASP_genome_draft/PROKKA_Bacteroidetes_RASP_ordered --addgenes --prefix RASP --locustag RASP
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/analysing/RHAM_genome_draft/Bacteroidetes_RHAM_peared_multi_k149_1contigs_pilon.fasta --outdir /Users/jinyeongchoi/Desktop/analysing/RHAM_genome_draft/PROKKA_Bacteroidetes_RHAM_peared_multi_k149_1contigs_pilon --compliant --rfam --evalue 1e-05 --addgenes --prefix RHAM --locustag RHAM
+/Users/jinyeongchoi/miniconda3/envs/prokka/bin/prokka /Users/jinyeongchoi/Desktop/analysing/RIMA_genome_draft/Bacteroidetes_RIMA_pilon_ordered.fasta --compliant --rfam --outdir /Users/jinyeongchoi/Desktop/analysing/RIMA_genome_draft/PROKKA_Bacteroidetes_RIMA_ordered --addgenes --prefix RIMA --locustag RIMA
+
+# Bakta v1.8.1
+on webserver https://bakta.computational.bio/
+
+# Ghostkoala v2.0
+on webserver https://www.kegg.jp/ghostkoala/
+
+# tRNAscan-SE v2.0
+tRNAscan-SE /path/to/assembly.fasta -B -o /path/to/output
+
+# Eggnog-mapper v2
+on webserver http://eggnog-mapper.embl.de/
+*with default parameters like below
+/data/shared/home/emapper/miniconda3/envs/eggnog-mapper-2.1/bin/emapper.py --cpu 20 --mp_start_method forkserver --data_dir /dev/shm/ -o out --output_dir /emapper_web_jobs/emapper_jobs/user_data/MM_cor87cli --temp_dir /emapper_web_jobs/emapper_jobs/user_data/MM_cor87cli --override -m diamond --dmnd_ignore_warnings --dmnd_algo ctg -i /emapper_web_jobs/emapper_jobs/user_data/MM_cor87cli/queries.fasta --evalue 0.001 --score 60 --pident 40 --query_cover 20 --subject_cover 20 --itype proteins --tax_scope auto --target_orthologs all --go_evidence non-electronic --pfam_realign none --report_orthologs --decorate_gff yes --excel
+
+# Orthofinder v2.5.4
+/apps/unit/HusnikU/OrthoFinder/orthofinder -f /path/to/input_dir
+
+# Bacteroidota genome COG visualization
+
+1.addingCOGinfoToOrthogroups
+merge_info.py
+
+2.COG_summary
+summarizeData.py
+
+3.splittingCOGs
+splittingCOGs.py
+
+4.generate_figures_byPhylogeny_final
+fill0or1.py
+makeIMAGE_data.py
+
+*This work is now automated by Akito
+https://github.com/asuq/OIST_Scripts/blob/main/Python_codes/COG_visualization.ipynb
+
+# Synteny plotting
+python input_maker.py --order-file order_file.txt
+run "alignment_auto.pde" with Processing
+
+*Original scripts
+https://github.com/filip-husnik/genome-plots-processing
+
+# Pseudofinder v1.1.0
+pseudofinder.py annotate --genome /path/to/.gbk --outprefix /path/to/<prefix> --database /media/ecbsu/PortableSSD/databases/NR_data/data --thread 32 --diamond
+
+# Paml v4.9 yn00 (Mafft, Pal2nal v14) 
+for dN/dS calculation
+allProcessForYn00.sh 
+python extractSequencesIntoEachFasta_faa.py
+python extractSequencesIntoEachFasta_ffn.py
+run_pal2nal.sh
+python catPal2nal.py
+yn00
+python summarize_dNdS.py
+
+for dN/dS visualization
+1.extractOrthogroups.py
+2.markDuplication.py
+3.splitDuplicatedGenes.py
+4.extractAAseq.py
+5.markPseudogene.py
+6.selectSeq.log
+6.selectSeq.py
+7.selection_symbiont_duplicatedGene.geneious
+8.makePair.py
+9.add_dNdS.py
+10.mark>1.0.py
+
+## Host genome assemblies and phylogenomic analyses
+
+# Decon
+Rscript /flash/husniku/jinyeong/decon/DeCon_pipeline.R /flash/husniku/jinyeong/decon/DeCon_main.R /flash/husniku/jinyeong/decon/DeCon_main.py /flash/husniku/jinyeong/decon/DeCon.conf_DASP.R
+
+DeCon.conf.R
+DeCon_main.R
+DeCon_main.py
+DeCon_pipeline.R
+Decon.sh
+
+*Original scripts
+https://github.com/CongLiu37/Notes/blob/main/pipelines/DeCon_conf.R
+https://github.com/CongLiu37/Notes/blob/main/pipelines/DeCon_main.R
+https://github.com/CongLiu37/Notes/blob/main/pipelines/DeCon_main.py
+https://github.com/CongLiu37/Notes/blob/main/pipelines/DeCon_pipeline.R
+
+# Buscoprot2phylo
+same as a description in ## symbiont phylogeny
+
+# Paml v4.9 MCMCtree 
+Step1-1.Estimation of Gradient and Hessian of Branch Lengths
+./mcmctree mcmc.ctl (as usedata3)
+
+Step1-2.wag.dat
+./codeml tmp0001.ctl
+
+Step2.usedata2 - Estimation of Time and Rate by MCMC Analysis
+./mcmctree mcmc.ctl (as usedata2)
+
+Substitution_rate_rgene_gamma
+./codeml tmp0001.ctl 
