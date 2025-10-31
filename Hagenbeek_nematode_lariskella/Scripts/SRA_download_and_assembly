@@ -1,0 +1,38 @@
+#!/bin/bash
+
+#SBATCH -p compute
+#SBATCH --output=SRA_binning%a.out
+#SBATCH -t 4-0
+#SBATCH --mem=480G
+#SBATCH -c 128
+#SBATCH --array=0-32%5 #Only download and run 5 jobs at a time to limit disk usage
+
+
+ml bioinfo-ugrp-modules
+ml DebianMed
+ml sra-toolkit
+
+#Read which files to analyze
+readarray -t a < /bucket/HusnikU/Unit_Members/Arno/restore-data/Lariskella_analyses/SRA_screening/SRA_list_with_phyloflash_confirmed_lariskella_and_known_host.txt
+
+#Generate output dir
+outdir=/flash/HusnikU/Arno/SRA_binning
+mkdir $outdir
+cd $outdir
+mkdir ./${a[${SLURM_ARRAY_TASK_ID}]}
+cd ./${a[${SLURM_ARRAY_TASK_ID}]}
+#Download the files
+fasterq-dump --split-files ${a[${SLURM_ARRAY_TASK_ID}]}
+
+#Assemble the fastq files
+ml fastp
+fastp -i ${a[${SLURM_ARRAY_TASK_ID}]}_1.fastq -I ${a[${SLURM_ARRAY_TASK_ID}]}_2.fastq -o ${a[${SLURM_ARRAY_TASK_ID}]}_1_trimmed.fastq -O ${a[${SLURM_ARRAY_TASK_ID}]}_2_trimmed.fastq -w 128 -z 9
+ml megahit
+megahit -o ${a[${SLURM_ARRAY_TASK_ID}]}_megahit -1 ${a[${SLURM_ARRAY_TASK_ID}]}_1_trimmed.fastq -2 ${a[${SLURM_ARRAY_TASK_ID}]}_2_trimmed.fastq -t 128 -m 480
+
+#Delete the raw fastq and the trimmed fastq
+rm ${a[${SLURM_ARRAY_TASK_ID}]}_1.fastq
+rm ${a[${SLURM_ARRAY_TASK_ID}]}_2.fastq
+rm ${a[${SLURM_ARRAY_TASK_ID}]}_1_trimmed.fastq
+rm ${a[${SLURM_ARRAY_TASK_ID}]}_2_trimmed.fastq
+
