@@ -1,0 +1,382 @@
+## ==========================================================
+## Directed NN attraction/repulsion:
+##   (A) Row-wise random-labelling permutations (labels-only)
+##   (B) CSR in an ELLIPSOID with same volume as the host cell
+## Exports a single comparative CSV.
+## ==========================================================
+options(stringsAsFactors = FALSE)
+
+## ---------------- user config ----------------
+files <- list(
+  B = "B_table.csv",
+  C = "C_table.csv",
+  S = "S_table.csv",
+  T = "T_table.csv"
+)
+
+# Host cell volume in "voxel units"
+V_vox <- 398000000  # 398e6 vox^3
+
+# Ellipsoid axis ratios (a:b:c). These define shape; volume is matched automatically.
+# Examples: c(1,1,1)=sphere; c(2,1,1)=prolate; c(1,1,0.5)=oblate.
+axis_ratios <- c(1, 1, 0.5)
+
+# Permutations for label-shuffle null
+nperm <- 10000
+seed_perm <- 1
+
+# CSR simulations inside ellipsoid (increase for finer p-values)
+n_csr <- 1000
+seed_csr <- 2
+
+# Output
+out_csv <- "attraction_results_comparative.csv"
+
+## --------------- robust readers ---------------
+.smart_read <- function(path) {
+  stopifnot(file.exists(path))
+  df <- tryCatch(
+    read.csv2(path, check.names = FALSE, stringsAsFactors = FALSE),
+    error = function(e) read.csv(path, check.names = FALSE, stringsAsFactors = FALSE)
+  )
+  names(df) <- trimws(names(df))
+  names(df) <- sub("^\ufeff", "", names(df))  # strip BOM
+  df
+}
+
+.read_focal_csv <- function(path, focal_label) {
+  df <- .smart_read(path)
+  nm_lc <- tolower(names(df))
+  if (!("cell_id" %in% nm_lc)) {
+    names(df)[1] <- "cell_id"
+  } else {
+    names(df)[nm_lc == "cell_id"] <- "cell_id"
+  }
+
+  nm_raw <- names(df)
+  nm_key <- tolower(gsub("\\s+", "", nm_raw))
+
+  pick_col <- function(target) {
+    pats <- c(
+      paste0("^to", target, "$"),
+      paste0("^", target, "$"),
+      paste0("^", target, "_?dist$"),
+      paste0("^dist_?", target, "$")
+    )
+    hit <- which(sapply(pats, function(p) any(grepl(p, nm_key, perl = TRUE))))
+    if (!length(hit)) return(NA_character_)
+    nm_key[grepl(pats[hit[1]], nm_key, perl = TRUE)][1]
+  }
+
+  cols <- c(
+    b = pick_col("b"),
+    c = pick_col("c"),
+    s = pick_col("s"),
+    t = pick_col("t")
+  )
+
+  desired <- c("b","c","s","t")
+  others  <- setdiff(desired, tolower(focal_label))
+
+  map_back <- function(xlc) {
+    if (is.na(xlc)) return(NA)
+    idx <- match(xlc, nm_key); if (is.na(idx)) return(NA)
+    nm_raw[idx]
+  }
+
+  out <- data.frame(cell_id = df[["cell_id"]], stringsAsFactors = FALSE)
+  for (lab in others) {
+    nm <- map_back(cols[[lab]])
+    out[[paste0("to", toupper(lab))]] <- if (is.na(nm)) NA else df[[nm]]
+  }
+
+  for (nm in names(out)) {
+    if (nm != "cell_id") out[[nm]] <- suppressWarnings(as.numeric(out[[nm]]))
+  }
+  out$focal <- toupper(focal_label)
+  out
+}
+
+## --------------- helpers ---------------
+# Winner credit (ties split)
+.winner_credit <- function(d_target, d_vec) {
+  if (!is.finite(d_target)) return(NA_real_)
+  v <- as.numeric(d_vec); v[!is.finite(v)] <- Inf
+  m <- min(v); if (!is.finite(m)) return(NA_real_)
+  k <- sum(abs(v - m) <= .Machine$double.eps^0.5)
+  if (abs(d_target - m) <= .Machine$double.eps^0.5) 1/k else 0
+}
+
+# Label-only permutation for one row: values fixed, labels shuffled
+.permute_pick_row <- function(vals_row, labs_row, target) {
+  ok <- is.finite(vals_row)
+  if (!any(ok)) return(NA_real_)
+  vals <- vals_row[ok]; labs <- labs_row[ok]
+  perm <- sample.int(length(labs))
+  labs_p <- labs[perm]
+  idx <- which(labs_p == target)
+  if (length(idx) == 1) vals[idx] else NA_real_
+}
+
+.permute_winner_row <- function(vals_row, labs_row, target) {
+  ok <- is.finite(vals_row)
+  if (!any(ok)) return(NA_real_)
+  vals <- vals_row[ok]; labs <- labs_row[ok]
+  perm <- sample.int(length(labs))
+  labs_p <- labs[perm]
+  idx <- which(labs_p == target)
+  if (length(idx) != 1) return(NA_real_)
+  .winner_credit(vals[idx], vals)
+}
+
+## ---- Euclidean NN (no torus), chunked for memory ----
+.nn_to_target_euclid <- function(F, T, chunk = 400) {
+  nF <- nrow(F); nT <- nrow(T)
+  if (nF == 0L || nT == 0L) return(rep(NA_real_, nF))
+  out <- numeric(nF)
+  for (i in seq(1, nF, by = chunk)) {
+    idx <- i:min(i + chunk - 1, nF)
+    Fx <- F[idx, , drop = FALSE]
+    dx <- outer(Fx[,1], T[,1], "-")
+    dy <- outer(Fx[,2], T[,2], "-")
+    dz <- outer(Fx[,3], T[,3], "-")
+    d2 <- dx*dx + dy*dy + dz*dz
+    out[idx] <- sqrt(apply(d2, 1, min))
+  }
+  out
+}
+
+## ---- Ellipsoid geometry & uniform sampling ----
+# Given volume V and axis ratios r = (rx,ry,rz), compute semi-axes (a,b,c) s.t. (4/3)πabc = V
+.compute_axes_from_volume <- function(V, ratios) {
+  ratios <- as.numeric(ratios); stopifnot(length(ratios) == 3, all(ratios > 0))
+  rx <- ratios[1]; ry <- ratios[2]; rz <- ratios[3]
+  s <- ( V * 3 / (4 * pi * rx * ry * rz) )^(1/3)
+  c(a = s*rx, b = s*ry, c = s*rz)
+}
+
+# Uniform in unit ball: direction ~ uniform sphere, radius ~ U^(1/3)
+.rand_in_unit_ball <- function(n) {
+  if (n <= 0) return(matrix(numeric(0), ncol = 3))
+  X <- matrix(rnorm(3*n), ncol = 3)
+  norms <- sqrt(rowSums(X^2))
+  U <- runif(n)^(1/3)
+  (X / norms) * U
+}
+
+# Uniform in ellipsoid centered at origin: scale unit-ball by (a,b,c)
+.rand_pts_ellipsoid <- function(n, axes) {
+  if (n <= 0) return(matrix(numeric(0), ncol = 3))
+  B <- .rand_in_unit_ball(n)
+  sweep(B, 2, as.numeric(axes), `*`)
+}
+
+## --------------- load data ---------------
+all_blocks <- lapply(names(files), function(foc) .read_focal_csv(files[[foc]], foc))
+names(all_blocks) <- names(files)
+
+cat("\n[Loaded tables]\n")
+for (foc in names(all_blocks)) {
+  present <- grep("^to", names(all_blocks[[foc]]), value = TRUE)
+  cat(sprintf("  %s_table: %s (n_rows=%d)\n", foc, ifelse(length(present), paste(present, collapse = ", "), "(none)"),
+              nrow(all_blocks[[foc]])))
+}
+
+# Epsilon for log transform (from smallest positive distance)
+all_d <- unlist(lapply(all_blocks, function(b) {
+  as.numeric(unlist(b[, grep("^to", names(b)), drop = FALSE]))
+}), use.names = FALSE)
+pos_min <- suppressWarnings(min(all_d[is.finite(all_d) & all_d > 0]))
+eps <- if (is.finite(pos_min) && pos_min > 0) pos_min * 1e-6 else 1e-9
+cat(sprintf("\n[epsilon for log] eps = %.12g\n", eps))
+
+## --------------- (A) label-shuffle results ---------------
+if (!is.na(seed_perm)) set.seed(seed_perm)
+
+perm_rows <- list()
+
+for (foc in names(all_blocks)) {
+  block <- all_blocks[[foc]]
+  tcols <- grep("^to", names(block), value = TRUE)     # three other targets
+  if (!length(tcols)) next
+
+  vals <- as.matrix(block[, tcols, drop = FALSE])      # distances matrix
+  tgts <- toupper(sub("^to", "", tcols))               # target labels present
+  labs <- matrix(tgts, nrow = nrow(vals), ncol = length(tgts), byrow = TRUE)
+
+  n <- nrow(vals); if (n == 0L) next
+
+  for (tgt in tgts) {
+    # observed
+    pick_obs <- sapply(seq_len(n), function(i) {
+      idx <- which(labs[i, ] == tgt)
+      if (length(idx) == 1) vals[i, idx] else NA_real_
+    })
+    obs_medlog <- median(log(pick_obs + eps), na.rm = TRUE)
+    obs_win    <- mean(sapply(seq_len(n), function(i) .winner_credit(pick_obs[i], vals[i, ])), na.rm = TRUE)
+
+    # permutations
+    sim_medlog <- numeric(nperm)
+    sim_win    <- numeric(nperm)
+
+    for (b in seq_len(nperm)) {
+      perm_pick <- vapply(seq_len(n), function(i)
+        .permute_pick_row(vals[i, ], labs[i, ], target = tgt), numeric(1))
+      sim_medlog[b] <- median(log(perm_pick + eps), na.rm = TRUE)
+
+      wins <- vapply(seq_len(n), function(i)
+        .permute_winner_row(vals[i, ], labs[i, ], target = tgt), numeric(1))
+      sim_win[b] <- mean(wins, na.rm = TRUE)
+    }
+
+    p_dist <- (1 + sum(sim_medlog <= obs_medlog, na.rm = TRUE)) / (1 + sum(is.finite(sim_medlog)))
+    p_win  <- (1 + sum(sim_win    >= obs_win,    na.rm = TRUE)) / (1 + sum(is.finite(sim_win)))
+
+    perm_rows[[paste(foc, tgt, sep=":")]] <- data.frame(
+      focal = foc, target = tgt, n_rows = n,
+      stat = c("median_log_distance", "winner_fraction"),
+      observed = c(obs_medlog, obs_win),
+      perm_mean = c(mean(sim_medlog, na.rm = TRUE), mean(sim_win, na.rm = TRUE)),
+      perm_sd   = c(sd(sim_medlog,   na.rm = TRUE), sd(sim_win,  na.rm = TRUE)),
+      p_perm    = c(p_dist, p_win),
+      alt       = c("attraction (smaller)", "enrichment (more often closest)"),
+      stringsAsFactors = FALSE
+    )
+  }
+}
+perm_res <- do.call(rbind, perm_rows)
+perm_res$q_perm <- ave(perm_res$p_perm, perm_res$stat, FUN = function(p) p.adjust(p, "BH"))
+
+## --------------- (B) CSR simulation in ellipsoid ---------------
+# Compute semi-axes from volume & ratios
+axes <- .compute_axes_from_volume(V_vox, axis_ratios)
+cat(sprintf("\n[Ellipsoid axes] a=%.3f, b=%.3f, c=%.3f (vox units), volume=%.3f (check: %.3f)\n",
+            axes["a"], axes["b"], axes["c"],
+            (4*pi/3)*prod(axes), V_vox))
+
+# Counts per species from your tables
+N <- vapply(all_blocks, nrow, integer(1))
+species <- c("B","C","S","T"); stopifnot(all(species %in% names(N)))
+
+if (!is.na(seed_csr)) set.seed(seed_csr)
+
+triples <- list(
+  B = c("C","S","T"),
+  C = c("B","S","T"),
+  S = c("B","C","T"),
+  T = c("B","C","S")
+)
+
+csr_vals <- list()
+
+for (rep in seq_len(n_csr)) {
+  # random positions in ellipsoid
+  P <- lapply(species, function(sp) .rand_pts_ellipsoid(N[[sp]], axes))
+  names(P) <- species
+
+  for (foc in species) {
+    foc_pts <- P[[foc]]
+    others <- triples[[foc]]
+    if (N[[foc]] == 0L) next
+
+    # NN distances (Euclidean) focal->each target
+    nn <- lapply(others, function(tg) {
+      if (N[[tg]] == 0L) rep(NA_real_, N[[foc]])
+      else .nn_to_target_euclid(foc_pts, P[[tg]], chunk = 400)
+    })
+    names(nn) <- others
+
+    # distance stats per directed pair
+    for (tg in others) {
+      vec <- nn[[tg]]
+      medlog <- median(log(vec + eps), na.rm = TRUE)
+      csr_vals[[length(csr_vals)+1L]] <- data.frame(
+        focal = foc, target = tg, stat = "median_log_distance",
+        value = medlog, rep = rep, stringsAsFactors = FALSE
+      )
+    }
+
+    # winner fraction (closest among the three others)
+    Dmat <- cbind(nn[[others[1]]], nn[[others[2]]], nn[[others[3]]])
+    colnames(Dmat) <- paste0("to", others)
+    for (tg in others) {
+      win <- mean(apply(Dmat, 1, function(row)
+        .winner_credit(row[paste0("to", tg)], row)), na.rm = TRUE)
+      csr_vals[[length(csr_vals)+1L]] <- data.frame(
+        focal = foc, target = tg, stat = "winner_fraction",
+        value = win, rep = rep, stringsAsFactors = FALSE
+      )
+    }
+  }
+}
+
+csr_df <- do.call(rbind, csr_vals)
+
+## --- Summaries per (focal, target, stat) with stable names ---
+csr_sum <- aggregate(
+  value ~ focal + target + stat,
+  data = csr_df,
+  FUN = function(x) c(
+    mean = mean(x),
+    sd   = sd(x),
+    q025 = unname(quantile(x, 0.025, na.rm = TRUE)),
+    q975 = unname(quantile(x, 0.975, na.rm = TRUE))
+  )
+)
+
+# Expand vector column robustly (handles matrix/list returns)
+val <- csr_sum$value
+if (is.matrix(val)) {
+  tmp <- val
+  if (is.null(colnames(tmp)) || any(colnames(tmp) == "")) {
+    colnames(tmp) <- c("mean","sd","q025","q975")
+  }
+} else {
+  tmp <- do.call(rbind, lapply(val, function(v) { v <- as.numeric(v); names(v) <- NULL; v }))
+  colnames(tmp) <- c("mean","sd","q025","q975")
+}
+csr_sum$csr_mean <- tmp[, "mean"]
+csr_sum$csr_sd   <- tmp[, "sd"]
+csr_sum$csr_q025 <- tmp[, "q025"]
+csr_sum$csr_q975 <- tmp[, "q975"]
+csr_sum$value <- NULL
+
+## --- CSR Monte-Carlo p (one-sided: attraction for distance, enrichment for winner) ---
+p_csr_vec <- mapply(function(foc, tgt, st, obs) {
+  v <- csr_df$value[csr_df$focal == foc & csr_df$target == tgt & csr_df$stat == st]
+  if (!length(v)) return(NA_real_)
+  if (st == "median_log_distance") {
+    (1 + sum(v <= obs, na.rm = TRUE)) / (1 + sum(is.finite(v)))
+  } else {
+    (1 + sum(v >= obs, na.rm = TRUE)) / (1 + sum(is.finite(v)))
+  }
+}, foc = perm_res$focal, tgt = perm_res$target, st = perm_res$stat, obs = perm_res$observed)
+
+## --- Merge CSR summaries into permutation results (safe join) ---
+final <- merge(perm_res, csr_sum, by = c("focal","target","stat"), all.x = TRUE, sort = FALSE)
+
+# Attach p_csr computed in the same row order as perm_res
+final$p_csr <- p_csr_vec
+# FDR within each stat
+final$q_csr <- ave(final$p_csr, final$stat, FUN = function(p) p.adjust(p, "BH"))
+
+# Effect-size ratio vs CSR mean
+final$ratio_obs_to_csr <- NA_real_
+is_dist <- final$stat == "median_log_distance"
+final$ratio_obs_to_csr[is_dist]  <- exp(final$observed[is_dist] - final$csr_mean[is_dist])
+final$ratio_obs_to_csr[!is_dist] <- final$observed[!is_dist] / final$csr_mean[!is_dist]
+
+## --------------- reorder columns & export ---------------
+final <- final[, c("focal","target","n_rows","stat",
+                   "observed",
+                   "perm_mean","perm_sd","p_perm","q_perm",
+                   "csr_mean","csr_sd","csr_q025","csr_q975","p_csr","q_csr",
+                   "ratio_obs_to_csr","alt")]
+
+final <- final[order(final$stat, final$q_csr, final$q_perm, final$focal, final$target), ]
+
+cat("\n=== Comparative results (Permutation & Ellipsoid CSR) ===\n")
+print(final, row.names = FALSE, digits = 5)
+
+write.csv(final, file = out_csv, row.names = FALSE)
+cat(sprintf("\n[Saved] %s\n", out_csv))
