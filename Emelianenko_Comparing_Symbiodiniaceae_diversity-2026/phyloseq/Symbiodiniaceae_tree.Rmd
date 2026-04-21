@@ -876,9 +876,11 @@ FastTree_unf_rooted_plt <- ggtree(FastTree_unf_rooted) %<+% tip_metadata +
     legend.title = element_blank() #element_text(size = 35)
   ) +
   ggplot2::xlim(0, max_x + extra_space) +
-  ggtree::geom_treescale(x = 0, y = 0, linesize = 0.5, fontsize = 10, width = 0.1) 
+  ggtree::geom_treescale(x = 0, y = 0, linesize = 0.5, fontsize = 10, width = 0.1) +
+  geom_text(data=subset(ggtree(FastTree_unf_rooted)$data, !isTip&as.numeric(label) > 0.9), 
+            aes(label=label), hjust=0.6)
 
-ggplot2::ggsave("./tree_plots/Compare_FastTree_unf_rooted.png", plot = FastTree_unf_rooted_plt,
+ggplot2::ggsave("./Compare_FastTree_unf_rooted.png", plot = FastTree_unf_rooted_plt,
                 width = 15, height = 24, dpi = 300)
 
 ```
@@ -1012,9 +1014,10 @@ p_flipped <- flip(p, node1 = 1, node2 = 2)
 # plot
 
 p_genus <- p_flipped %<+% tip_meta_genus +
-  geom_tippoint(aes(fill = label, size = n_asvs), shape = 22, color = "grey", show.legend = FALSE) +
+  geom_tippoint(aes(fill = label, size = 30), shape = 22, color = "grey", show.legend = FALSE) +
+  #geom_tippoint(aes(fill = label, size = n_asvs), shape = 22, color = "grey", show.legend = FALSE) +
   geom_tiplab(aes(label = label), size = 8, offset = 0.02) +
-  scale_size_continuous(name = "ASVs per genus") +
+  #scale_size_continuous(name = "ASVs per genus") +
   scale_fill_manual(values = Symbiodiniaceae_color_palette) +
   theme(legend.position = "bottom") +
   ggplot2::xlim(0, 1) +
@@ -1029,10 +1032,10 @@ library(patchwork)
 
 Inset_plt <- FastTree_unf_rooted_plt + inset_element(p_genus,  left = 0, bottom = 0.7, right = 0.45, top = 1)
 ggplot2::ggsave("./tree_plots/INSET.png", plot =Inset_plt,
-                width = 15, height = 26, dpi = 300)
+                width = 20, height = 26, dpi = 300)
 
 ggsave_clean("./tree_plots/INSET.svg", plot =Inset_plt,
-                width = 15, height = 26, dpi = 300)
+                width = 20, height = 26, dpi = 300)
 ```
 
 # Make a tree for pre-lulu sequences

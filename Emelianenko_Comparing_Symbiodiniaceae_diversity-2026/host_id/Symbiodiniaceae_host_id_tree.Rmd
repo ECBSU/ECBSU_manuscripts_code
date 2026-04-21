@@ -260,6 +260,8 @@ ggplot2::ggsave("./plt_18S_colored.png", plot = plt_18S_colored ,
                 width = 10, height = 10, dpi = 300)
 ```
 
+
+
 COI with bootstraps
 ```{r}
 tree_COI_tbl <- as_tibble(tree_COI_mid_treedata)
@@ -301,18 +303,16 @@ plt_COI <- ggtree(tree_COI_mid_treedata, branch.length = "branch.length") +
     color = "grey", 
     show.legend = FALSE
   ) +
-  # control sizes so they match your previous manual scaling
   scale_size_continuous(
     name = "Ultra-fast bootstrap (%)",
     range = c(2, 7),   # same min/max as before
     breaks = seq(90, 100, by = 2),
     labels = seq(90, 100, by = 2)
   )
-  #scale_size_identity()+
   
   ggplot2::xlim(0, max_x_COI + extra_space_COI)
 
-# --- COI horizontal bar for symbionts ---
+# COI horizontal bar for symbionts 
 tip_coords_COI <- fortify(tree_COI_mid_treedata) %>% filter(isTip) %>% select(label, x, y)
 
 ASVs_counts_Symb_long_COI <- ASVs_counts_Symb_long_df %>%
@@ -357,10 +357,10 @@ plt_18S_colored_sc <- plt_18S_colored +
 plt_COI_colored_sc <- plt_COI_colored +
   geom_treescale(x = 0, y = -1, linesize = 0.5, fontsize = 3) + labs(title = "COI")
 
-combined_plot <- plt_18S_colored_sc + plt_COI_colored_sc +
+combined_plot <- (plt_18S_colored_sc / plt_COI_colored_sc) +
   plot_annotation(tag_levels = 'A') +
-  plot_layout(ncol = 2, guides = "collect") &
-  guides(fill = guide_legend(nrow = 1), 
+  plot_layout(ncol = 1, guides = "collect") &
+  guides(fill = guide_legend(nrow = 2), 
          size = guide_legend(nrow = 1), 
         )&
   theme(legend.position = "bottom", 
@@ -370,10 +370,10 @@ combined_plot <- plt_18S_colored_sc + plt_COI_colored_sc +
 combined_plot
 
 ggsave("./combined_18S_COI.png", plot = combined_plot,
-       width = 20, height = 10, dpi = 300)
+       width = 12, height = 20, dpi = 300)
 
 ggsave("./combined_18S_COI.svg", plot = combined_plot,
-       width = 20, height = 10, dpi = 300)
+       width = 12, height = 20, dpi = 300)
 ```
 
 ```{r}
