@@ -1,2 +1,2 @@
 # Comparing_Symbiodiniaceae_diversity-2026
-This repository contains the code used for the data analysis in the manuscript "Comparing Symbiodiniaceae diversity across unicellular hosts, multicellular hosts, and environmental reservoirs" by Vera Emelianenko, Maria Eduarda Alves dos Santos, Gayun Kim, and Filip Husnik. 
+This repository contains the code used for the data analysis in the manuscript "Comparing Symbiodiniaceae diversity across unicellular hosts, multicellular hosts, and environmental reservoirs" by Vera Emelianenko, Maria Eduarda Alves dos Santos, Gayun Kim, and Filip Husnik. Can be accessed on bioRxiv, 2026.04. 21.719777: https://www.biorxiv.org/content/10.64898/2026.04.21.719777v1.full 
