@@ -15,9 +15,9 @@ The workflow proceeded in multiple steps:
     - Kraken2_Bray_curtis_to_tsv_microbiome.py
     - Metabuli_Bray_curtis_to_tsv_microbiome.py
     - phyloFlash_Bray_curtis_to_tsv_microbiome.py
- 4)  Bray-Curtis dissimilarities were visualized as either violin plots or PCoA cluster plots.
-    - Distance_matrices_to_multiple_violin_plot.py
-    - Distance_matrix_to_PCoA.py
+ 4)  Bray-Curtis dissimilarities were visualized as either violin plots or PCoA cluster plots. D
+     - Distance_matrices_to_multiple_violin_plot.py
+     - Distance_matrix_to_PCoA.py
 
 ## Long-read approach
 The workflow proceeded largely as above, though with a modified bioinformatics pipeline:
