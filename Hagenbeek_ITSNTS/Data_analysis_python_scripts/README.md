@@ -51,5 +51,4 @@ The general workflow bioinformatics pipeline also generated MAGs, and their func
      - Distance_matrices_to_multiple_violin_plot.py
      - Distance_matrix_to_PCoA.py
  5)  For the in-depth rodent analysis, a heatmap was generated based on the cumulative MAG read mapping.
-     - Distance_matrices_to_multiple_violin_plot.py
-     - Distance_matrix_to_PCoA.py
+     - per_MAG_Keggstimate_module_completions_heatmap_for_rodent.py
