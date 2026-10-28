@@ -38,9 +38,9 @@ The workflow proceeded largely as above, though with a modified bioinformatics p
 
 ## Genome-resolved approach
 The general workflow bioinformatics pipeline also generated MAGs, and their functional and taxonomic annotations. The following scripts then built on this data:
- 1)  It was assessed for which samples sufficient reads mapped to the generated MAGs. These were stored in a newline-delimited file. 
-    - CoverM_to_filter_tsv.py
- 2) Based on these filtered samples, a script would read all generated eggNOG-mapper outputs, GTDB-Tk software outputs, and CoverM outputs. It would then calculate Bray-Curtis dissimilarities based on the annotations and taxonomies, normalized by the read coverage of the corresponding MAG. These dissimilarities were then saved as a matrix in a tab-delimited file. 
+ 1)  It was assessed for which samples sufficient reads mapped to the generated MAGs. These were stored in a newline-delimited file.
+     - CoverM_to_filter_tsv.py
+ 3) Based on these filtered samples, a script would read all generated eggNOG-mapper outputs, GTDB-Tk software outputs, and CoverM outputs. It would then calculate Bray-Curtis dissimilarities based on the annotations and taxonomies, normalized by the read coverage of the corresponding MAG. These dissimilarities were then saved as a matrix in a tab-delimited file. 
     - MAG_EggNOG_COG_Bray_curtis_to_tsv_coverM_normalized.py
     - MAG_EggNOG_EC_code_Bray_curtis_to_tsv_coverM_normalized.py
     - MAG_EggNOG_KEGG_orthologs_Bray_curtis_to_tsv_coverM_normalized.py
