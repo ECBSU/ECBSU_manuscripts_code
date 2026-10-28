@@ -3,7 +3,7 @@
 The workflow proceeded in multiple steps:
  1) The raw shotgun sequencing data was processed using the bioinformatics pipeline, generating eggNOG-mapper annotations and LCA taxonomic assignments
     - https://github.com/ECBSU/ECBSU_manuscripts_code/tree/main/Hagenbeek_ITSNTS/Slurm_scripts
- 2) Based on annotation metrics, samples that met quality criteria (at least 2500 eggNOG-mapper annotations) were determined. These filenames were stored in a tab-delimited file. 
+ 2) Based on annotation metrics, samples that met quality criteria (at least 2500 eggNOG-mapper annotations) were determined. These filenames were stored in a newline-delimited file. 
     - EggNOG_hit_finder.py
     - Hit_count_to_filter_tsv.py
  3) Based on these filtered samples, a script would read all generated eggNOG-mapper outputs and LCA software outputs, and calculate Bray-Curtis dissimilarities. These dissimilarities were then saved as a matrix in a tab-delimited file. 
@@ -38,7 +38,7 @@ The workflow proceeded largely as above, though with a modified bioinformatics p
 
 ## Genome-resolved approach
 The general workflow bioinformatics pipeline also generated MAGs, and their functional and taxonomic annotations. The following scripts then built on this data:
- 1)  It was assessed for which samples sufficient reads mapped to the generated MAGs
+ 1)  It was assessed for which samples sufficient reads mapped to the generated MAGs. These were stored in a newline-delimited file. 
     - CoverM_to_filter_tsv.py
  2) Based on these filtered samples, a script would read all generated eggNOG-mapper outputs, GTDB-Tk software outputs, and CoverM outputs. It would then calculate Bray-Curtis dissimilarities based on the annotations and taxonomies, normalized by the read coverage of the corresponding MAG. These dissimilarities were then saved as a matrix in a tab-delimited file. 
     - MAG_EggNOG_COG_Bray_curtis_to_tsv_coverM_normalized.py
