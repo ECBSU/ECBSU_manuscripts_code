@@ -15,7 +15,7 @@ The workflow proceeded in multiple steps:
     - Kraken2_Bray_curtis_to_tsv_microbiome.py
     - Metabuli_Bray_curtis_to_tsv_microbiome.py
     - phyloFlash_Bray_curtis_to_tsv_microbiome.py
- 4)  Bray-Curtis dissimilarities were visualized as either violin plots or PCoA cluster plots. D
+ 4)  Bray-Curtis dissimilarities were visualized as either violin plots or PCoA cluster plots.
      - Distance_matrices_to_multiple_violin_plot.py
      - Distance_matrix_to_PCoA.py
 
@@ -33,8 +33,8 @@ The workflow proceeded largely as above, though with a modified bioinformatics p
     - Metabuli_Bray_curtis_to_tsv_microbiome.py
     - phyloFlash_Bray_curtis_to_tsv_microbiome.py
  4)  Bray-Curtis dissimilarities were visualized as either violin plots or PCoA cluster plots.
-    - Distance_matrices_to_multiple_violin_plot.py
-    - Distance_matrix_to_PCoA.py
+     - Distance_matrices_to_multiple_violin_plot.py
+     - Distance_matrix_to_PCoA.py
 
 ## Genome-resolved approach
 The general workflow bioinformatics pipeline also generated MAGs, and their functional and taxonomic annotations. The following scripts then built on this data:
@@ -48,8 +48,8 @@ The general workflow bioinformatics pipeline also generated MAGs, and their func
     - MAG_KEGGstimate_module_Bray_curtis_to_tsv_coverM_normalized.py
     - MAG_GTDBTK_coverM_Bray_curtis_to_tsv_.py
  4)  Bray-Curtis dissimilarities were visualized as either violin plots or PCoA cluster plots.
-    - Distance_matrices_to_multiple_violin_plot.py
-    - Distance_matrix_to_PCoA.py
+     - Distance_matrices_to_multiple_violin_plot.py
+     - Distance_matrix_to_PCoA.py
  5)  For the in-depth rodent analysis, a heatmap was generated based on the cumulative MAG read mapping.
-    - per_MAG_Keggstimate_module_completions_heatmap_for_rodent.py
-    - MAG_GTDBTK_coverM_heatmap.py
+     - Distance_matrices_to_multiple_violin_plot.py
+     - Distance_matrix_to_PCoA.py
