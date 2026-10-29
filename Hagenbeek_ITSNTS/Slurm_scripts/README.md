@@ -31,3 +31,6 @@ Both pipelines were written in bash and designed to be run using a slurm-based p
 
 ## Execution
 The scripts are executed using a wrapper script. The samples to be processed are provided in a newline delimited text file (either file names or SRA accessions depending on the pipeline), written into line 11 of the wrapper script. The directory containing the files of these samples is specified in line 13, and the directory for the generated output is porivided in line 15. The number of files to be processed is the specified in line 18. 
+
+
+NOTE: The pipelines currently still use several tools saved as modules on the OIST Deigo system. I still need to modify this, so the tools can be specified, and the pipelines executed in other systems. 
